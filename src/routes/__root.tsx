@@ -13,12 +13,12 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "Marketing Teacher | Practice better marketing",
+        title: "Teacher Workspace | A calmer teaching day",
       },
       {
         name: "description",
         content:
-          "A cinematic practice studio for marketers to plan campaigns, sharpen positioning, and get better feedback before launch.",
+          "A calm workspace for teachers to plan lessons, take attendance, grade faster, message home, and keep the school day in one tab.",
       },
     ],
     links: [

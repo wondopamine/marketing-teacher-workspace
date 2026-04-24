@@ -1,21 +1,21 @@
 ---
-title: feat: Build Cinematic Marketing Teacher Landing Page
+title: feat: Build Cinematic Teacher Workspace Landing Page
 type: feat
 status: active
 date: 2026-04-24
 ---
 
-# feat: Build Cinematic Marketing Teacher Landing Page
+# feat: Build Cinematic Teacher Workspace Landing Page
 
 ## Overview
 
-Create a greenfield TanStack Start React landing page for Marketing Teacher using shadcn/ui, Tailwind CSS, and Radix Colors. The core design effort is a Mercury-inspired cinematic first viewport: a full-bleed scenic hero that scrolls or plays through a staged zoom from a wide environment into a laptop/product interface, then hands off into a dark product-detail section.
+Create a greenfield TanStack Start React landing page for Teacher Workspace using shadcn/ui, Tailwind CSS, and Radix Colors. The core design effort is a Mercury-inspired cinematic first viewport: a full-bleed scenic hero that scrolls or plays through a staged zoom from a wide environment into a laptop/product interface, then hands off into a dark product-detail section.
 
 The reference is Mercury's landing page animation style and the supplied screenshots. The implementation should borrow the interaction structure, pacing, and visual quality, not Mercury's exact brand, copy, assets, or banking UI.
 
 ## Problem Frame
 
-The project needs to establish a premium landing page foundation and make the first impression feel unusually polished. The most important outcome is not a generic marketing page; it is a memorable motion-led hero that makes "Marketing Teacher" feel like a product with craft, credibility, and atmosphere.
+The project needs to establish a premium landing page foundation and make the first impression feel unusually polished. The most important outcome is not a generic marketing page; it is a memorable motion-led hero that makes "Teacher Workspace" feel like a product with craft, credibility, and atmosphere.
 
 ## Requirements Trace
 
@@ -61,7 +61,7 @@ The project needs to establish a premium landing page foundation and make the fi
 - Use `pnpm` by default: It is a good fit for shadcn/TanStack workflows and can be swapped if the user prefers another package manager.
 - Use Radix Colors via CSS imports and Tailwind theme variables: Import only selected scales, then map them into semantic tokens used by shadcn components and custom landing-page CSS.
 - Use `motion/react` for the hero sequence: The animation needs scroll progress, transforms, opacity interpolation, and reduced-motion handling. CSS alone is possible but would be less ergonomic for this staged cinematic sequence.
-- Use original media assets: Generate or design a unique "marketing strategy desk / product laptop" environment instead of using Mercury's imagery.
+- Use original media assets: Generate or design a unique "teacher desk / product laptop" environment instead of using Mercury's imagery.
 - Keep the first release mostly static: The email capture UI should look complete, but submission can be a no-op or client-side success state unless the user later asks for lead capture.
 
 ## Open Questions
@@ -74,13 +74,13 @@ The project needs to establish a premium landing page foundation and make the fi
 
 ### Deferred to Implementation
 
-- Final product name and copy: Use "Marketing Teacher" as the working brand unless the user provides different naming.
+- Final product name and copy: Use "Teacher Workspace" as the product name.
 - Final asset generation method: The implementer can use generated raster imagery, commissioned/static design assets, or a short generated video, as long as the animation stages remain original and performant.
 - Final deployment target: Not needed for the first local landing page build.
 
 ## Visual Direction
 
-**Visual thesis:** A quiet, cinematic strategy studio at dawn: natural light, a desk or laptop in a landscape-like setting, then a confident transition into a dark product interface for marketing lessons, planning, and campaign feedback.
+**Visual thesis:** A quiet, cinematic teacher workspace at dawn: natural light, a desk or laptop in a landscape-like setting, then a confident transition into a dark product interface for lessons, attendance, grading, and parent communication.
 
 **Content plan:** Header, cinematic hero with email CTA, scroll-linked zoom into product UI, dark product detail section, compact proof/feature strip, final CTA.
 
@@ -194,12 +194,12 @@ The page should use one sticky animation region with a height around `280vh` to 
 - Test: browser screenshot verification at desktop and mobile sizes
 
 **Approach:**
-- Implemented as coherent original CSS/DOM visual layers instead of rasterized Mercury-like source assets:
-  - Wide scenic frame with a calm workspace visible.
-  - Mid frame closer to desk/laptop.
-  - Close laptop frame with screen readable enough to imply product depth.
-  - Product UI frame or HTML overlay that can become the next section.
-- Use WebP or AVIF for static frames and keep a fallback `poster` if video is used.
+- Implemented with local visual placeholders that preserve the future media contract:
+  - A poster/start placeholder layer with the calm workspace composition.
+  - A scrub placeholder layer controlled by the same opacity hook a future video will use.
+  - An end-frame placeholder layer controlled by the same opacity hook a future close frame will use.
+  - Product UI frame as HTML overlay that becomes the next section.
+- Later, replace the placeholders with original WebP/AVIF poster/end frames and MP4/WebM video sources while keeping the existing scroll timing model.
 - Avoid embedding Mercury logos, finance copy, or exact interface shapes.
 
 **Patterns to follow:**
@@ -277,8 +277,8 @@ The page should use one sticky animation region with a height around `280vh` to 
 - Build the dark product section as the destination of the hero transition.
 - Use restrained sections, not a card-heavy SaaS grid.
 - Suggested page structure:
-  - Hero: "Marketing Teacher" with one promise and email CTA.
-  - Product section: "Plan, practice, and improve campaigns in one place."
+  - Hero: "Teacher Workspace" with one promise and email CTA.
+  - Product section: "One tab for the work around teaching."
   - Proof strip: three compact outcomes or capabilities.
   - Final CTA: email field or button repeated once.
 - Keep the product UI visually dense enough to feel real, but avoid building a full app shell.

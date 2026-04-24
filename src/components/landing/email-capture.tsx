@@ -11,7 +11,7 @@ export function EmailCapture() {
       onSubmit={(event) => event.preventDefault()}
     >
       <Input
-        aria-label="Work email"
+        aria-label="School email"
         className="h-12 flex-1 border-transparent bg-transparent px-5 text-white placeholder:text-white/68 focus-visible:border-white/35 focus-visible:ring-white/35"
         placeholder={heroCopy.emailPlaceholder}
         type="email"

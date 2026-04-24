@@ -1,5 +1,6 @@
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react"
 import { useRef } from "react"
+import type { MotionValue } from "motion/react"
 
 import { EmailCapture } from "@/components/landing/email-capture"
 import { heroCopy } from "@/content/landing"
@@ -12,51 +13,61 @@ export function CinematicHero() {
     offset: ["start start", "end end"],
   })
 
-  const sceneScale = useTransform(
+  const mediaScale = useTransform(
     scrollYProgress,
-    [0, 0.48, 1],
-    [1, 1.26, 1.52]
+    [0, 0.56, 1],
+    [1, 1.16, 1.34]
   )
-  const sceneY = useTransform(
+  const mediaY = useTransform(
     scrollYProgress,
-    [0, 0.55, 1],
-    ["0%", "-8%", "-15%"]
+    [0, 0.56, 1],
+    ["0%", "-4%", "-10%"]
   )
-  const foregroundScale = useTransform(
+  const videoOpacity = useTransform(
     scrollYProgress,
-    [0, 0.45, 0.82],
-    [1, 1.42, 2.28]
+    [0, 0.5, 0.7],
+    [1, 0.88, 0]
   )
-  const foregroundY = useTransform(
+  const endFrameOpacity = useTransform(
     scrollYProgress,
-    [0, 0.45, 0.82],
-    ["0%", "-8%", "-18%"]
+    [0.45, 0.7, 1],
+    [0, 0.76, 1]
   )
   const copyOpacity = useTransform(
     scrollYProgress,
-    [0, 0.2, 0.36],
-    [1, 0.72, 0]
+    [0, 0.002, 0.006],
+    [1, 0.58, 0]
   )
-  const copyY = useTransform(scrollYProgress, [0, 0.32], ["0px", "-56px"])
+  const copyY = useTransform(scrollYProgress, [0, 0.014], ["0px", "-72px"])
   const interfaceOpacity = useTransform(
     scrollYProgress,
-    [0.42, 0.66, 0.86],
-    [0, 0.72, 1]
+    [0.64, 0.8, 0.94],
+    [0, 0.86, 1]
   )
   const interfaceScale = useTransform(
     scrollYProgress,
-    [0.38, 0.7, 1],
-    [0.72, 1.08, 1.22]
+    [0.62, 0.82, 1],
+    [0.82, 1.04, 1.14]
   )
-  const veilOpacity = useTransform(scrollYProgress, [0.46, 0.82], [0, 0.74])
+  const veilOpacity = useTransform(scrollYProgress, [0.44, 0.84], [0, 0.7])
 
   return (
     <section
       aria-labelledby="hero-title"
-      className="relative h-[330vh] bg-[color:var(--interface-ink)]"
+      className={
+        prefersReducedMotion
+          ? "relative min-h-svh overflow-hidden bg-[color:var(--interface-ink)]"
+          : "relative h-[320vh] bg-[color:var(--interface-ink)]"
+      }
       ref={sectionRef}
     >
-      <div className="sticky top-0 h-svh overflow-hidden">
+      <div
+        className={
+          prefersReducedMotion
+            ? "relative min-h-svh overflow-hidden"
+            : "sticky top-0 h-svh overflow-hidden"
+        }
+      >
         <motion.div
           aria-hidden
           className="absolute inset-0 origin-center"
@@ -64,27 +75,15 @@ export function CinematicHero() {
             prefersReducedMotion
               ? undefined
               : {
-                  scale: sceneScale,
-                  y: sceneY,
+                  scale: mediaScale,
+                  y: mediaY,
                 }
           }
         >
-          <SceneBackdrop />
-        </motion.div>
-
-        <motion.div
-          aria-hidden
-          className="absolute inset-x-0 bottom-0 h-[58svh] origin-bottom"
-          style={
-            prefersReducedMotion
-              ? undefined
-              : {
-                  scale: foregroundScale,
-                  y: foregroundY,
-                }
-          }
-        >
-          <SceneForeground />
+          <HeroMedia
+            endFrameOpacity={prefersReducedMotion ? undefined : endFrameOpacity}
+            videoOpacity={prefersReducedMotion ? undefined : videoOpacity}
+          />
         </motion.div>
 
         <motion.div
@@ -93,7 +92,7 @@ export function CinematicHero() {
         />
 
         <motion.div
-          className="absolute inset-x-0 top-[17svh] z-10 mx-auto flex max-w-5xl flex-col items-center px-5 text-center text-white sm:top-[20svh]"
+          className="absolute inset-x-0 top-[10svh] z-10 mx-auto flex max-w-5xl flex-col items-center px-5 text-center text-white sm:top-[12svh]"
           style={
             prefersReducedMotion
               ? undefined
@@ -103,19 +102,19 @@ export function CinematicHero() {
                 }
           }
         >
-          <p className="mb-4 text-sm font-medium tracking-[0.18em] text-white/72 uppercase">
-            {heroCopy.eyebrow}
-          </p>
           <h1
             id="hero-title"
-            className="max-w-4xl font-heading text-5xl leading-[0.94] font-semibold text-balance sm:text-7xl lg:text-8xl"
+            className="font-heading text-5xl leading-[0.9] font-semibold text-balance sm:text-7xl lg:text-[7.75rem]"
           >
-            {heroCopy.headline}
+            {heroCopy.eyebrow}
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-white/78 sm:text-xl">
+          <p className="mt-5 max-w-4xl font-heading text-2xl leading-tight font-medium text-balance text-white/88 sm:text-3xl lg:text-4xl">
+            {heroCopy.headline}
+          </p>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-white/74 sm:text-lg sm:leading-8">
             {heroCopy.body}
           </p>
-          <div className="mt-10 w-full">
+          <div className="mt-8 w-full">
             <EmailCapture />
           </div>
         </motion.div>
@@ -140,45 +139,30 @@ export function CinematicHero() {
   )
 }
 
-function SceneBackdrop() {
+function HeroMedia({
+  endFrameOpacity,
+  videoOpacity,
+}: {
+  endFrameOpacity?: MotionValue<number>
+  videoOpacity?: MotionValue<number>
+}) {
   return (
-    <div className="scene-backdrop absolute inset-0">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,var(--dawn-glow),transparent_30%),radial-gradient(circle_at_78%_24%,var(--sky-glow),transparent_32%),linear-gradient(180deg,var(--sky-top),var(--sky-middle)_42%,var(--forest-deep)_100%)]" />
-      <div className="mountain mountain-a" />
-      <div className="mountain mountain-b" />
-      <div className="mountain mountain-c" />
-      <div className="mist mist-a" />
-      <div className="mist mist-b" />
-      <div className="valley-line" />
-    </div>
-  )
-}
-
-function SceneForeground() {
-  return (
-    <div className="absolute inset-0">
-      <div className="absolute inset-x-[-8%] bottom-0 h-[82%] rounded-[50%_50%_0_0/28%_28%_0_0] bg-[radial-gradient(circle_at_52%_8%,var(--grass-lit),transparent_26%),linear-gradient(180deg,var(--grass-mid),var(--grass-dark))]" />
-      <div className="grass-field" />
-      <div className="desk-scene">
-        <div className="chair" />
-        <div className="desk">
-          <div className="laptop">
-            <ProductInterfaceMini />
-          </div>
+    <div className="hero-media hero-placeholder absolute inset-0">
+      <div className="hero-placeholder-base absolute inset-0" />
+      <motion.div
+        className="hero-placeholder-scrub absolute inset-0"
+        style={videoOpacity ? { opacity: videoOpacity } : undefined}
+      />
+      <motion.div
+        className="hero-placeholder-end absolute inset-0"
+        style={endFrameOpacity ? { opacity: endFrameOpacity } : { opacity: 0 }}
+      />
+      <div className="hero-placeholder-workspace absolute inset-x-0 bottom-[-8svh] h-[58svh]">
+        <div className="hero-placeholder-desk" />
+        <div className="hero-placeholder-seat" />
+        <div className="hero-placeholder-device">
+          <div className="hero-placeholder-device-screen" />
         </div>
-      </div>
-    </div>
-  )
-}
-
-function ProductInterfaceMini() {
-  return (
-    <div className="mini-ui">
-      <div className="mini-sidebar" />
-      <div className="mini-main">
-        <span />
-        <strong />
-        <em />
       </div>
     </div>
   )
@@ -189,12 +173,12 @@ export function ProductInterfaceFrame() {
     <div className="overflow-hidden rounded-[1.4rem] border border-white/10 bg-[color:var(--interface-panel)] p-4 shadow-2xl shadow-black/40 backdrop-blur-sm">
       <div className="grid min-h-[56svh] gap-4 rounded-[1rem] border border-white/8 bg-[color:var(--interface-surface)] p-4 text-white sm:grid-cols-[15rem_1fr]">
         <aside className="hidden flex-col gap-3 border-r border-white/8 pr-4 text-sm text-white/54 sm:flex">
-          <p className="text-white/82">Marketing Teacher</p>
-          {["Brief", "Audience", "Positioning", "Creative", "Launch"].map(
+          <p className="text-white/82">Teacher Workspace</p>
+          {["Today", "Classes", "To grade", "Students", "Library"].map(
             (item, index) => (
               <span
                 className={
-                  index === 2
+                  index === 0
                     ? "rounded-lg bg-white/10 px-3 py-2 text-white"
                     : "px-3 py-2"
                 }
@@ -209,49 +193,47 @@ export function ProductInterfaceFrame() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-sm text-[color:var(--interface-accent)]">
-                Positioning rehearsal
+                Today's workspace
               </p>
               <h2 className="mt-2 max-w-xl text-3xl font-semibold text-balance sm:text-5xl">
-                Launch a sharper offer before you spend.
+                Good morning, Sam. Here's today.
               </h2>
             </div>
             <div className="rounded-full bg-[color:var(--interface-accent-soft)] px-4 py-2 text-sm text-[color:var(--interface-accent)]">
-              84% stronger
+              12 to grade
             </div>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
             <div className="rounded-xl border border-white/8 bg-white/[0.045] p-4">
               <div className="mb-4 flex items-center justify-between text-sm text-white/54">
-                <span>Campaign confidence</span>
-                <span>12 week trend</span>
+                <span>Today at a glance</span>
+                <span>4 classes</span>
               </div>
               <div className="chart-path" />
             </div>
             <div className="rounded-xl border border-white/8 bg-white/[0.045] p-4">
-              <p className="text-sm text-white/54">Next critique</p>
-              <p className="mt-3 text-2xl font-medium">Landing page promise</p>
+              <p className="text-sm text-white/54">Next up</p>
+              <p className="mt-3 text-2xl font-medium">Bio Period 3 quiz</p>
               <p className="mt-5 text-sm leading-6 text-white/62">
-                Tighten the proof, name the audience, and make the moment of
-                value unmistakable.
+                Attendance is ready, the rubric is attached, and yesterday's
+                parent note is waiting for review.
               </p>
             </div>
           </div>
 
           <div className="grid gap-3 text-sm text-white/68 sm:grid-cols-3">
-            {["Audience clarity", "Offer tension", "Proof quality"].map(
-              (label) => (
-                <div
-                  className="rounded-xl border border-white/8 bg-white/[0.035] p-4"
-                  key={label}
-                >
-                  <p>{label}</p>
-                  <div className="mt-4 h-2 rounded-full bg-white/10">
-                    <div className="h-full w-4/5 rounded-full bg-[color:var(--interface-accent)]" />
-                  </div>
+            {["Attendance", "Grading", "Messages"].map((label) => (
+              <div
+                className="rounded-xl border border-white/8 bg-white/[0.035] p-4"
+                key={label}
+              >
+                <p>{label}</p>
+                <div className="mt-4 h-2 rounded-full bg-white/10">
+                  <div className="h-full w-4/5 rounded-full bg-[color:var(--interface-accent)]" />
                 </div>
-              )
-            )}
+              </div>
+            ))}
           </div>
         </div>
       </div>

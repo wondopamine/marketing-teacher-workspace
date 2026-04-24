@@ -1,36 +1,42 @@
-export const navItems = ["Practice", "Curriculum", "Reviews", "Pricing"]
+export const navItems = [
+  { label: "Today", href: "#today" },
+  { label: "Classes", href: "#today" },
+  { label: "Reviews", href: "#reviews" },
+  { label: "Pricing", href: "#pricing" },
+]
 
 export const heroCopy = {
-  eyebrow: "Marketing Teacher",
-  headline: "Practice every campaign before the market grades it.",
-  body: "A private strategy studio where marketers rehearse positioning, offers, and launches with guided feedback.",
-  emailPlaceholder: "Enter your work email",
-  cta: "Join the waitlist",
+  eyebrow: "Teacher Workspace",
+  headline: "Monday mornings, sorted.",
+  body: "Your plan, classes, grading queue, and the parent email you have been meaning to send, all in one calm place.",
+  emailPlaceholder: "Enter your school email",
+  cta: "Get early access",
 }
 
 export const productCopy = {
-  kicker: "Strategy studio",
-  headline: "Plan, practice, and improve in one focused workspace.",
-  body: "Turn a vague campaign idea into a sharper brief, stronger positioning, and a clearer launch plan before it reaches your customers.",
+  kicker: "A calmer teaching day",
+  headline: "One tab for the work around teaching.",
+  body: "See today's classes, take attendance, clear the grading queue, message home, and pull tomorrow's lesson materials without opening seven different tools.",
+  cta: "See today's workspace",
 }
 
 export const modules = [
   {
-    title: "Positioning drills",
-    body: "Stress-test the customer, promise, proof, and objections behind every offer.",
+    title: "Today's classes, surfaced automatically",
+    body: "Start the morning with the right schedule, lesson notes, attendance prompts, and reminders already in view.",
   },
   {
-    title: "Campaign rehearsals",
-    body: "Practice launch angles and channel plans until the story holds together.",
+    title: "Grading queue with rubrics built in",
+    body: "Move through assignments faster with reusable rubrics and optional AI pre-checks you can accept, edit, or ignore.",
   },
   {
-    title: "Creative critique",
-    body: "Get sharper feedback on hooks, landing pages, and ads without waiting for spend.",
+    title: "Parent comms, translated and logged",
+    body: "Draft a message, translate it, send it, and keep the conversation attached to the student record.",
   },
 ]
 
 export const proofPoints = [
-  "Briefs that expose weak assumptions",
-  "Feedback tuned for real marketing work",
-  "A calmer path from idea to launch",
+  "Plan lessons and reuse them across terms",
+  "Track attendance before the bell stops ringing",
+  "Close the laptop with nothing hiding in another tab",
 ]

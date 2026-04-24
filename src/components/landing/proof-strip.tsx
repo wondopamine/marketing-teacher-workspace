@@ -9,10 +9,11 @@ export function ProofStrip() {
       <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
         <div>
           <p className="text-sm font-medium tracking-[0.16em] text-[color:var(--paper-muted)] uppercase">
-            Built for careful launches
+            Built around the school day
           </p>
           <h2 className="mt-4 max-w-2xl font-heading text-4xl leading-tight font-semibold text-balance sm:text-6xl">
-            A second brain for the moment before the campaign goes live.
+            The planner, attendance book, gradebook, and inbox finally sit
+            together.
           </h2>
         </div>
 

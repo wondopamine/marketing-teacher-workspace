@@ -8,14 +8,14 @@ export function FinalCta() {
     >
       <div className="mx-auto max-w-5xl text-center">
         <p className="text-sm font-medium tracking-[0.16em] text-white/62 uppercase">
-          Private beta
+          Free for individual teachers
         </p>
         <h2 className="mt-5 font-heading text-4xl leading-tight font-semibold text-balance sm:text-7xl">
-          Rehearse the work before the budget is on the line.
+          Close the laptop with nothing hiding in another tab.
         </h2>
         <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/66">
-          Join the early list for guided practice sessions, campaign critique,
-          and a calmer path to better marketing.
+          Join the early list for Teacher Workspace. Schools are welcome, and
+          individual teachers can start free.
         </p>
         <div className="mx-auto mt-10 max-w-xl">
           <EmailCapture />

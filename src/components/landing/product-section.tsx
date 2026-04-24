@@ -8,7 +8,7 @@ export function ProductSection() {
   return (
     <section
       className="bg-[color:var(--interface-ink)] px-5 py-24 text-white sm:px-8 lg:py-32"
-      id="practice"
+      id="today"
     >
       <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
         <div className="max-w-xl">
@@ -44,7 +44,7 @@ export function ProductSection() {
           </div>
 
           <Button className="mt-10 h-11 rounded-full bg-white text-[color:var(--interface-ink)] hover:bg-white/90">
-            Explore the studio
+            {productCopy.cta}
             <ArrowUpRightIcon data-icon="inline-end" />
           </Button>
         </div>
