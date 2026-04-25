@@ -9,7 +9,7 @@ export function SiteHeader() {
       <div className="mx-auto mt-3 max-w-7xl px-3 sm:mt-5 sm:px-6 lg:px-10">
         <nav
           aria-label="Primary navigation"
-          className="flex items-center justify-between rounded-full border border-black/5 bg-white/95 px-4 py-3 shadow-[0_8px_30px_-12px_rgb(15_23_42/0.18)] backdrop-blur-sm sm:px-6"
+          className="flex items-center justify-between rounded-2xl border border-black/5 bg-white/95 px-4 py-3 shadow-[0_8px_30px_-12px_rgb(15_23_42/0.18)] backdrop-blur-sm sm:px-6"
         >
           <a
             className="flex items-center gap-2.5 font-heading text-[color:var(--paper-ink)]"

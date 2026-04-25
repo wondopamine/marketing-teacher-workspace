@@ -75,32 +75,43 @@ export function PaperHero() {
                 }
           }
         >
-          <motion.img
+          <motion.div
             aria-hidden
-            alt=""
-            className="pointer-events-none absolute -bottom-8 -left-10 w-[min(28vw,300px)] opacity-80 select-none sm:-left-12"
-            src="/hero/cloud-halftone.png"
+            className="pointer-events-none absolute -bottom-8 -left-10 w-[min(28vw,300px)] sm:-left-12"
             style={reduced ? undefined : { y: cloudYLeft }}
-          />
-          <motion.img
+          >
+            <img
+              alt=""
+              className="cloud-drift-left block w-full opacity-80 select-none"
+              src="/hero/cloud-halftone.png"
+            />
+          </motion.div>
+          <motion.div
             aria-hidden
-            alt=""
-            className="pointer-events-none absolute -top-4 -right-10 w-[min(26vw,280px)] opacity-80 select-none sm:-right-12"
-            src="/hero/cloud-halftone.png"
+            className="pointer-events-none absolute -top-4 -right-10 w-[min(26vw,280px)] sm:-right-12"
             style={reduced ? undefined : { y: cloudYRight }}
-          />
+          >
+            <img
+              alt=""
+              className="cloud-drift-right block w-full opacity-80 select-none"
+              src="/hero/cloud-halftone.png"
+            />
+          </motion.div>
 
           <motion.div
             className="relative z-10 mt-6 flex w-full max-w-5xl flex-col items-center px-5 text-center sm:mt-8"
             style={reduced ? undefined : { opacity: copyOpacity, y: copyY }}
           >
             <h1
-              className="font-heading text-[clamp(2rem,5.4vw,4.75rem)] leading-[0.98] font-semibold tracking-tight text-balance text-[color:var(--paper-ink)]"
+              className="font-heading text-[clamp(1.75rem,4.4vw,4rem)] leading-[1.05] font-semibold tracking-tight text-[color:var(--paper-ink)]"
               id="hero-title"
             >
-              {heroCopy.headline}
-              <br />
-              {heroCopy.headlineSecond}
+              <span className="block whitespace-nowrap">
+                {heroCopy.headline}
+              </span>
+              <span className="block whitespace-nowrap">
+                {heroCopy.headlineSecond}
+              </span>
             </h1>
             <Button
               asChild
@@ -117,14 +128,14 @@ export function PaperHero() {
               {reduced ? (
                 <img
                   alt="Teacher working at her desk with a laptop and lamp"
-                  className="block h-auto max-h-full w-auto max-w-full select-none"
+                  className="block h-auto max-h-full w-auto max-w-full mix-blend-multiply select-none"
                   src="/hero/teacher-illustration.png"
                 />
               ) : (
                 <video
                   aria-label="A teacher slowly working at her desk"
                   autoPlay
-                  className="block h-auto max-h-full w-auto max-w-full select-none"
+                  className="block h-auto max-h-full w-auto max-w-full mix-blend-multiply select-none"
                   loop
                   muted
                   playsInline
