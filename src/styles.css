@@ -181,6 +181,11 @@
     mix-blend-mode: multiply;
   }
 
+  .cloud-drift-left,
+  .cloud-drift-right {
+    filter: brightness(1.06) contrast(1.02);
+  }
+
   .cloud-drift-left {
     animation: cloud-drift-left 18s ease-in-out infinite;
   }
