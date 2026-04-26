@@ -59,8 +59,8 @@ export function PaperHero() {
       <div
         className={
           reduced
-            ? "relative px-2 pt-20 pb-6 sm:px-3 sm:pt-24 lg:px-4"
-            : "sticky top-0 flex h-svh items-stretch overflow-hidden px-2 pt-20 pb-2 sm:px-3 sm:pt-24 sm:pb-3 lg:px-4"
+            ? "relative px-4 pt-[6.125rem] pb-4"
+            : "sticky top-0 flex h-svh items-stretch overflow-hidden px-4 pt-[6.125rem] pb-4"
         }
       >
         <motion.div
