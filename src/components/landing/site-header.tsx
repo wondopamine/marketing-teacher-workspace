@@ -6,7 +6,7 @@ import { heroCopy, navItems } from "@/content/landing"
 export function SiteHeader() {
   return (
     <header className="absolute inset-x-0 top-0 z-50">
-      <div className="mx-auto mt-3 max-w-7xl px-3 sm:mt-5 sm:px-6 lg:px-10">
+      <div className="mx-auto mt-3 max-w-[110rem] px-2 sm:mt-4 sm:px-3 lg:px-4">
         <nav
           aria-label="Primary navigation"
           className="flex items-center justify-between rounded-2xl border border-black/5 bg-white/95 px-4 py-3 shadow-[0_8px_30px_-12px_rgb(15_23_42/0.18)] backdrop-blur-sm sm:px-6"

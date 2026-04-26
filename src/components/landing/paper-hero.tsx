@@ -59,8 +59,8 @@ export function PaperHero() {
       <div
         className={
           reduced
-            ? "relative px-3 pt-24 pb-12 sm:px-6 sm:pt-28 lg:px-10"
-            : "sticky top-0 flex h-svh items-stretch overflow-hidden px-3 pt-24 pb-4 sm:px-6 sm:pt-28 sm:pb-6 lg:px-10"
+            ? "relative px-2 pt-20 pb-6 sm:px-3 sm:pt-24 lg:px-4"
+            : "sticky top-0 flex h-svh items-stretch overflow-hidden px-2 pt-20 pb-2 sm:px-3 sm:pt-24 sm:pb-3 lg:px-4"
         }
       >
         <motion.div
@@ -123,8 +123,8 @@ export function PaperHero() {
             </Button>
           </motion.div>
 
-          <div className="relative z-0 mt-auto flex w-full justify-center pb-10 sm:pb-14 lg:pb-16">
-            <div className="relative w-full max-w-[340px] px-4 sm:max-w-[360px]">
+          <div className="relative z-0 mt-auto flex w-full justify-center pb-0">
+            <div className="relative w-full max-w-[360px] px-4 sm:max-w-[400px]">
               {reduced ? (
                 <img
                   alt="Teacher working at her desk with a laptop and lamp"
