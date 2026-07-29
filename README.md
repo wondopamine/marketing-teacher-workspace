@@ -1,32 +1,40 @@
 # Teacher Workspace
 
-A private TanStack Start landing page project for Teacher Workspace.
+TanStack Start marketing site for Teacher Workspace.
 
-## Stack
+## Runtime
 
-- TanStack Start + React
-- TypeScript
-- Tailwind CSS v4
-- shadcn/ui with Radix primitives
-- Radix Colors for theme tokens
-- Motion for the scroll-linked hero sequence
-
-## Scripts
+- Node.js 24 LTS (`.nvmrc`)
+- pnpm 10 (`packageManager` in `package.json`)
 
 ```bash
+pnpm install --frozen-lockfile
 pnpm dev
-pnpm typecheck
+```
+
+The local site runs at `http://127.0.0.1:3000/`.
+
+## Verification
+
+```bash
 pnpm lint
+pnpm typecheck
+pnpm test
 pnpm build
 ```
 
-The local app runs at `http://127.0.0.1:3000/` by default.
+The same checks run in `.github/workflows/ci.yml`.
 
-## Project Shape
+## Project shape
 
-- `src/routes/index.tsx` composes the landing page.
-- `src/components/landing/` contains the cinematic hero and page sections.
-- `src/content/landing.ts` holds the editable landing copy.
-- `src/styles.css` contains Tailwind, shadcn tokens, Radix color mapping, and the hero placeholder styling.
-
-The hero currently uses local visual placeholders that mirror the eventual media contract: poster/start layer, scrub layer, end-frame layer, and product UI handoff. Later, those placeholder layers can be replaced with original poster images and MP4/WebM sources without changing the scroll timing model. The Mercury screenshots in the plan are reference material for pacing and composition only.
+- `src/routes/` owns SSR document metadata and the single landing route.
+- `src/components/landing/scroll-choreography/` owns the desktop pinned
+  experience and its static mobile/reduced-motion fallback.
+- `src/content/landing.ts` is the current rendered content.
+- `src/content/landing-v2.ts` is the typed issue #3 content contract.
+- `src/content/landing-v2-readiness.ts` exposes structural errors and unresolved
+  launch decisions separately.
+- `src/config/site.ts` centralises product, feedback, support, and source links.
+- `docs/landing-page-v2-foundations.md` explains the v2 handoff and why no
+  backend or analytics integration exists without a product/governance
+  contract.

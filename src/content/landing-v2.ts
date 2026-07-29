@@ -1,0 +1,483 @@
+import type { HttpsUrl } from "@/config/site"
+import { siteConfig } from "@/config/site"
+
+export const capabilityIds = [
+  "student-insights",
+  "contextual-intelligence",
+  "hey-talia",
+  "posts",
+] as const
+
+export type CapabilityId = (typeof capabilityIds)[number]
+
+export const proposedAiLayerMemberCapabilityIds = Object.freeze([
+  "contextual-intelligence",
+  "hey-talia",
+] as const) satisfies ReadonlyArray<CapabilityId>
+
+export const journeyActIds = [
+  "promise",
+  "notice",
+  "next-steps",
+  "words",
+  "family-and-record",
+] as const
+
+export type JourneyActId = (typeof journeyActIds)[number]
+
+export const audienceIds = [
+  "teachers",
+  "key-personnel",
+  "school-leaders",
+] as const
+
+export type AudienceId = (typeof audienceIds)[number]
+
+type EditorialStatus = "proposed" | "verbatim"
+export type SupportStrategy =
+  | "resource-centre"
+  | "pair-assistant"
+  | "human-support"
+
+export type AiGaPresentationDecision =
+  | {
+      readonly status: "approved"
+      readonly presentation: "individual-capabilities"
+      readonly publicName: null
+    }
+  | {
+      readonly status: "approved"
+      readonly presentation: "shared-ai-layer"
+      readonly publicName: string
+    }
+  | {
+      readonly status: "unresolved"
+      readonly presentation: null
+      readonly publicName: null
+    }
+
+export type JourneyAct = {
+  readonly id: JourneyActId
+  readonly order: 1 | 2 | 3 | 4 | 5
+  readonly moment: string
+  readonly headline: string
+  readonly body: string
+  readonly capabilityId: CapabilityId | null
+  readonly editorialStatus: EditorialStatus
+}
+
+export type CapabilityCard = {
+  readonly id: CapabilityId
+  readonly name: string
+  readonly job: string
+  readonly scenario: string
+  readonly anchorId: string
+  readonly editorialStatus: EditorialStatus
+}
+
+export type AiPlanning = {
+  readonly futureDirection: {
+    readonly status: "working-hypothesis"
+    readonly model: "shared-ai-capability-and-agent-layer"
+    readonly proposedMemberCapabilityIds: ReadonlyArray<CapabilityId>
+  }
+  readonly gaPresentationDecision: AiGaPresentationDecision
+}
+
+export type AudienceBlock = {
+  readonly id: AudienceId
+  readonly label: string
+  readonly question: string | null
+  readonly answer: string | null
+}
+
+export type Testimonial = {
+  readonly id: string
+  readonly quote: string
+  readonly role: string
+  readonly schoolLevel: "Primary School" | "Secondary School"
+  readonly schoolName: string | null
+  readonly capabilityIds: ReadonlyArray<CapabilityId>
+  readonly sourceUrl: HttpsUrl
+  readonly verbatim: true
+  readonly publicationApproved: boolean
+}
+
+export type SupportResource = {
+  readonly id:
+    | "parent-gateway-resource-centre"
+    | "pair-assistant"
+    | "support-bot"
+  readonly label: string
+  readonly href: HttpsUrl | null
+  readonly availability: "available-restricted" | "url-required" | "in-progress"
+  readonly publicLinkDecision: "required"
+}
+
+export type LandingPageV2Content = {
+  readonly version: 2
+  readonly editorialStatus: "draft" | "approved"
+  readonly sources: {
+    readonly ticket: HttpsUrl
+    readonly directionComment: HttpsUrl
+    readonly testimonialsComment: HttpsUrl
+    readonly bursaryExampleComment: HttpsUrl
+  }
+  readonly seoDraft: {
+    readonly title: string
+    readonly description: string
+  }
+  readonly hero: {
+    readonly eyebrow: string | null
+    readonly headline: string
+    readonly body: string
+    readonly ctaPlacements: readonly ["hero", "close"]
+  }
+  readonly journey: readonly [
+    JourneyAct,
+    JourneyAct,
+    JourneyAct,
+    JourneyAct,
+    JourneyAct,
+  ]
+  readonly reveal: {
+    readonly headline: string
+    readonly body: string
+    readonly gaLaunchLine: string | null
+    readonly editorialStatus: EditorialStatus
+  }
+  readonly capabilities: readonly [
+    CapabilityCard,
+    CapabilityCard,
+    CapabilityCard,
+    CapabilityCard,
+  ]
+  readonly aiPlanning: AiPlanning
+  readonly audiences: readonly [AudienceBlock, AudienceBlock, AudienceBlock]
+  readonly testimonials: ReadonlyArray<Testimonial>
+  readonly supportResources: readonly [
+    SupportResource,
+    SupportResource,
+    SupportResource,
+  ]
+  readonly close: {
+    readonly headline: string
+    readonly body: string
+    readonly editorialStatus: EditorialStatus
+  }
+}
+
+export type PrimaryCtaIntent =
+  | "open-restricted-product"
+  | "contact-team"
+
+export type LandingPageV2Publication = {
+  readonly releasePositioning: "ga"
+  readonly primaryCta: {
+    readonly label: string | null
+    readonly href: HttpsUrl | null
+    readonly intent: PrimaryCtaIntent | null
+  }
+  readonly canonicalUrl: HttpsUrl | null
+  readonly socialImageUrl: HttpsUrl | null
+  readonly contentApprovedBy: string | null
+  readonly claimsApprovedBy: string | null
+  readonly studentScenarioApprovedBy: string | null
+  readonly testimonialCoverageRequired: readonly [
+    "student-insights",
+    "hey-talia",
+    "posts",
+  ]
+  readonly support: {
+    readonly strategy: SupportStrategy | null
+    readonly destinationUrl: HttpsUrl | null
+    readonly owner: string | null
+    readonly accessExplanation: string | null
+    readonly approvedBy: string | null
+  }
+}
+
+/**
+ * Content contract derived from issue #3. The ticket author explicitly
+ * described the five-act narrative and information architecture as
+ * suggestions, so every non-verbatim marketing line remains "proposed".
+ *
+ * This module is deliberately separate from the current v1 rendering data.
+ * Designers can change layout without losing the journey/capability
+ * relationships, while product and legal reviewers can see which material
+ * is still awaiting approval.
+ */
+export const landingPageV2Content = {
+  version: 2,
+  editorialStatus: "draft",
+  sources: {
+    ticket: siteConfig.links.landingPageV2Issue,
+    directionComment: siteConfig.links.landingPageV2DirectionComment,
+    testimonialsComment: siteConfig.links.landingPageV2TestimonialsComment,
+    bursaryExampleComment: siteConfig.links.landingPageV2BursaryExampleComment,
+  },
+  seoDraft: {
+    title: "Teacher Workspace | Every student, cared for in one journey",
+    description:
+      "Notice what a student needs, find the next step, reach the family, and keep the record together with Teacher Workspace.",
+  },
+  hero: {
+    eyebrow: null,
+    headline: "Every student. No support left unclaimed.",
+    body: "From the first sign of eligibility to a family that applied, on the record, in one place.",
+    ctaPlacements: ["hero", "close"],
+  },
+  journey: [
+    {
+      id: "promise",
+      order: 1,
+      moment: "The promise",
+      headline: "Every student. No support left unclaimed.",
+      body: "From the first sign of eligibility to a family that applied, on the record, in one place.",
+      capabilityId: null,
+      editorialStatus: "proposed",
+    },
+    {
+      id: "notice",
+      order: 2,
+      moment: "You notice",
+      headline: "Xiao Ming's family may qualify. Nobody has applied.",
+      body: "A sibling on FAS, a household update, and no active bursary appear together before the application window closes.",
+      capabilityId: "student-insights",
+      editorialStatus: "proposed",
+    },
+    {
+      id: "next-steps",
+      order: 3,
+      moment: "You know the steps",
+      headline: "The right scheme finds you.",
+      body: "The fit, documents, submission route, and closing date are surfaced on the student's profile.",
+      capabilityId: "contextual-intelligence",
+      editorialStatus: "proposed",
+    },
+    {
+      id: "words",
+      order: 4,
+      moment: "The words are ready",
+      headline: "A clean and clear message, already drafted.",
+      body: "The family note starts with the student's context, the teacher's tone, and the practical steps laid out plainly.",
+      capabilityId: "hey-talia",
+      editorialStatus: "proposed",
+    },
+    {
+      id: "family-and-record",
+      order: 5,
+      moment: "The family is in the loop. So is the record.",
+      headline: "Sent. Seen. On file.",
+      body: "Delivery, response, application, and approval status stay visible without rebuilding the record elsewhere.",
+      capabilityId: "posts",
+      editorialStatus: "proposed",
+    },
+  ],
+  reveal: {
+    headline: "This is Teacher Workspace.",
+    body: "The care was always yours. The chasing, cross-referencing, and drafting between the moments is what we removed.",
+    gaLaunchLine: null,
+    editorialStatus: "proposed",
+  },
+  capabilities: [
+    {
+      id: "student-insights",
+      name: "Student Insights",
+      job: "Bring the signals around one student into a usable view.",
+      scenario:
+        "Spot a family who may qualify for support before the application window closes.",
+      anchorId: "student-insights",
+      editorialStatus: "proposed",
+    },
+    {
+      id: "contextual-intelligence",
+      name: "Contextual Intelligence",
+      job: "Surface the relevant process and next step in context.",
+      scenario:
+        "See the matching scheme, required documents, submission route, and deadline from the profile.",
+      anchorId: "contextual-intelligence",
+      editorialStatus: "proposed",
+    },
+    {
+      id: "hey-talia",
+      name: "HeyTalia",
+      job: "Turn student context into a clear first draft for the teacher.",
+      scenario:
+        "Prepare a sensitive family message with the practical details already organised.",
+      anchorId: "hey-talia",
+      editorialStatus: "proposed",
+    },
+    {
+      id: "posts",
+      name: "Posts",
+      job: "Reach the family and keep the communication on record.",
+      scenario:
+        "Track delivery and response without recreating the communication trail in another system.",
+      anchorId: "posts",
+      editorialStatus: "proposed",
+    },
+  ],
+  aiPlanning: {
+    futureDirection: {
+      status: "working-hypothesis",
+      model: "shared-ai-capability-and-agent-layer",
+      proposedMemberCapabilityIds: [...proposedAiLayerMemberCapabilityIds],
+    },
+    gaPresentationDecision: {
+      status: "unresolved",
+      presentation: null,
+      publicName: null,
+    },
+  },
+  audiences: [
+    {
+      id: "teachers",
+      label: "Teachers",
+      question: null,
+      answer: null,
+    },
+    {
+      id: "key-personnel",
+      label: "Key Personnel",
+      question: null,
+      answer: null,
+    },
+    {
+      id: "school-leaders",
+      label: "School Leaders",
+      question: null,
+      answer: null,
+    },
+  ],
+  testimonials: [
+    {
+      id: "pg-work-reduction",
+      quote:
+        "A lot of enhancements have been made to facilitate and cut down some of the work done in school. We are quite grateful.",
+      role: "Vice Principal",
+      schoolLevel: "Primary School",
+      schoolName: null,
+      capabilityIds: ["posts"],
+      sourceUrl: siteConfig.links.landingPageV2TestimonialsComment,
+      verbatim: true,
+      publicationApproved: false,
+    },
+    {
+      id: "pg-intuitive",
+      quote:
+        "The system is quite intuitive — it's easy to go from one point to another.",
+      role: "Corporate Comms & Education Outreach Staff",
+      schoolLevel: "Secondary School",
+      schoolName: null,
+      capabilityIds: ["posts"],
+      sourceUrl: siteConfig.links.landingPageV2TestimonialsComment,
+      verbatim: true,
+      publicationApproved: false,
+    },
+    {
+      id: "pg-growth",
+      quote:
+        "We've really seen the system grow and improve over the years, and how it has benefited us.",
+      role: "Vice Principal",
+      schoolLevel: "Primary School",
+      schoolName: null,
+      capabilityIds: ["posts"],
+      sourceUrl: siteConfig.links.landingPageV2TestimonialsComment,
+      verbatim: true,
+      publicationApproved: false,
+    },
+    {
+      id: "pg-read-speed",
+      quote:
+        "Wow, so fast! Within 10 minutes, so many parents had already checked and read it. It's even faster than Facebook and Instagram.",
+      role: "Corporate Comms & Education Outreach Staff",
+      schoolLevel: "Secondary School",
+      schoolName: null,
+      capabilityIds: ["posts"],
+      sourceUrl: siteConfig.links.landingPageV2TestimonialsComment,
+      verbatim: true,
+      publicationApproved: false,
+    },
+    {
+      id: "pg-immediacy",
+      quote: "It's the immediacy of the outreach — it's almost instant.",
+      role: "Head of Department",
+      schoolLevel: "Secondary School",
+      schoolName: null,
+      capabilityIds: ["posts"],
+      sourceUrl: siteConfig.links.landingPageV2TestimonialsComment,
+      verbatim: true,
+      publicationApproved: false,
+    },
+    {
+      id: "pg-wonderful-tool",
+      quote: "PG has been a wonderful tool for all of us.",
+      role: "Vice Principal",
+      schoolLevel: "Secondary School",
+      schoolName: null,
+      capabilityIds: ["posts"],
+      sourceUrl: siteConfig.links.landingPageV2TestimonialsComment,
+      verbatim: true,
+      publicationApproved: false,
+    },
+  ],
+  supportResources: [
+    {
+      id: "parent-gateway-resource-centre",
+      label: "Parent Gateway Resource Centre",
+      href: siteConfig.links.parentGatewayResourceCentre,
+      availability: "available-restricted",
+      publicLinkDecision: "required",
+    },
+    {
+      id: "pair-assistant",
+      label: "Pair Assistant",
+      href: null,
+      availability: "url-required",
+      publicLinkDecision: "required",
+    },
+    {
+      id: "support-bot",
+      label: "Parent Gateway support bot",
+      href: null,
+      availability: "in-progress",
+      publicLinkDecision: "required",
+    },
+  ],
+  close: {
+    headline: "The care was always yours.",
+    body: "Teacher Workspace removes the chasing, cross-referencing, and drafting between the moments.",
+    editorialStatus: "proposed",
+  },
+} as const satisfies LandingPageV2Content
+
+/**
+ * Confirmed and unresolved launch decisions. Nulls are not placeholders to
+ * render; the readiness validator turns them into explicit launch blockers.
+ */
+export const landingPageV2Publication = {
+  releasePositioning: "ga",
+  primaryCta: {
+    label: null,
+    href: null,
+    intent: null,
+  },
+  canonicalUrl: null,
+  socialImageUrl: null,
+  contentApprovedBy: null,
+  claimsApprovedBy: null,
+  studentScenarioApprovedBy: null,
+  testimonialCoverageRequired: [
+    "student-insights",
+    "hey-talia",
+    "posts",
+  ],
+  support: {
+    strategy: null,
+    destinationUrl: null,
+    owner: null,
+    accessExplanation: null,
+    approvedBy: null,
+  },
+} as const satisfies LandingPageV2Publication

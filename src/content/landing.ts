@@ -1,7 +1,7 @@
 import type { StageCopyContent } from "@/components/landing/scroll-choreography/types"
+import { siteConfig } from "@/config/site"
 
-export const TEACHER_WORKSPACE_APP_URL =
-  "https://teacher.digital.moe.gov.sg"
+export const TEACHER_WORKSPACE_APP_URL = siteConfig.links.product
 
 export const navItems = [
   { label: "Features", href: "#features" },
@@ -14,7 +14,7 @@ export const siteCtaCopy = {
   access: "Only accessible on MOE-issued devices (SSoE)",
 } as const
 
-export const stages: readonly StageCopyContent[] = [
+export const stages: ReadonlyArray<StageCopyContent> = [
   {
     id: "hero",
     copy: {
@@ -94,7 +94,7 @@ export const schoolsTodayCopy = {
       role: "— Year Heads",
       school: "Westwood Secondary",
     },
-  ] as const satisfies readonly SchoolMemo[],
+  ] as const satisfies ReadonlyArray<SchoolMemo>,
 } as const
 
 export const audienceCopy = {
@@ -126,6 +126,6 @@ export const finalCtaCopy = {
 export const footerCopy = {
   copyright: "© MOE 2026",
   brand: "Teacher Workspace",
-  feedbackUrl: "https://go.gov.sg/teacherworkspace-feedback",
+  feedbackUrl: siteConfig.links.feedback,
   feedbackLabel: "Send feedback",
 } as const

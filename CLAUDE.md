@@ -3,7 +3,7 @@
 
 **Teacher Workspace — Marketing Landing**
 
-Marketing landing page for Teacher Workspace, a school product that gives teachers one screen to see every student's full picture (attendance, behavior, notes, messages home). The site exists to convert visitors to the live app at `teacherworkspace-alpha.vercel.app/students` — its job is to make a teacher feel "this is the tool I've been missing" within one scroll.
+Marketing landing page for Teacher Workspace, a school product that gives teachers one screen to see every student's full picture (attendance, behavior, notes, messages home). The current conversion target is `https://teacher.digital.moe.gov.sg`, which is available only on MOE-issued devices.
 
 **Core Value:** A single scroll-driven choreography that introduces the product UI as a shared element morphing through the page — emerging from the hand-drawn paper world, scaling to a full reveal, then docking to the side as features explain themselves. If everything else regresses, *this transition must feel intentional and on-brand*.
 
@@ -14,7 +14,7 @@ Marketing landing page for Teacher Workspace, a school product that gives teache
 - **Performance**: Must not regress current Lighthouse scores. Scroll choreography is GPU-friendly (transform/opacity only); no layout thrash.
 - **Accessibility**: `prefers-reduced-motion` is a hard requirement. All content must be reachable without scroll-driven animation.
 - **Mobile**: Static fallback only — no engineering effort spent on mobile pinned scroll.
-- **Deployment**: Vercel; the live app at `teacherworkspace-alpha.vercel.app/students` is the conversion target and must not be modified by this milestone.
+- **Deployment**: Vercel; the live app at `https://teacher.digital.moe.gov.sg` is the conversion target and must not be modified by this milestone.
 - **Scope discipline**: Marketing-site-only milestone. Live app is untouched.
 <!-- GSD:project-end -->
 
@@ -27,32 +27,30 @@ Marketing landing page for Teacher Workspace, a school product that gives teache
 - JavaScript - Configuration files (`eslint.config.js`, `vite.config.ts`)
 - CSS - `src/styles.css` for Tailwind and design tokens
 ## Runtime
-- Node.js 25.6.1 (or compatible)
-- pnpm (inferred from `pnpm-lock.yaml`)
+- Node.js 24 LTS (pinned in `.nvmrc` and `package.json`)
+- pnpm 10 (pinned through `packageManager`)
 - Lockfile: `pnpm-lock.yaml` (344KB)
 ## Frameworks
 - React 19.2.4 - UI framework
-- TanStack Start 1.166.15 - Full-stack React framework with SSR support
-- TanStack React Router 1.167.4 - Type-safe routing
-- Nitro (latest) - Server runtime for TanStack Start
-- Tailwind CSS 4.2.1 - Utility-first CSS framework
-- @tailwindcss/vite 4.2.1 - Vite integration for Tailwind
+- TanStack Start 1.168.32 - Full-stack React framework with SSR support
+- TanStack React Router 1.170.18 - Type-safe routing
+- Nitro 3.0.260415-beta - Server runtime for TanStack Start
+- Tailwind CSS 4.3.3 - Utility-first CSS framework
+- @tailwindcss/vite 4.3.3 - Vite integration for Tailwind
 - Motion 12.38.0 - React animation library (used in `src/components/landing/paper-hero.tsx` for scroll-linked animations)
-- Radix UI 1.4.3 - Unstyled, accessible component primitives
-- shadcn 4.4.0 - Copy-paste component library built on Radix
+- Base UI 1.4.1 - Unstyled, accessible component primitives
+- shadcn 4.16.0 - Copy-paste component library built on Base UI
 - @radix-ui/colors 3.0.0 - Color system for theming
 - Lucide React 1.9.0 - Icon library
 - class-variance-authority 0.7.1 - Type-safe CSS class composition
 - clsx 2.1.1 - Conditional CSS class merging
 - tailwind-merge 3.5.0 - Intelligent Tailwind class merging
 - tw-animate-css 1.4.0 - Animation utilities
-- Vite 7.3.1 - Build tool and dev server
+- Vite 7.3.6 - Build tool and dev server
 - vite-tsconfig-paths 5.1.4 - TypeScript path alias support in Vite
 - @vitejs/plugin-react 5.2.0 - Fast Refresh and JSX support
-- @tanstack/react-devtools 0.10.0 - TanStack React Router dev tools
-- @tanstack/react-router-devtools 1.166.9 - Router debugging tools
-- @tanstack/devtools-vite 0.6.0 - Vite integration for TanStack devtools
-- Vitest 3.2.4 - Unit test framework (config: none detected)
+- @tanstack/devtools-vite 0.8.3 - Vite integration for TanStack devtools
+- Vitest 3.2.7 - Unit test framework
 - @testing-library/react 16.3.2 - React component testing utilities
 - @testing-library/dom 10.4.1 - DOM testing utilities
 - jsdom 27.4.0 - JavaScript DOM implementation for testing
@@ -62,10 +60,9 @@ Marketing landing page for Teacher Workspace, a school product that gives teache
 - @types/react 19.2.14 - React type definitions
 - @types/react-dom 19.2.3 - React DOM type definitions
 - @types/node 22.19.15 - Node.js type definitions
-- web-vitals 5.1.0 - Web performance metrics (Core Web Vitals)
 - @rsbuild/core 2.0.1 - Alternative build framework (optional/dev dependency)
-- @tanstack/router-plugin 1.166.13 - TanStack router file-based routing plugin
-- @tanstack/react-router-ssr-query 1.166.9 - SSR support for router
+- sharp 0.35.3 - Local responsive-image generation
+- @tanstack/router-plugin 1.168.23 - TanStack router file-based routing plugin
 ## Configuration
 - No environment variables detected in source code
 - .env file is in .gitignore (not tracked)
@@ -77,11 +74,11 @@ Marketing landing page for Teacher Workspace, a school product that gives teache
 - `components.json` - Likely shadcn/ui component configuration (contains theming or component mapping)
 ## Scripts
 ## Platform Requirements
-- Node.js 25.6.1 (no .nvmrc specified)
-- pnpm package manager
+- Node.js 24 LTS
+- pnpm 10
 - Modern browser (ES2022 target)
-- Deployment target: Vercel (inferred from landing copy referencing `teacherworkspace-alpha.vercel.app`)
-- Runtime: Node.js 18+ (TanStack Start/Nitro requirement)
+- Deployment target: Vercel
+- Runtime: Node.js 24
 ## External Assets
 - Font variables from @fontsource
 - Local images and video in `/public/hero/`
@@ -169,11 +166,12 @@ Marketing landing page for Teacher Workspace, a school product that gives teache
 | Component | Responsibility | File |
 |-----------|----------------|------|
 | HomePage | Main landing page layout composing all sections | `src/routes/index.tsx` |
-| PaperHero | Hero section with scroll-triggered animations, video, and CTA | `src/components/landing/paper-hero.tsx` |
-| ProductSection | Product features showcase with grid layout and feature list | `src/components/landing/product-section.tsx` |
-| ProofStrip | Social proof/testimonials strip with point callouts | `src/components/landing/proof-strip.tsx` |
-| FinalCta | Bottom CTA section with email capture form | `src/components/landing/final-cta.tsx` |
-| EmailCapture | Reusable email input form component | `src/components/landing/email-capture.tsx` |
+| ScrollChoreography | Desktop pinned story and mobile/reduced-motion mode switch | `src/components/landing/scroll-choreography/scroll-choreography.tsx` |
+| PaperHero | Static fallback hero with product CTA | `src/components/landing/paper-hero.tsx` |
+| SchoolsToday | Testimonial memo section | `src/components/landing/schools-today.tsx` |
+| AudienceColumns | Role-specific value section | `src/components/landing/audience-columns.tsx` |
+| FinalCta | Bottom product-link CTA | `src/components/landing/final-cta.tsx` |
+| SiteFooter | Brand, copyright, and feedback link | `src/components/landing/footer.tsx` |
 | SiteHeader | Navigation header with logo and links | `src/components/landing/site-header.tsx` |
 | Button | Polymorphic UI button with CVA variants | `src/components/ui/button.tsx` |
 | Input | Form input field with consistent styling | `src/components/ui/input.tsx` |
@@ -183,7 +181,7 @@ Marketing landing page for Teacher Workspace, a school product that gives teache
 - Scroll-driven animations using motion/react with reduced-motion support
 - Tailwind CSS v4 with custom theming (paper design system)
 - Radix UI colors and primitives (Button using Slot for polymorphism)
-- Content as data structure (heroCopy, navItems, modules in content/landing.ts)
+- Content as data structures for the current page and the v2 launch contract in `src/content/`
 ## Layers
 - Purpose: Define page structure and SEO metadata
 - Location: `src/routes/`
@@ -192,18 +190,18 @@ Marketing landing page for Teacher Workspace, a school product that gives teache
 - Used by: TanStack Start server-side rendering
 - Purpose: Compose marketing page sections with animations and interactivity
 - Location: `src/components/landing/`
-- Contains: Section components (PaperHero, ProductSection, etc.) and SiteHeader
+- Contains: Scroll choreography, static fallback, page sections, and site navigation
 - Depends on: UI components, motion/react, content data, lucide-react icons
 - Used by: HomePage route component
 - Purpose: Provide reusable, styled primitives for composition
 - Location: `src/components/ui/`
 - Contains: Button, Input with CVA variants and Radix/shadcn integration
 - Depends on: class-variance-authority, clsx, tailwind-merge, Radix UI, cn() utility
-- Used by: Landing components, EmailCapture
+- Used by: Landing components
 - Purpose: Centralize marketing copy and data for easy editing
-- Location: `src/content/landing.ts`
-- Contains: navItems, heroCopy, productCopy, modules, proofPoints
-- Depends on: Nothing (pure data)
+- Location: `src/content/`
+- Contains: Current page copy, the v2 content contract, and v2 launch-readiness checks
+- Depends on: `src/config/site.ts` for centralized public URLs; the current page copy also shares the scroll-choreography `StageCopyContent` type
 - Used by: Landing components, SiteHeader
 - Purpose: Shared helper functions
 - Location: `src/lib/utils.ts`
@@ -221,7 +219,7 @@ Marketing landing page for Teacher Workspace, a school product that gives teache
 - Motion state: useScroll() + useTransform() (local motion library state)
 - React state: stageOpacity, screenOpacity, copyOpacity in PaperHero (useState)
 - Video metadata: stored in ref (videoDurationRef)
-- Form state: none (email capture form has no submission handler yet)
+- Conversion state: none; CTAs are external links and there is no form backend
 - Global design tokens: CSS custom properties in :root (styles.css)
 ## Key Abstractions
 - Purpose: Render styled button/link with multiple variants (default, outline, ghost, etc.)
@@ -231,7 +229,7 @@ Marketing landing page for Teacher Workspace, a school product that gives teache
 - Examples: `src/components/landing/paper-hero.tsx:26-38`
 - Pattern: useScroll() → useTransform() → motion.div with style object
 - Purpose: Centralize all marketing text in data structure
-- Examples: `src/content/landing.ts`
+- Examples: `src/content/landing.ts`, `src/content/landing-v2.ts`
 - Pattern: Export objects (heroCopy, productCopy, etc.) imported and rendered by components
 - Purpose: Create cohesive visual language with CSS custom properties
 - Examples: `--paper-card`, `--paper-ink`, `--paper-muted`, `--paper-rule` in styles.css
