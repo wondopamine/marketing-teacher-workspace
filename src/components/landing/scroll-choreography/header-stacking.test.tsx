@@ -48,7 +48,7 @@ describe("Header placement (header is part of the hero scene)", () => {
 
   it("ScrollChoreography renders a non-empty subtree inside <main>", () => {
     const { container } = render(<HomePageFixture />)
-    const main = container.querySelector("main#main") as HTMLElement | null
+    const main = container.querySelector<HTMLElement>("main#main")
     expect(main).not.toBeNull()
     expect(main?.children.length).toBeGreaterThanOrEqual(1)
   })

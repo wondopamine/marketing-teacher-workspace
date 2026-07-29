@@ -13,10 +13,10 @@
  * lands the source files AND Wave 2 honors the transform/opacity-only
  * rule.
  */
-import { describe, expect, it } from "vitest"
 import { existsSync, readFileSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+import { describe, expect, it } from "vitest"
 import { parse } from "@typescript-eslint/parser"
 
 const __dirname_local = dirname(fileURLToPath(import.meta.url))
@@ -85,7 +85,7 @@ describe("PERF-04 transform/opacity-only rule (RESEARCH § Anti-Patterns)", () =
         sourceType: "module",
       })
 
-      const violations: string[] = []
+      const violations: Array<string> = []
       walk(ast, (node) => {
         if (node.type !== "JSXAttribute") return
         const name = (node as { name?: AstNode }).name
@@ -95,7 +95,9 @@ describe("PERF-04 transform/opacity-only rule (RESEARCH § Anti-Patterns)", () =
         const expr = (value as { expression?: AstNode }).expression
         if (!expr || expr.type !== "ObjectExpression") return
 
-        const properties = (expr as { properties?: AstNode[] }).properties ?? []
+        const properties = (
+          expr as { properties?: Array<AstNode | null> }
+        ).properties ?? []
         for (const prop of properties) {
           if (!prop) continue
           if (prop.type !== "Property") continue

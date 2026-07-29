@@ -26,12 +26,12 @@
  * from usePaperCardConfig() so the dev tuner can live-edit the fade.
  */
 import { motion, useTransform } from "motion/react"
-import type { ReactNode } from "react"
 
 import { useScrollChoreography } from "./context"
 import { usePaperCardConfig, useSketchesConfig } from "./dev-flow-context"
 import { EASE_OUT_EXIT, LINEAR } from "./eases"
 import { ProductScreen } from "./product-screen"
+import type { ReactNode } from "react"
 
 export function PaperBackdrop({ children }: { children?: ReactNode }) {
   const { scrollYProgress, bgScale, cardsScale, teacherScale } =

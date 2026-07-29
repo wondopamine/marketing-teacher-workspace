@@ -1,6 +1,6 @@
-import { audienceCopy } from "@/content/landing"
-
 import { RevealOnScroll } from "./reveal-on-scroll"
+
+import { audienceCopy } from "@/content/landing"
 
 const CARD_BG = [
   "var(--audience-sky)",

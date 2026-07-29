@@ -53,7 +53,7 @@ export type ScrollChoreographyContextValue = {
   readonly bgScale: MotionValue<number>
   readonly cardsScale: MotionValue<number>
   readonly teacherScale: MotionValue<number>
-  readonly stages: readonly StageDef[]
+  readonly stages: ReadonlyArray<StageDef>
   readonly reducedMotion: boolean
   readonly mode: ScrollChoreographyMode
 }

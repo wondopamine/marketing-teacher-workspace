@@ -42,7 +42,7 @@ export function StageCopy({ stage }: StageCopyProps) {
     flowStages.find((s) => s.id === id)
 
   const entry = stages.find((s) => s.id === stage)
-  if (!entry || entry.id !== "docked") {
+  if (!entry) {
     throw new Error(`StageCopy: unknown stage "${stage}"`)
   }
   const { heading, bullets } = entry.copy

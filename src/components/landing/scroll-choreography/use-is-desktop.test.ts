@@ -26,9 +26,7 @@ describe("useIsDesktop", () => {
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(() => false),
     }
-    window.matchMedia = vi.fn().mockReturnValue(
-      mq
-    ) as unknown as typeof window.matchMedia
+    window.matchMedia = vi.fn().mockReturnValue(mq)
     try {
       const { result } = renderHook(() => useIsDesktop())
       await waitFor(() => expect(result.current).toBe(false))
@@ -52,16 +50,16 @@ describe("useIsDesktop", () => {
       addEventListener,
       removeEventListener,
       dispatchEvent: vi.fn(() => false),
-    }) as unknown as typeof window.matchMedia
+    })
     try {
       const { unmount } = renderHook(() => useIsDesktop())
       await waitFor(() => expect(addEventListener).toHaveBeenCalledTimes(1))
-      const [event, handler] = addEventListener.mock.calls[0]!
+      const [event, handler] = addEventListener.mock.calls[0]
       expect(event).toBe("change")
       unmount()
       expect(removeEventListener).toHaveBeenCalledTimes(1)
-      expect(removeEventListener.mock.calls[0]![0]).toBe("change")
-      expect(removeEventListener.mock.calls[0]![1]).toBe(handler)
+      expect(removeEventListener.mock.calls[0][0]).toBe("change")
+      expect(removeEventListener.mock.calls[0][1]).toBe(handler)
     } finally {
       window.matchMedia = original
     }

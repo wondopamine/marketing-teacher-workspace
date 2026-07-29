@@ -7,9 +7,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import {
+  TEACHER_WORKSPACE_APP_URL,
   siteCtaCopy,
   stages,
-  TEACHER_WORKSPACE_APP_URL,
 } from "@/content/landing"
 
 // Static-fallback hero. The choreography path in scroll-choreography.tsx
@@ -17,7 +17,7 @@ import {
 // reduced-motion users see the same brand impression.
 export function PaperHero() {
   const heroEntry = stages.find((s) => s.id === "hero")
-  if (!heroEntry || heroEntry.id !== "hero") {
+  if (!heroEntry) {
     throw new Error("PaperHero: hero stage missing from content/landing stages")
   }
   const hero = heroEntry.copy

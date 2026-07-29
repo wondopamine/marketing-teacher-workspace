@@ -1,12 +1,16 @@
+import { RevealOnScroll } from "./reveal-on-scroll"
+
 import { Button } from "@/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { finalCtaCopy, siteCtaCopy, TEACHER_WORKSPACE_APP_URL } from "@/content/landing"
-
-import { RevealOnScroll } from "./reveal-on-scroll"
+import {
+  TEACHER_WORKSPACE_APP_URL,
+  finalCtaCopy,
+  siteCtaCopy,
+} from "@/content/landing"
 
 export function FinalCta() {
   return (

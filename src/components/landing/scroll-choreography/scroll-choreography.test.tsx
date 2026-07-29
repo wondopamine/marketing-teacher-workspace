@@ -22,13 +22,14 @@
 import { describe, expect, it, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
 
+import { ScrollChoreography } from "./scroll-choreography"
+import type * as MotionReact from "motion/react"
+
 const useReducedMotionMock = vi.fn(() => false)
 const useScrollMock = vi.fn()
 
 vi.mock("motion/react", async () => {
-  const actual = await vi.importActual<typeof import("motion/react")>(
-    "motion/react"
-  )
+  const actual = await vi.importActual<typeof MotionReact>("motion/react")
   return {
     ...actual,
     useReducedMotion: () => useReducedMotionMock(),
@@ -38,8 +39,6 @@ vi.mock("motion/react", async () => {
     },
   }
 })
-
-import { ScrollChoreography } from "./scroll-choreography"
 
 function mockMatchMedia(isDesktop: boolean) {
   window.matchMedia = vi.fn((query: string) => ({
@@ -101,7 +100,7 @@ describe("ScrollChoreography useScroll signature (FOUND-04 / OQ-1)", () => {
       // Plan 05 verifies the runtime effect on `pnpm preview`.
       const sawLayoutEffectFalse = useScrollMock.mock.calls.some(
         (args) =>
-          (args[0] as { layoutEffect?: boolean })?.layoutEffect === false
+          (args[0] as { layoutEffect?: boolean }).layoutEffect === false
       )
       expect(sawLayoutEffectFalse).toBe(true)
     } finally {

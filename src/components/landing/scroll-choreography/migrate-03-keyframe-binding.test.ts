@@ -18,10 +18,10 @@
  * map directly to ESTree shape. We only walk for `useTransform(...)` calls
  * and inspect args[1] (the keyframes ArrayExpression).
  */
-import { describe, expect, it } from "vitest"
 import { existsSync, readFileSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+import { describe, expect, it } from "vitest"
 import { parse } from "@typescript-eslint/parser"
 
 const __dirname_local = dirname(fileURLToPath(import.meta.url))
@@ -111,7 +111,7 @@ describe("MIGRATE-03 keyframe-binding rule (D-12 / D-13)", () => {
         sourceType: "module",
       })
 
-      const violations: string[] = []
+      const violations: Array<string> = []
       walk(ast, (node) => {
         if (node.type !== "CallExpression") return
         const callee = (node as { callee?: AstNode }).callee
@@ -119,7 +119,8 @@ describe("MIGRATE-03 keyframe-binding rule (D-12 / D-13)", () => {
         if (callee.type !== "Identifier") return
         if ((callee as { name?: string }).name !== "useTransform") return
 
-        const args = (node as { arguments?: AstNode[] }).arguments ?? []
+        const args = (node as { arguments?: Array<AstNode | null> })
+          .arguments ?? []
         if (args.length < 2) return
         const keyframes = args[1]
         if (!keyframes) return
@@ -137,7 +138,9 @@ describe("MIGRATE-03 keyframe-binding rule (D-12 / D-13)", () => {
           )
           return
         }
-        const elements = (keyframes as { elements?: AstNode[] }).elements ?? []
+        const elements = (
+          keyframes as { elements?: Array<AstNode | null> }
+        ).elements ?? []
         for (const el of elements) {
           if (!el) continue
           const check = isAllowedKeyframeEntry(el)

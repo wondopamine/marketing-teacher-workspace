@@ -35,7 +35,7 @@ export const STAGES = [
     y: "0cqi",
     opacity: 1,
   },
-] as const satisfies readonly StageDef[]
+] as const satisfies ReadonlyArray<StageDef>
 
 export function byId(id: StageId): StageDef {
   const stage = STAGES.find((s) => s.id === id)

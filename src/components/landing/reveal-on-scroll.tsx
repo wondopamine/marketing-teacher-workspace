@@ -1,4 +1,4 @@
-import { motion, useInView, useReducedMotion, cubicBezier } from "motion/react"
+import { cubicBezier, motion, useInView, useReducedMotion } from "motion/react"
 import { useRef } from "react"
 import type { ReactNode } from "react"
 

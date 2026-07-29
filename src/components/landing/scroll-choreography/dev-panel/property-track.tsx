@@ -333,7 +333,7 @@ function LiveValueInput({
   const [draft, setDraft] = useState<string | null>(null)
   const editing = draft !== null
   const editable = activeStage !== null
-  const display = editing ? (draft ?? "") : adapter.format(live)
+  const display = editing ? draft : adapter.format(live)
 
   const commit = () => {
     if (draft !== null && editable) {

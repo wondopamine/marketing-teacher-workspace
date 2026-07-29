@@ -1,5 +1,4 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react"
-import type { MotionValue } from "motion/react"
 import { useEffect, useMemo, useState } from "react"
 
 import { EMPTY_FILTER } from "./components/filter-popover"
@@ -9,6 +8,7 @@ import { TopBar } from "./top-bar"
 import { PlaceholderView } from "./views/placeholder"
 import { StudentInsightsView } from "./views/student-insights"
 import { StudentProfileView } from "./views/student-profile"
+import type { MotionValue } from "motion/react"
 import type { FilterState } from "./components/filter-popover"
 import type { AppRoute } from "./types"
 
@@ -100,7 +100,7 @@ export function StudentInsightsApp({
       </motion.aside>
       <div className="grid min-w-0 flex-1 grid-rows-[auto_1fr]">
         <TopBar heading={heading} />
-        <main className="min-h-0 overflow-hidden">
+        <div className="min-h-0 overflow-hidden">
           <AnimatePresence initial={false} mode="wait">
             <motion.div
               key={
@@ -146,7 +146,7 @@ export function StudentInsightsApp({
               )}
             </motion.div>
           </AnimatePresence>
-        </main>
+        </div>
       </div>
     </div>
   )

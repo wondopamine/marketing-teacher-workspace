@@ -221,7 +221,9 @@ export function ProductScreen() {
 
   return (
     <motion.div
+      aria-hidden="true"
       data-testid="product-screen-outer"
+      inert
       className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 sm:px-10 lg:px-16"
       style={{ opacity, x: compensatedX, y: compensatedY, pointerEvents: "none" }}
     >

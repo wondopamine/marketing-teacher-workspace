@@ -42,9 +42,9 @@ describe("PaperBackdrop render shape", () => {
     // Sky background lives on the same motion.div that carries bgScale.
     // The sky image (image-set with AVIF + WebP) is applied via the
     // hero-sky-bg utility class defined in styles.css.
-    const root = container.querySelector(
+    const root = container.querySelector<HTMLElement>(
       "[data-testid='paper-backdrop']"
-    ) as HTMLElement | null
+    )
     const bgLayer = root?.firstElementChild as HTMLElement | null
     expect(bgLayer).not.toBeNull()
     const cls = bgLayer?.className ?? ""
@@ -72,12 +72,12 @@ describe("PaperBackdrop render shape", () => {
 describe("PaperBackdrop scenery opacity lock", () => {
   it("teacher + cards sketches fade out by docked window end so they don't bleed over the docked product screen", () => {
     const { container } = renderWithMockProgress(byId("docked").window[1])
-    const cards = container.querySelector(
+    const cards = container.querySelector<HTMLImageElement>(
       "img[src='/hero/hero-cards-sketch.svg']"
-    ) as HTMLElement | null
-    const teacher = container.querySelector(
+    )
+    const teacher = container.querySelector<HTMLImageElement>(
       "img[src='/hero/hero-teacher-sketch.svg']"
-    ) as HTMLElement | null
+    )
     expect(cards).not.toBeNull()
     expect(teacher).not.toBeNull()
 
@@ -92,9 +92,9 @@ describe("PaperBackdrop scenery opacity lock", () => {
 describe("PaperBackdrop motion-value-driven shape (CHOREO-06 / MIGRATE-02)", () => {
   it("renders motion-value-driven inline styles on the per-layer scale wrappers", () => {
     const { container } = renderWithMockProgress(byId("wow").window[1])
-    const root = container.querySelector(
+    const root = container.querySelector<HTMLElement>(
       "[data-testid='paper-backdrop']"
-    ) as HTMLElement | null
+    )
     expect(root).not.toBeNull()
 
     // After the layer-zoom refactor, scale lives on three inner motion.divs

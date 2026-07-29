@@ -1,9 +1,9 @@
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router"
+import { Suspense, lazy } from "react"
 
 import appCss from "../styles.css?url"
 import { SkipLink } from "@/components/landing/skip-link"
 import { MastheadSg } from "@/components/landing/masthead-sg"
-import { lazy, Suspense } from 'react'
 
 const DirectEdit = lazy(() =>
   import('made-refine').then((m) => ({ default: m.DirectEdit }))

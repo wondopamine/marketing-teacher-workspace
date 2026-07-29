@@ -118,6 +118,20 @@ describe("ProductScreen pointer-events", () => {
   })
 })
 
+describe("ProductScreen accessibility boundary", () => {
+  it("keeps the decorative demo out of keyboard and accessibility navigation", () => {
+    const { container } = renderWithMockProgress(0.8)
+    const outer = container.querySelector(
+      '[data-testid="product-screen-outer"]'
+    )
+
+    expect(outer?.getAttribute("aria-hidden")).toBe("true")
+    expect(outer?.hasAttribute("inert")).toBe(true)
+    expect(container.querySelector("main")).toBeNull()
+    expect(container.querySelector("h1")).toBeNull()
+  })
+})
+
 describe("ProductScreen embedded app", () => {
   it("renders the live Student Insights app inside the frame (no static <picture>)", () => {
     const { container } = renderWithMockProgress(0)

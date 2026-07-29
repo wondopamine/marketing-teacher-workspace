@@ -1,4 +1,4 @@
-import { describe, it, expectTypeOf } from "vitest"
+import { describe, expectTypeOf, it } from "vitest"
 
 import type {
   ScrollChoreographyContextValue,
@@ -46,7 +46,7 @@ describe("scroll-choreography type module", () => {
   it("ScrollChoreographyContextValue exposes all four required fields", () => {
     expectTypeOf<
       ScrollChoreographyContextValue["stages"]
-    >().toEqualTypeOf<readonly StageDef[]>()
+    >().toEqualTypeOf<ReadonlyArray<StageDef>>()
     expectTypeOf<
       ScrollChoreographyContextValue["reducedMotion"]
     >().toEqualTypeOf<boolean>()

@@ -26,13 +26,14 @@ import { describe, expect, it, vi } from "vitest"
 import { render } from "@testing-library/react"
 import { motionValue } from "motion/react"
 
+import { ScrollChoreography } from "./scroll-choreography"
+import type * as MotionReact from "motion/react"
+
 const mockProgress = motionValue(0)
 const useReducedMotionMock = vi.fn(() => false)
 
 vi.mock("motion/react", async () => {
-  const actual = await vi.importActual<typeof import("motion/react")>(
-    "motion/react"
-  )
+  const actual = await vi.importActual<typeof MotionReact>("motion/react")
   return {
     ...actual,
     useReducedMotion: () => useReducedMotionMock(),
@@ -44,8 +45,6 @@ vi.mock("motion/react", async () => {
     }),
   }
 })
-
-import { ScrollChoreography } from "./scroll-choreography"
 
 function mockMatchMedia(isDesktop: boolean) {
   window.matchMedia = vi.fn((query: string) => ({

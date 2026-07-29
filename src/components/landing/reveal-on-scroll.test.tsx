@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
-import type { useInView as RealUseInView } from "motion/react"
+
+import { RevealOnScroll } from "./reveal-on-scroll"
+import type * as MotionReact from "motion/react"
 
 // Per-test mocks of motion/react are configured via vi.hoisted() so each
 // test can flip useInView / useReducedMotion independently while keeping
@@ -9,7 +11,9 @@ import type { useInView as RealUseInView } from "motion/react"
 // The InViewOptions type is derived from motion/react's real `useInView`
 // signature so the mock cannot drift if motion ever extends or renames an
 // option (e.g., adds `root` or `initial`, narrows `amount`).
-type InViewOptions = NonNullable<Parameters<typeof RealUseInView>[1]>
+type InViewOptions = NonNullable<
+  Parameters<typeof MotionReact.useInView>[1]
+>
 const mocks = vi.hoisted(() => ({
   useInView: vi.fn(
     (_ref: unknown, _options?: InViewOptions): boolean => false
@@ -18,15 +22,13 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("motion/react", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("motion/react")>()
+  const actual = await importOriginal<typeof MotionReact>()
   return {
     ...actual,
     useInView: mocks.useInView,
     useReducedMotion: mocks.useReducedMotion,
   }
 })
-
-import { RevealOnScroll } from "./reveal-on-scroll"
 
 describe("RevealOnScroll", () => {
   it("renders children at final state under prefers-reduced-motion", () => {
@@ -71,7 +73,7 @@ describe("RevealOnScroll", () => {
     expect(mocks.useInView).toHaveBeenCalled()
     const call = mocks.useInView.mock.calls.at(-1)
     expect(call).not.toBeUndefined()
-    const options = call?.[1] as InViewOptions | undefined
+    const options = call?.[1]
     expect(options).not.toBeUndefined()
     expect(options?.once).toBe(true)
     expect(options?.margin).toBe("0px 0px -15% 0px")

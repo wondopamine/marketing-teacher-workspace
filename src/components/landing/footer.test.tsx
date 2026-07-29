@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 import { render, screen } from "@testing-library/react"
 
-import { footerCopy } from "@/content/landing"
-
 import { SiteFooter } from "./footer"
+
+import { footerCopy } from "@/content/landing"
 
 describe("SiteFooter", () => {
   it("renders a <footer> landmark", () => {

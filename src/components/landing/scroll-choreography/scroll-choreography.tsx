@@ -9,9 +9,7 @@ import {
   useScroll,
   useTransform,
 } from "motion/react"
-import type { MotionValue } from "motion/react"
 import { useRef, useState } from "react"
-import type { ReactNode, RefObject } from "react"
 
 import { ScrollChoreographyContext } from "./context"
 import {
@@ -27,6 +25,8 @@ import { StageCopy } from "./stage-copy"
 import { STAGES } from "./stages"
 import { StaticChoreographyFallback } from "./static-choreography-fallback"
 import { useIsDesktop } from "./use-is-desktop"
+import type { MotionValue } from "motion/react"
+import type { ReactNode, RefObject } from "react"
 
 import { AudienceColumns } from "@/components/landing/audience-columns"
 import { FinalCta } from "@/components/landing/final-cta"
@@ -39,9 +39,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import {
+  TEACHER_WORKSPACE_APP_URL,
   siteCtaCopy,
   stages,
-  TEACHER_WORKSPACE_APP_URL,
 } from "@/content/landing"
 
 const HERO_COPY_FADE_OUT_START = 0.06
@@ -74,7 +74,7 @@ function ChoreographyTree({
   } as Parameters<typeof useScroll>[0])
 
   const heroEntry = stages.find((s) => s.id === "hero")
-  if (!heroEntry || heroEntry.id !== "hero") {
+  if (!heroEntry) {
     throw new Error(
       "ScrollChoreography: hero stage missing from content/landing stages"
     )
@@ -190,7 +190,7 @@ function ChoreographyContextShell({
   scrollYProgress: MotionValue<number>
   children: ReactNode
 }) {
-  const stages = useFlowStages()
+  const flowStages = useFlowStages()
 
   // Lock scenery scale (bg + cards + teacher) to the product-screen scale
   // by ratio. The hero baseline ratio is screen=STAGES[0].scale (0.05) /
@@ -199,24 +199,24 @@ function ChoreographyContextShell({
   // keeps the screen visually glued to the laptop drawn into the SVG
   // (compensatedScale = scale / teacherScale collapses to a constant
   // HERO_SCREEN_SCALE — see product-screen.tsx).
-  const HERO_SCREEN_SCALE = stages[0].scale
+  const HERO_SCREEN_SCALE = flowStages[0].scale
   const screenScale = useTransform(
     scrollYProgress,
     [
-      stages[0].window[0],
-      stages[0].window[1],
-      stages[1].window[0],
-      stages[1].window[1],
-      stages[2].window[0],
-      stages[2].window[1],
+      flowStages[0].window[0],
+      flowStages[0].window[1],
+      flowStages[1].window[0],
+      flowStages[1].window[1],
+      flowStages[2].window[0],
+      flowStages[2].window[1],
     ],
     [
-      stages[0].scale,
-      stages[0].scale,
-      stages[1].scale,
-      stages[1].scale,
-      stages[2].scale,
-      stages[2].scale,
+      flowStages[0].scale,
+      flowStages[0].scale,
+      flowStages[1].scale,
+      flowStages[1].scale,
+      flowStages[2].scale,
+      flowStages[2].scale,
     ],
     { ease: SCALE_EASES }
   )

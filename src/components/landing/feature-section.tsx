@@ -6,7 +6,7 @@ import type {
   BulletItem,
   CtaLink,
 } from "@/components/landing/scroll-choreography/types"
-import { stages, TEACHER_WORKSPACE_APP_URL } from "@/content/landing"
+import { TEACHER_WORKSPACE_APP_URL, stages } from "@/content/landing"
 
 export type FeatureSectionContent = {
   readonly kicker: string
@@ -27,7 +27,7 @@ type FeatureSectionProps = {
 function resolveContent(props: FeatureSectionProps): FeatureSectionContent {
   if (props.content) return props.content
   const entry = stages.find((s) => s.id === "docked")
-  if (!entry || entry.id !== "docked") {
+  if (!entry) {
     throw new Error("FeatureSection: docked stage missing from stages")
   }
   return entry.copy

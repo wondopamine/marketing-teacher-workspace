@@ -7,9 +7,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import {
+  TEACHER_WORKSPACE_APP_URL,
   navItems,
   siteCtaCopy,
-  TEACHER_WORKSPACE_APP_URL,
 } from "@/content/landing"
 
 // Force "instant" (not "auto") so hash jumps bypass the global CSS

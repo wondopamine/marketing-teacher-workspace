@@ -15,9 +15,9 @@ import {
   useMemo,
   useState,
 } from "react"
-import type { ReactNode } from "react"
 
 import { STAGES } from "./stages"
+import type { ReactNode } from "react"
 import type { StageDef, StageId } from "./types"
 
 export type FlowWindow = readonly [number, number]
@@ -106,7 +106,7 @@ export const TIMELINE_VIEW_DEFAULT: TimelineView = { start: 0, end: 1 }
 type FlowStagesState = Record<StageId, StageDef>
 
 type FlowControlsContextValue = {
-  readonly stages: readonly StageDef[]
+  readonly stages: ReadonlyArray<StageDef>
   readonly paperCard: PaperCardConfig
   readonly sketches: SketchesConfig
   readonly scrollHeightVh: number
@@ -132,7 +132,7 @@ const cloneStages = (): FlowStagesState => {
   return out
 }
 
-const orderedFromState = (state: FlowStagesState): readonly StageDef[] =>
+const orderedFromState = (state: FlowStagesState): ReadonlyArray<StageDef> =>
   STAGES.map((s) => state[s.id])
 
 const clamp01 = (v: number) => Math.min(Math.max(v, 0), 1)
@@ -163,7 +163,7 @@ export function DevFlowProvider({ children }: { children: ReactNode }) {
       const merged: StageDef = {
         ...current,
         ...patch,
-        window: nextWindow as StageDef["window"],
+        window: nextWindow,
       }
       return { ...prev, [id]: merged }
     })
@@ -260,7 +260,7 @@ export function DevFlowProvider({ children }: { children: ReactNode }) {
  *  shape as the compile-time STAGES const so consumers keep referencing
  *  s.window / s.scale / s.x / s.y / s.opacity. Falls back to STAGES
  *  outside dev. */
-export function useFlowStages(): readonly StageDef[] {
+export function useFlowStages(): ReadonlyArray<StageDef> {
   const ctx = useContext(FlowControlsContext)
   return ctx?.stages ?? STAGES
 }

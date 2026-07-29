@@ -56,9 +56,9 @@ export function StudentInsightsView({
   return (
     <div className="flex h-full flex-col gap-3 px-5 pt-4 pb-2">
       <header>
-        <h1 className="text-xl leading-tight font-semibold tracking-tight text-[color:var(--paper-ink)]">
+        <h2 className="text-xl leading-tight font-semibold tracking-tight text-[color:var(--paper-ink)]">
           Student Insights
-        </h1>
+        </h2>
         <p className="mt-0.5 text-[11px] text-black/55">
           Key data to understand your students holistically
         </p>
