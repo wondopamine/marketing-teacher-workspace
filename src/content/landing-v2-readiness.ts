@@ -4,6 +4,7 @@ import {
   journeyActIds,
   landingPageV2Content,
   landingPageV2Publication,
+  productExplorerComprehensionFlow,
 } from "./landing-v2"
 
 import type {
@@ -16,6 +17,7 @@ import type {
   SupportResource,
   Testimonial,
 } from "./landing-v2"
+import { siteConfig } from "@/config/site"
 
 export type LandingPageV2ReadinessIssue = {
   readonly code: string
@@ -162,6 +164,21 @@ function checkCapabilityAnchors(
       )
 }
 
+function checkPublicCapabilityLabels(
+  content: LandingPageV2Candidate
+): LandingPageV2ReadinessIssue | null {
+  const internalOnlyLabels = new Set(["Contextual Intelligence", "HeyTalia"])
+  return content.capabilities.some((capability) =>
+    internalOnlyLabels.has(capability.publicLabel)
+  )
+    ? issue(
+        "public-capability-labels",
+        "error",
+        "Capability cards must use approved plain-language public labels."
+      )
+    : null
+}
+
 function checkProductExplorerCapabilities(
   content: LandingPageV2Candidate
 ): LandingPageV2ReadinessIssue | null {
@@ -173,6 +190,23 @@ function checkProductExplorerCapabilities(
         "product-explorer-capabilities",
         "error",
         "An accepted product explorer must cover every Teacher Workspace capability exactly once."
+      )
+}
+
+function checkProductExplorerFlow(
+  content: LandingPageV2Candidate
+): LandingPageV2ReadinessIssue | null {
+  if (content.productExplorer.status !== "accepted") return null
+
+  return sameOrder(
+    content.productExplorer.comprehensionFlow,
+    productExplorerComprehensionFlow
+  )
+    ? null
+    : issue(
+        "product-explorer-flow",
+        "error",
+        "The accepted product explorer must preserve the confirmed comprehension flow."
       )
 }
 
@@ -214,7 +248,9 @@ export function getLandingPageV2StructureIssues(
     checkJourneyCapabilities(content),
     checkCapabilityOrder(content),
     checkCapabilityAnchors(content),
+    checkPublicCapabilityLabels(content),
     checkProductExplorerCapabilities(content),
+    checkProductExplorerFlow(content),
     checkAudienceOrder(content),
     checkTestimonialProvenance(content),
   ])
@@ -249,14 +285,26 @@ function checkContentApproval(
 function checkPrimaryCta(
   publication: LandingPageV2Publication
 ): LandingPageV2ReadinessIssue | null {
-  const { href, intent, label } = publication.primaryCta
-  return intent === null || !isNonBlank(label) || !isHttpsUrl(href)
-    ? issue(
+  const {
+    accessNote,
+    href,
+    identityProvider,
+    intent,
+    label,
+    requiredAccountDomain,
+  } = publication.primaryCta
+  return label === "Sign in with Google" &&
+    href === siteConfig.links.product &&
+    intent === "google-sign-in" &&
+    identityProvider === "google" &&
+    requiredAccountDomain === "edu.gov.sg" &&
+    accessNote === "Use your @edu.gov.sg account."
+    ? null
+    : issue(
         "primary-cta",
         "decision",
-        "Define one CTA intent, label, and destination for hero and close."
+        "Use the confirmed Google sign-in link and @edu.gov.sg access note in hero and close."
       )
-    : null
 }
 
 function checkCanonicalUrl(
@@ -286,24 +334,48 @@ function checkSocialImage(
 function checkProductClaims(
   publication: LandingPageV2Publication
 ): LandingPageV2ReadinessIssue | null {
-  return isNonBlank(publication.claimsApprovedBy)
+  const { approvedBy, owner, status } = publication.productClaimsApproval
+  return owner === "Xingyu (PM)" &&
+    status === "approved" &&
+    isNonBlank(approvedBy)
     ? null
     : issue(
         "product-claims",
         "decision",
-        "A product owner must approve the eligibility, recommendation, drafting, tracking, and record claims."
+        "Record Xingyu's approval of the eligibility, recommendation, drafting, tracking, and record claims."
       )
 }
 
-function checkStudentScenario(
+function checkAudienceConfirmation(
   publication: LandingPageV2Publication
 ): LandingPageV2ReadinessIssue | null {
-  return isNonBlank(publication.studentScenarioApprovedBy)
+  const { confirmedBy, intendedAudienceIds, owner, status } =
+    publication.gaAudience
+  return sameOrder(intendedAudienceIds, audienceIds) &&
+    owner === "Xingyu (PM)" &&
+    status === "confirmed" &&
+    isNonBlank(confirmedBy)
     ? null
     : issue(
-        "student-scenario",
+        "audience-confirmation",
         "decision",
-        "Confirm that the named student story and all demo data are synthetic and safe for public use."
+        "Record Xingyu's confirmation of Form Teachers, Key Personnel, and School Leaders as the GA audience."
+      )
+}
+
+function checkSyntheticDemoApproval(
+  publication: LandingPageV2Publication
+): LandingPageV2ReadinessIssue | null {
+  const requiredApprovers = ["Designer", "Xingyu (PM)"] as const
+  const { approvedBy, owners, status } = publication.syntheticDemoApproval
+  return sameOrder(owners, requiredApprovers) &&
+    status === "approved" &&
+    requiredApprovers.every((approver) => approvedBy.includes(approver))
+    ? null
+    : issue(
+        "synthetic-demo-approval",
+        "decision",
+        "Record Designer and Xingyu approval that the student story and demo data are synthetic and safe for public use."
       )
 }
 
@@ -316,27 +388,17 @@ function checkTestimonialCoverage(
   )
   return publication.testimonialCoverageRequired
     .filter((capabilityId) => !coverage.has(capabilityId))
-    .map((capabilityId) =>
-      issue(
+    .map((capabilityId) => {
+      const publicLabel =
+        content.capabilities.find(
+          (capability) => capability.id === capabilityId
+        )?.publicLabel ?? "a required capability"
+      return issue(
         `testimonial-coverage-${capabilityId}`,
         "decision",
-        `Provide an approved testimonial covering ${capabilityId}.`
+        `Provide an approved testimonial covering ${publicLabel}.`
       )
-    )
-}
-
-function checkTestimonialSchoolNames(
-  content: LandingPageV2Candidate
-): LandingPageV2ReadinessIssue | null {
-  return content.testimonials.some(
-    (testimonial) => !isNonBlank(testimonial.schoolName)
-  )
-    ? issue(
-        "testimonial-school-names",
-        "decision",
-        "The supplied verbatims do not include the named schools requested by the ticket."
-      )
-    : null
+    })
 }
 
 function checkTestimonialApproval(
@@ -408,12 +470,12 @@ export function getLandingPageV2LaunchDecisions(
       checkPrimaryCta(publication),
       checkCanonicalUrl(publication),
       checkSocialImage(publication),
+      checkAudienceConfirmation(publication),
       checkProductClaims(publication),
-      checkStudentScenario(publication),
+      checkSyntheticDemoApproval(publication),
     ]),
     ...checkTestimonialCoverage(content, publication),
     ...compactIssues([
-      checkTestimonialSchoolNames(content),
       checkTestimonialApproval(content),
       checkAudienceCopy(content),
       checkSupportStrategy(publication),

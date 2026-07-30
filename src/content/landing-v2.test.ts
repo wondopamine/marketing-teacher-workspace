@@ -2,8 +2,6 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, expectTypeOf, it } from "vitest"
 
-import { siteConfig } from "@/config/site"
-
 import {
   getLandingPageV2LaunchDecisions,
   getLandingPageV2Readiness,
@@ -29,6 +27,7 @@ import type {
   ProductExplorer,
   Testimonial,
 } from "./landing-v2"
+import { siteConfig } from "@/config/site"
 
 const explorerComprehensionFlow = [
   "choose-scenario",
@@ -68,7 +67,6 @@ function publicCopyFields(): ReadonlyArray<string> {
   return [
     landingPageV2Content.seoDraft.title,
     landingPageV2Content.seoDraft.description,
-    landingPageV2Content.hero.eyebrow ?? "",
     landingPageV2Content.hero.headline,
     landingPageV2Content.hero.body,
     ...landingPageV2Content.journey.flatMap((act) => [
@@ -78,28 +76,22 @@ function publicCopyFields(): ReadonlyArray<string> {
     ]),
     landingPageV2Content.reveal.headline,
     landingPageV2Content.reveal.body,
-    landingPageV2Content.reveal.gaLaunchLine ?? "",
     ...landingPageV2Content.capabilities.flatMap((capability) => [
       capability.publicLabel,
       capability.job,
       capability.scenario,
     ]),
-    ...landingPageV2Content.audiences.flatMap((audience) => [
-      audience.label,
-      audience.question ?? "",
-      audience.answer ?? "",
-    ]),
+    ...landingPageV2Content.audiences.flatMap((audience) => [audience.label]),
     ...landingPageV2Content.testimonials.flatMap((testimonial) => [
       testimonial.quote,
       testimonial.role,
       testimonial.schoolLevel,
-      testimonial.schoolName ?? "",
     ]),
     ...landingPageV2Content.supportResources.map((resource) => resource.label),
     landingPageV2Content.close.headline,
     landingPageV2Content.close.body,
-    landingPageV2Publication.primaryCta.label ?? "",
-    landingPageV2Publication.primaryCta.accessNote ?? "",
+    landingPageV2Publication.primaryCta.label,
+    landingPageV2Publication.primaryCta.accessNote,
   ]
 }
 
@@ -554,7 +546,7 @@ describe("Landing Page v2 content contract", () => {
     },
     {
       name: "a different CTA URL",
-      patch: { href: "https://teacher.example.gov.sg/app" as HttpsUrl },
+      patch: { href: "https://teacher.example.gov.sg/app" },
     },
     {
       name: "a missing Google identity provider",

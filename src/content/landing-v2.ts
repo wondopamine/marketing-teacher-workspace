@@ -33,6 +33,15 @@ export const audienceIds = [
 
 export type AudienceId = (typeof audienceIds)[number]
 
+export const productExplorerComprehensionFlow = [
+  "choose-scenario",
+  "inspect-connected-context",
+  "preview-resulting-action",
+] as const
+
+export type ProductExplorerComprehensionStep =
+  (typeof productExplorerComprehensionFlow)[number]
+
 type EditorialStatus = "proposed" | "verbatim"
 export type SupportStrategy =
   | "resource-centre"
@@ -51,7 +60,7 @@ export type JourneyAct = {
 
 export type CapabilityCard = {
   readonly id: CapabilityId
-  readonly name: string
+  readonly publicLabel: string
   readonly job: string
   readonly scenario: string
   readonly anchorId: string
@@ -99,6 +108,7 @@ export type ProductExplorer =
   | {
       readonly status: "proposed" | "accepted"
       readonly format: "guided-key-screen-explorer"
+      readonly comprehensionFlow: ReadonlyArray<ProductExplorerComprehensionStep>
       readonly capabilityIds: ReadonlyArray<CapabilityId>
       readonly maxStepsToAnyCapability: 3
       readonly usesSyntheticDataOnly: true
@@ -193,7 +203,26 @@ export type LandingPageV2Content = {
   }
 }
 
-export type PrimaryCtaIntent = "open-restricted-product" | "contact-team"
+export type PrimaryCtaIntent = "google-sign-in"
+
+export type GaAudienceGovernance = {
+  readonly intendedAudienceIds: ReadonlyArray<AudienceId>
+  readonly status: "pending-pm-confirmation" | "confirmed"
+  readonly owner: string
+  readonly confirmedBy: string | null
+}
+
+export type ApprovalGovernance = {
+  readonly owner: string
+  readonly status: "pending-approval" | "approved"
+  readonly approvedBy: string | null
+}
+
+export type MultiPartyApprovalGovernance = {
+  readonly owners: ReadonlyArray<string>
+  readonly status: "pending-approval" | "approved"
+  readonly approvedBy: ReadonlyArray<string>
+}
 
 export type LandingPageV2Publication = {
   readonly releasePositioning: "ga"
@@ -201,12 +230,17 @@ export type LandingPageV2Publication = {
     readonly label: string | null
     readonly href: HttpsUrl | null
     readonly intent: PrimaryCtaIntent | null
+    readonly identityProvider: "google" | null
+    readonly requiredAccountDomain: "edu.gov.sg" | null
+    readonly accessNote: string | null
   }
   readonly canonicalUrl: HttpsUrl | null
   readonly socialImageUrl: HttpsUrl | null
   readonly contentApprovedBy: string | null
-  readonly claimsApprovedBy: string | null
-  readonly studentScenarioApprovedBy: string | null
+  readonly gaAudience: GaAudienceGovernance
+  readonly productClaimsApproval: ApprovalGovernance
+  readonly syntheticDemoApproval: MultiPartyApprovalGovernance
+  readonly testimonialAttributionPolicy: "anonymous-role-and-school-level"
   readonly testimonialCoverageRequired: readonly [
     "student-insights",
     "hey-talia",
@@ -219,6 +253,67 @@ export type LandingPageV2Publication = {
     readonly accessExplanation: string | null
     readonly approvedBy: string | null
   }
+}
+
+export type LandingPageV2MeasurementPlan = {
+  readonly providerStrategy: "provider-neutral"
+  readonly objectives: readonly ["engagement", "conversion"]
+  readonly engagement: {
+    readonly scroll: {
+      readonly event: "scroll-milestone"
+      readonly owner: "marketing-surface"
+      readonly milestones: readonly [25, 50, 75, 100]
+    }
+    readonly explorer: {
+      readonly owner: "marketing-surface"
+      readonly events: readonly [
+        {
+          readonly event: "explorer-scenario-selected"
+          readonly step: "choose-scenario"
+        },
+        {
+          readonly event: "explorer-connected-context-inspected"
+          readonly step: "inspect-connected-context"
+        },
+        {
+          readonly event: "explorer-resulting-action-previewed"
+          readonly step: "preview-resulting-action"
+        },
+      ]
+    }
+  }
+  readonly conversion: {
+    readonly proxy: {
+      readonly event: "primary-cta-selected"
+      readonly owner: "marketing-surface"
+      readonly classification: "interim-proxy"
+      readonly placements: readonly ["hero", "close"]
+    }
+    readonly true: {
+      readonly event: "product-access-completed"
+      readonly owner: "product-auth-surface"
+      readonly identityProvider: "google"
+      readonly outcomes: readonly ["sign-in", "sign-up"]
+      readonly crossDomainAttribution: {
+        readonly required: true
+        readonly purpose: "associate-product-access-with-landing-journey"
+      }
+    }
+  }
+  readonly payloadPolicy: {
+    readonly allowlistedFields: readonly [
+      "journey-id",
+      "placement",
+      "synthetic-scenario-id",
+    ]
+    readonly prohibitedFields: readonly [
+      "student-data",
+      "testimonial-text",
+      "teacher-email",
+      "account-identifier",
+    ]
+  }
+  readonly marketingImplementationBoundary: "contract-only"
 }
 
 /**
@@ -307,7 +402,7 @@ export const landingPageV2Content = {
   capabilities: [
     {
       id: "student-insights",
-      name: "Student Insights",
+      publicLabel: "Student Insights",
       job: "Bring the signals around one student into a usable view.",
       scenario:
         "Spot a family who may qualify for support before the application window closes.",
@@ -316,16 +411,16 @@ export const landingPageV2Content = {
     },
     {
       id: "contextual-intelligence",
-      name: "Contextual Intelligence",
+      publicLabel: "Next-step guidance",
       job: "Surface the relevant process and next step in context.",
       scenario:
-        "See the matching scheme, required documents, submission route, and deadline from the profile.",
+        "View the matching scheme, required documents, submission route, and deadline from the profile.",
       anchorId: "contextual-intelligence",
       editorialStatus: "proposed",
     },
     {
       id: "hey-talia",
-      name: "HeyTalia",
+      publicLabel: "Message drafting",
       job: "Turn student context into a clear first draft for the teacher.",
       scenario:
         "Prepare a sensitive family message with the practical details already organised.",
@@ -334,7 +429,7 @@ export const landingPageV2Content = {
     },
     {
       id: "posts",
-      name: "Posts",
+      publicLabel: "Posts",
       job: "Reach the family and keep the communication on record.",
       scenario:
         "Track delivery and response without recreating the communication trail in another system.",
@@ -379,8 +474,9 @@ export const landingPageV2Content = {
     },
   },
   productExplorer: {
-    status: "proposed",
+    status: "accepted",
     format: "guided-key-screen-explorer",
+    comprehensionFlow: productExplorerComprehensionFlow,
     capabilityIds: [...capabilityIds],
     maxStepsToAnyCapability: 3,
     usesSyntheticDataOnly: true,
@@ -390,7 +486,7 @@ export const landingPageV2Content = {
   audiences: [
     {
       id: "teachers",
-      label: "Teachers",
+      label: "Form Teachers",
       question: null,
       answer: null,
     },
@@ -516,15 +612,33 @@ export const landingPageV2Content = {
 export const landingPageV2Publication = {
   releasePositioning: "ga",
   primaryCta: {
-    label: null,
-    href: null,
-    intent: null,
+    label: "Sign in with Google",
+    href: siteConfig.links.product,
+    intent: "google-sign-in",
+    identityProvider: "google",
+    requiredAccountDomain: "edu.gov.sg",
+    accessNote: "Use your @edu.gov.sg account.",
   },
   canonicalUrl: null,
   socialImageUrl: null,
   contentApprovedBy: null,
-  claimsApprovedBy: null,
-  studentScenarioApprovedBy: null,
+  gaAudience: {
+    intendedAudienceIds: audienceIds,
+    status: "pending-pm-confirmation",
+    owner: "Xingyu (PM)",
+    confirmedBy: null,
+  },
+  productClaimsApproval: {
+    owner: "Xingyu (PM)",
+    status: "pending-approval",
+    approvedBy: null,
+  },
+  syntheticDemoApproval: {
+    owners: ["Designer", "Xingyu (PM)"],
+    status: "pending-approval",
+    approvedBy: [],
+  },
+  testimonialAttributionPolicy: "anonymous-role-and-school-level",
   testimonialCoverageRequired: ["student-insights", "hey-talia", "posts"],
   support: {
     strategy: null,
@@ -534,3 +648,60 @@ export const landingPageV2Publication = {
     approvedBy: null,
   },
 } as const satisfies LandingPageV2Publication
+
+export const landingPageV2MeasurementPlan = {
+  providerStrategy: "provider-neutral",
+  objectives: ["engagement", "conversion"],
+  engagement: {
+    scroll: {
+      event: "scroll-milestone",
+      owner: "marketing-surface",
+      milestones: [25, 50, 75, 100],
+    },
+    explorer: {
+      owner: "marketing-surface",
+      events: [
+        {
+          event: "explorer-scenario-selected",
+          step: "choose-scenario",
+        },
+        {
+          event: "explorer-connected-context-inspected",
+          step: "inspect-connected-context",
+        },
+        {
+          event: "explorer-resulting-action-previewed",
+          step: "preview-resulting-action",
+        },
+      ],
+    },
+  },
+  conversion: {
+    proxy: {
+      event: "primary-cta-selected",
+      owner: "marketing-surface",
+      classification: "interim-proxy",
+      placements: ["hero", "close"],
+    },
+    true: {
+      event: "product-access-completed",
+      owner: "product-auth-surface",
+      identityProvider: "google",
+      outcomes: ["sign-in", "sign-up"],
+      crossDomainAttribution: {
+        required: true,
+        purpose: "associate-product-access-with-landing-journey",
+      },
+    },
+  },
+  payloadPolicy: {
+    allowlistedFields: ["journey-id", "placement", "synthetic-scenario-id"],
+    prohibitedFields: [
+      "student-data",
+      "testimonial-text",
+      "teacher-email",
+      "account-identifier",
+    ],
+  },
+  marketingImplementationBoundary: "contract-only",
+} as const satisfies LandingPageV2MeasurementPlan
