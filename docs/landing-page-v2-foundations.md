@@ -9,6 +9,8 @@ Source: [GitHub issue #3](https://github.com/String-dxd/marketing-teacher-worksp
   Intelligence, HeyTalia, and Posts.
 - Lead with the student's journey and teacher value, not integrations or a
   feature bundle.
+- Use Teacher Workspace as the only public brand. Present the named capabilities
+  as parts of the product, not as separate brands.
 - Preserve accessibility, the footer, and the feedback link.
 
 The ticket author explicitly described the proposed five-act narrative and
@@ -21,8 +23,8 @@ acceptance criteria.
 - `src/config/site.ts` owns public destinations and ticket source links.
 - `src/content/landing-v2.ts` owns the typed v2 journey, capability order,
   audiences, AI planning metadata, verbatim testimonials, support candidates,
-  and the publication checklist. AI planning keeps the proposed future
-  direction separate from the GA presentation decision.
+  the proposed product explorer, and the publication checklist. AI planning
+  separates the approved brand architecture from working product hypotheses.
 - `src/content/landing-v2-readiness.ts` separates structural errors from
   product/content decisions. A draft may remain valid while launch readiness
   stays false.
@@ -40,6 +42,33 @@ relationships:
 5. Testimonials retain their source, capability coverage, school attribution,
    and publication-approval state.
 6. The same primary CTA intent is repeated in hero and close.
+7. If the product explorer is accepted, it covers all four capabilities and
+   lets a teacher reach each preview in no more than three steps.
+
+## Brand and AI direction
+
+- Teacher Workspace is the sole public brand.
+- Contextual Intelligence and HeyTalia may appear as product-capability labels
+  under Teacher Workspace. They are not separate brands.
+- AI will be available inside existing workflows and through a dedicated
+  destination. Which surface becomes primary is intentionally undecided while
+  UX is explored.
+- HeyTalia is a proposed specialist agent for document drafting, not a
+  separately branded product.
+- Teacher review of AI-assisted output is the current trust direction. Do not
+  claim autonomous sending or record updates without a separate product
+  decision and claim approval.
+
+## Proposed product explorer
+
+A guided key-screen explorer may help teachers understand the product before
+opening the restricted live workspace. A teacher should be able to reach any
+capability preview in no more than three steps.
+
+This remains a UX proposal, not a new ticket requirement. It may sit inside the
+capability section or become a separate section; placement is undecided. Use
+public-safe synthetic data and local interactions only. The preview needs no
+authentication, persistence, AI inference, or submission backend.
 
 ## Why no backend was added
 
@@ -48,19 +77,11 @@ provider, consent model, or data-retention policy. The current conversion is a
 plain link to an SSOE-restricted product. A backend would only be justified if
 the chosen CTA becomes a contact or lead submission.
 
-The possible shared AI/agent layer is also not a backend requirement for this
-landing-page phase. It remains a working hypothesis, not an approved service
-boundary. Before implementing shared context or orchestration, define:
-
-- whether AI is a destination, embedded intelligence, or both;
-- whether HeyTalia is the primary persona or one agent in a registry;
-- which capabilities are agents, which are tools, and how new members register;
-- which read, infer, recommend, draft, send, and update actions need human
-  confirmation;
-- whether memory belongs to a teacher, student case, school, or conversation,
-  including access, retention, and deletion rules;
-- the audit trail, attribution, and stable internal IDs independent of public
-  naming.
+The possible shared AI/agent platform also does not create a backend requirement
+for this landing-page phase. Agent-versus-tool classification, orchestration,
+memory ownership, retention, and audit design are future platform decisions.
+They are not GTM website blockers unless the site later performs real AI work
+or makes claims about those behaviours.
 
 Before adding a submission endpoint, define:
 
@@ -78,9 +99,6 @@ the product is permitted.
 ## Publication blockers
 
 - GA is confirmed; the exact GA launch line is still unapproved.
-- Contextual Intelligence and HeyTalia remain approved individual names. The
-  working direction is to bring them into one Teacher Workspace AI/agent layer,
-  but its GA presentation and public brand are still undefined.
 - The single CTA's intent, label, destination, and non-SSOE fallback are
   unresolved.
 - The canonical marketing origin, preview indexing policy, and social image
@@ -101,7 +119,8 @@ real-looking student names. Use redacted or purpose-built synthetic material.
 
 ## Integration gate
 
-The v2 visual implementation is ready to start when the content owner resolves
-the GA launch line, AI-layer presentation, CTA, claims, testimonial permissions,
-and synthetic-data approval. Canonical/SEO and analytics/backend work can then
-follow their respective decisions without reworking the content model.
+UX exploration and visual implementation can proceed against this draft
+contract. Publishing remains blocked until the content owner resolves the GA
+launch line, CTA, claims, testimonial permissions, and synthetic-data approval.
+Canonical/SEO and analytics/backend work can then follow their respective
+decisions without reworking the content model.

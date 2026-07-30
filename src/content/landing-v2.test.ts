@@ -56,34 +56,20 @@ const readyContent: LandingPageV2Candidate = {
     ...landingPageV2Content.reveal,
     gaLaunchLine: "Teacher Workspace is now available.",
   },
-  aiPlanning: {
-    ...landingPageV2Content.aiPlanning,
-    gaPresentationDecision: {
-      status: "approved",
-      presentation: "shared-ai-layer",
-      publicName: "Example approved AI layer name",
-    },
-  },
   audiences: landingPageV2Content.audiences.map((audience) => ({
     ...audience,
     question: `What does ${audience.label} need?`,
     answer: "A clear, launch-ready answer.",
   })),
-  testimonials: landingPageV2Content.testimonials.map(
-    (testimonial, index) => ({
-      ...testimonial,
-      schoolName: "Example School",
-      capabilityIds:
-        index === 0
-          ? ([
-              "student-insights",
-              "hey-talia",
-              "posts",
-            ] as const)
-          : testimonial.capabilityIds,
-      publicationApproved: true,
-    })
-  ),
+  testimonials: landingPageV2Content.testimonials.map((testimonial, index) => ({
+    ...testimonial,
+    schoolName: "Example School",
+    capabilityIds:
+      index === 0
+        ? (["student-insights", "hey-talia", "posts"] as const)
+        : testimonial.capabilityIds,
+    publicationApproved: true,
+  })),
 }
 
 const readyPublication: LandingPageV2Publication = {
@@ -98,11 +84,7 @@ const readyPublication: LandingPageV2Publication = {
   contentApprovedBy: "Content owner",
   claimsApprovedBy: "Product owner",
   studentScenarioApprovedBy: "Privacy reviewer",
-  testimonialCoverageRequired: [
-    "student-insights",
-    "hey-talia",
-    "posts",
-  ],
+  testimonialCoverageRequired: ["student-insights", "hey-talia", "posts"],
   support: {
     strategy: "pair-assistant",
     destinationUrl: "https://pair-assistant.example.gov.sg",
@@ -217,23 +199,6 @@ describe("Landing Page v2 content contract", () => {
       },
     },
     {
-      name: "AI layer members are out of order",
-      code: "ai-layer-members",
-      candidate: {
-        ...landingPageV2Content,
-        aiPlanning: {
-          ...landingPageV2Content.aiPlanning,
-          futureDirection: {
-            ...landingPageV2Content.aiPlanning.futureDirection,
-            proposedMemberCapabilityIds: [
-              "hey-talia",
-              "contextual-intelligence",
-            ],
-          },
-        },
-      },
-    },
-    {
       name: "audience blocks are out of order",
       code: "audience-order",
       candidate: {
@@ -275,60 +240,68 @@ describe("Landing Page v2 content contract", () => {
   })
 
   it.each([
-    ["a missing member", ["contextual-intelligence"]],
+    ["a missing capability", capabilityIds.slice(0, -1)],
+    ["an extra capability", [...capabilityIds, "student-insights"]],
     [
-      "an extra member",
-      ["contextual-intelligence", "hey-talia", "student-insights"],
-    ],
-    [
-      "a duplicate member",
-      ["contextual-intelligence", "contextual-intelligence"],
+      "a duplicate capability",
+      ["student-insights", "contextual-intelligence", "hey-talia", "hey-talia"],
     ],
   ] satisfies ReadonlyArray<readonly [string, ReadonlyArray<CapabilityId>]>)(
-    "rejects $0 in the proposed AI-layer membership",
-    (_name, proposedMemberCapabilityIds) => {
+    "rejects $0 after the product explorer is accepted",
+    (_name, productExplorerCapabilityIds) => {
       const candidate: LandingPageV2Candidate = {
         ...landingPageV2Content,
-        aiPlanning: {
-          ...landingPageV2Content.aiPlanning,
-          futureDirection: {
-            ...landingPageV2Content.aiPlanning.futureDirection,
-            proposedMemberCapabilityIds,
-          },
+        productExplorer: {
+          ...landingPageV2Content.productExplorer,
+          status: "accepted",
+          capabilityIds: productExplorerCapabilityIds,
         },
       }
 
-      expect(
-        issueCodes(getLandingPageV2StructureIssues(candidate))
-      ).toContain("ai-layer-members")
+      expect(issueCodes(getLandingPageV2StructureIssues(candidate))).toContain(
+        "product-explorer-capabilities"
+      )
     }
   )
 
-  it("keeps the validator baseline isolated from in-place candidate mutation", () => {
-    const proposedMemberCapabilityIds: Array<CapabilityId> = [
-      ...proposedAiLayerMemberCapabilityIds,
-    ]
+  it("allows an accepted product explorer to choose its own capability order", () => {
     const candidate: LandingPageV2Candidate = {
       ...landingPageV2Content,
-      aiPlanning: {
-        ...landingPageV2Content.aiPlanning,
-        futureDirection: {
-          ...landingPageV2Content.aiPlanning.futureDirection,
-          proposedMemberCapabilityIds,
-        },
+      productExplorer: {
+        ...landingPageV2Content.productExplorer,
+        status: "accepted",
+        capabilityIds: [...capabilityIds].reverse(),
       },
     }
 
-    proposedMemberCapabilityIds.reverse()
-
-    expect(Object.isFrozen(proposedAiLayerMemberCapabilityIds)).toBe(true)
     expect(
-      landingPageV2Content.aiPlanning.futureDirection
-        .proposedMemberCapabilityIds
-    ).not.toBe(proposedAiLayerMemberCapabilityIds)
-    expect(issueCodes(getLandingPageV2StructureIssues(candidate))).toContain(
-      "ai-layer-members"
-    )
+      issueCodes(getLandingPageV2StructureIssues(candidate))
+    ).not.toContain("product-explorer-capabilities")
+  })
+
+  it("keeps the proposed product explorer outside launch readiness", () => {
+    const candidate: LandingPageV2Candidate = {
+      ...landingPageV2Content,
+      productExplorer: {
+        ...landingPageV2Content.productExplorer,
+        capabilityIds: [],
+      },
+    }
+
+    expect(
+      issueCodes(getLandingPageV2StructureIssues(candidate))
+    ).not.toContain("product-explorer-capabilities")
+  })
+
+  it("allows the product explorer proposal to be declined", () => {
+    const candidate: LandingPageV2Candidate = {
+      ...landingPageV2Content,
+      productExplorer: {
+        status: "not-pursued",
+      },
+    }
+
+    expect(getLandingPageV2StructureIssues(candidate)).toEqual([])
   })
 
   it("fails launch readiness loudly on the ticket's unresolved decisions", () => {
@@ -339,7 +312,6 @@ describe("Landing Page v2 content contract", () => {
     expect(codes).toEqual(
       expect.arrayContaining([
         "release-copy",
-        "ga-ai-presentation",
         "content-approval",
         "primary-cta",
         "canonical-url",
@@ -493,17 +465,41 @@ describe("Landing Page v2 content contract", () => {
     ).toContain("content-approval")
   })
 
-  it("keeps individual names inside a provisional shared AI-layer direction", () => {
+  it("keeps Teacher Workspace as the sole brand for AI capabilities", () => {
     expect(landingPageV2Content.aiPlanning).toEqual({
+      brandArchitecture: {
+        status: "approved",
+        publicBrand: "Teacher Workspace",
+        capabilityTreatment: "product-capabilities",
+        dedicatedAiLayerBrand: false,
+      },
+      surfaceModel: {
+        status: "confirmed",
+        embedded: true,
+        destination: true,
+        primarySurfaceDecision: {
+          status: "undecided",
+          value: null,
+        },
+      },
       futureDirection: {
         status: "working-hypothesis",
         model: "shared-ai-capability-and-agent-layer",
         proposedMemberCapabilityIds: proposedAiLayerMemberCapabilityIds,
       },
-      gaPresentationDecision: {
-        status: "unresolved",
-        presentation: null,
-        publicName: null,
+      specialistAgentDirection: {
+        status: "working-hypothesis",
+        agents: [
+          {
+            capabilityId: "hey-talia",
+            role: "document-drafting",
+            dedicatedBrand: false,
+          },
+        ],
+      },
+      teacherControl: {
+        status: "working-hypothesis",
+        outputs: "teacher-reviewable",
       },
     })
     expect(
@@ -512,55 +508,22 @@ describe("Landing Page v2 content contract", () => {
           landingPageV2Content.capabilities.find(
             (capability) => capability.id === capabilityId
           )?.name
-        )
-    ).toEqual(["Contextual Intelligence", "HeyTalia"])
-    expect(
-      issueCodes(
-        getLandingPageV2LaunchDecisions(
-          landingPageV2Content,
-          landingPageV2Publication
-        )
       )
-    ).toContain("ga-ai-presentation")
+    ).toEqual(["Contextual Intelligence", "HeyTalia"])
+    expect(issueCodes(getLandingPageV2LaunchDecisions())).not.toContain(
+      "ga-ai-presentation"
+    )
   })
 
-  it.each(["   ", "\u200B"])(
-    "rejects an approved shared AI layer with an invisible public name",
-    (publicName) => {
-      const content: LandingPageV2Candidate = {
-        ...readyContent,
-        aiPlanning: {
-          ...readyContent.aiPlanning,
-          gaPresentationDecision: {
-            status: "approved",
-            presentation: "shared-ai-layer",
-            publicName,
-          },
-        },
-      }
-
-      expect(
-        issueCodes(getLandingPageV2LaunchDecisions(content, readyPublication))
-      ).toContain("ga-ai-presentation")
-    }
-  )
-
-  it("allows the current individual names as an approved GA presentation", () => {
-    const content: LandingPageV2Candidate = {
-      ...readyContent,
-      aiPlanning: {
-        ...readyContent.aiPlanning,
-        gaPresentationDecision: {
-          status: "approved",
-          presentation: "individual-capabilities",
-          publicName: null,
-        },
-      },
-    }
-
-    expect(getLandingPageV2Readiness(content, readyPublication)).toEqual({
-      ready: true,
-      issues: [],
+  it("proposes a synthetic three-step explorer for every capability", () => {
+    expect(landingPageV2Content.productExplorer).toEqual({
+      status: "proposed",
+      format: "guided-key-screen-explorer",
+      capabilityIds,
+      maxStepsToAnyCapability: 3,
+      usesSyntheticDataOnly: true,
+      requiresBackend: false,
+      placement: null,
     })
   })
 
@@ -572,24 +535,38 @@ describe("Landing Page v2 content contract", () => {
   })
 
   it("retains readonly literal publication metadata", () => {
-    expectTypeOf(landingPageV2Publication).toMatchTypeOf<LandingPageV2Publication>()
+    expectTypeOf(
+      landingPageV2Publication
+    ).toMatchTypeOf<LandingPageV2Publication>()
     expectTypeOf(
       landingPageV2Publication.releasePositioning
     ).toEqualTypeOf<"ga">()
     expectTypeOf(
       landingPageV2Publication.testimonialCoverageRequired
-    ).toEqualTypeOf<
-      readonly ["student-insights", "hey-talia", "posts"]
-    >()
+    ).toEqualTypeOf<readonly ["student-insights", "hey-talia", "posts"]>()
     expectTypeOf(proposedAiLayerMemberCapabilityIds).toEqualTypeOf<
       readonly ["contextual-intelligence", "hey-talia"]
     >()
     expectTypeOf(
       landingPageV2Content.aiPlanning.futureDirection
         .proposedMemberCapabilityIds
+    ).toEqualTypeOf<readonly ["contextual-intelligence", "hey-talia"]>()
+    expectTypeOf(
+      landingPageV2Content.aiPlanning.brandArchitecture.publicBrand
+    ).toEqualTypeOf<"Teacher Workspace">()
+    expectTypeOf(
+      landingPageV2Content.productExplorer.capabilityIds
     ).toEqualTypeOf<
-      readonly ["contextual-intelligence", "hey-talia"]
+      readonly [
+        "student-insights",
+        "contextual-intelligence",
+        "hey-talia",
+        "posts",
+      ]
     >()
+    expectTypeOf(
+      landingPageV2Content.productExplorer.maxStepsToAnyCapability
+    ).toEqualTypeOf<3>()
   })
 
   it("does not silently point an unresolved v2 CTA at the restricted app", () => {

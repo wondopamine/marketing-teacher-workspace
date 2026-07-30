@@ -4,16 +4,15 @@ import {
   journeyActIds,
   landingPageV2Content,
   landingPageV2Publication,
-  proposedAiLayerMemberCapabilityIds,
 } from "./landing-v2"
 
 import type {
-  AiPlanning,
   AudienceBlock,
   CapabilityCard,
   JourneyAct,
   LandingPageV2Content,
   LandingPageV2Publication,
+  ProductExplorer,
   SupportResource,
   Testimonial,
 } from "./landing-v2"
@@ -29,7 +28,7 @@ export type LandingPageV2Candidate = {
   readonly reveal: LandingPageV2Content["reveal"]
   readonly journey: ReadonlyArray<JourneyAct>
   readonly capabilities: ReadonlyArray<CapabilityCard>
-  readonly aiPlanning: AiPlanning
+  readonly productExplorer: ProductExplorer
   readonly audiences: ReadonlyArray<AudienceBlock>
   readonly testimonials: ReadonlyArray<Testimonial>
   readonly supportResources: ReadonlyArray<SupportResource>
@@ -45,6 +44,18 @@ function sameOrder<T>(
   )
 }
 
+function hasExactMembers<T>(
+  actual: ReadonlyArray<T>,
+  expected: ReadonlyArray<T>
+): boolean {
+  const actualMembers = new Set(actual)
+  return (
+    actual.length === expected.length &&
+    actualMembers.size === expected.length &&
+    expected.every((value) => actualMembers.has(value))
+  )
+}
+
 function issue(
   code: string,
   severity: LandingPageV2ReadinessIssue["severity"],
@@ -55,8 +66,7 @@ function issue(
 
 function isNonBlank(value: string | null | undefined): value is string {
   return (
-    typeof value === "string" &&
-    value.replace(/\p{Cf}/gu, "").trim().length > 0
+    typeof value === "string" && value.replace(/\p{Cf}/gu, "").trim().length > 0
   )
 }
 
@@ -75,8 +85,7 @@ function compactIssues(
   issues: ReadonlyArray<LandingPageV2ReadinessIssue | null>
 ): ReadonlyArray<LandingPageV2ReadinessIssue> {
   return issues.filter(
-    (candidate): candidate is LandingPageV2ReadinessIssue =>
-      candidate !== null
+    (candidate): candidate is LandingPageV2ReadinessIssue => candidate !== null
   )
 }
 
@@ -153,18 +162,17 @@ function checkCapabilityAnchors(
       )
 }
 
-function checkProposedAiLayerMembers(
+function checkProductExplorerCapabilities(
   content: LandingPageV2Candidate
 ): LandingPageV2ReadinessIssue | null {
-  return sameOrder(
-    content.aiPlanning.futureDirection.proposedMemberCapabilityIds,
-    proposedAiLayerMemberCapabilityIds
-  )
+  if (content.productExplorer.status !== "accepted") return null
+
+  return hasExactMembers(content.productExplorer.capabilityIds, capabilityIds)
     ? null
     : issue(
-        "ai-layer-members",
+        "product-explorer-capabilities",
         "error",
-        "The proposed future AI-layer direction must include Contextual Intelligence and HeyTalia."
+        "An accepted product explorer must cover every Teacher Workspace capability exactly once."
       )
 }
 
@@ -206,7 +214,7 @@ export function getLandingPageV2StructureIssues(
     checkJourneyCapabilities(content),
     checkCapabilityOrder(content),
     checkCapabilityAnchors(content),
-    checkProposedAiLayerMembers(content),
+    checkProductExplorerCapabilities(content),
     checkAudienceOrder(content),
     checkTestimonialProvenance(content),
   ])
@@ -222,29 +230,6 @@ function checkReleaseCopy(
         "decision",
         "Approve GA launch copy before publishing."
       )
-}
-
-function checkGaAiPresentation(
-  content: LandingPageV2Candidate
-): LandingPageV2ReadinessIssue | null {
-  const decision = content.aiPlanning.gaPresentationDecision
-
-  if (decision.status !== "approved") {
-    return issue(
-      "ga-ai-presentation",
-      "decision",
-      "Decide whether Contextual Intelligence and HeyTalia appear individually or under one Teacher Workspace AI layer at GA."
-    )
-  }
-
-  return decision.presentation === "shared-ai-layer" &&
-    !isNonBlank(decision.publicName)
-    ? issue(
-        "ga-ai-presentation",
-        "decision",
-        "Approve a public name for the Teacher Workspace AI layer before publishing."
-      )
-    : null
 }
 
 function checkContentApproval(
@@ -372,8 +357,7 @@ function checkAudienceCopy(
   content: LandingPageV2Candidate
 ): LandingPageV2ReadinessIssue | null {
   return content.audiences.some(
-    (audience) =>
-      !isNonBlank(audience.question) || !isNonBlank(audience.answer)
+    (audience) => !isNonBlank(audience.question) || !isNonBlank(audience.answer)
   )
     ? issue(
         "audience-copy",
@@ -420,7 +404,6 @@ export function getLandingPageV2LaunchDecisions(
   return [
     ...compactIssues([
       checkReleaseCopy(content),
-      checkGaAiPresentation(content),
       checkContentApproval(content, publication),
       checkPrimaryCta(publication),
       checkCanonicalUrl(publication),

@@ -39,23 +39,6 @@ export type SupportStrategy =
   | "pair-assistant"
   | "human-support"
 
-export type AiGaPresentationDecision =
-  | {
-      readonly status: "approved"
-      readonly presentation: "individual-capabilities"
-      readonly publicName: null
-    }
-  | {
-      readonly status: "approved"
-      readonly presentation: "shared-ai-layer"
-      readonly publicName: string
-    }
-  | {
-      readonly status: "unresolved"
-      readonly presentation: null
-      readonly publicName: null
-    }
-
 export type JourneyAct = {
   readonly id: JourneyActId
   readonly order: 1 | 2 | 3 | 4 | 5
@@ -76,13 +59,55 @@ export type CapabilityCard = {
 }
 
 export type AiPlanning = {
+  readonly brandArchitecture: {
+    readonly status: "approved"
+    readonly publicBrand: "Teacher Workspace"
+    readonly capabilityTreatment: "product-capabilities"
+    readonly dedicatedAiLayerBrand: false
+  }
+  readonly surfaceModel: {
+    readonly status: "confirmed"
+    readonly embedded: true
+    readonly destination: true
+    readonly primarySurfaceDecision: {
+      readonly status: "undecided"
+      readonly value: null
+    }
+  }
   readonly futureDirection: {
     readonly status: "working-hypothesis"
     readonly model: "shared-ai-capability-and-agent-layer"
     readonly proposedMemberCapabilityIds: ReadonlyArray<CapabilityId>
   }
-  readonly gaPresentationDecision: AiGaPresentationDecision
+  readonly specialistAgentDirection: {
+    readonly status: "working-hypothesis"
+    readonly agents: readonly [
+      {
+        readonly capabilityId: "hey-talia"
+        readonly role: "document-drafting"
+        readonly dedicatedBrand: false
+      },
+    ]
+  }
+  readonly teacherControl: {
+    readonly status: "working-hypothesis"
+    readonly outputs: "teacher-reviewable"
+  }
 }
+
+export type ProductExplorer =
+  | {
+      readonly status: "proposed" | "accepted"
+      readonly format: "guided-key-screen-explorer"
+      readonly capabilityIds: ReadonlyArray<CapabilityId>
+      readonly maxStepsToAnyCapability: 3
+      readonly usesSyntheticDataOnly: true
+      readonly requiresBackend: false
+      readonly placement: null
+    }
+  | {
+      readonly status: "not-pursued"
+    }
 
 export type AudienceBlock = {
   readonly id: AudienceId
@@ -153,6 +178,7 @@ export type LandingPageV2Content = {
     CapabilityCard,
   ]
   readonly aiPlanning: AiPlanning
+  readonly productExplorer: ProductExplorer
   readonly audiences: readonly [AudienceBlock, AudienceBlock, AudienceBlock]
   readonly testimonials: ReadonlyArray<Testimonial>
   readonly supportResources: readonly [
@@ -167,9 +193,7 @@ export type LandingPageV2Content = {
   }
 }
 
-export type PrimaryCtaIntent =
-  | "open-restricted-product"
-  | "contact-team"
+export type PrimaryCtaIntent = "open-restricted-product" | "contact-team"
 
 export type LandingPageV2Publication = {
   readonly releasePositioning: "ga"
@@ -319,16 +343,49 @@ export const landingPageV2Content = {
     },
   ],
   aiPlanning: {
+    brandArchitecture: {
+      status: "approved",
+      publicBrand: siteConfig.name,
+      capabilityTreatment: "product-capabilities",
+      dedicatedAiLayerBrand: false,
+    },
+    surfaceModel: {
+      status: "confirmed",
+      embedded: true,
+      destination: true,
+      primarySurfaceDecision: {
+        status: "undecided",
+        value: null,
+      },
+    },
     futureDirection: {
       status: "working-hypothesis",
       model: "shared-ai-capability-and-agent-layer",
       proposedMemberCapabilityIds: [...proposedAiLayerMemberCapabilityIds],
     },
-    gaPresentationDecision: {
-      status: "unresolved",
-      presentation: null,
-      publicName: null,
+    specialistAgentDirection: {
+      status: "working-hypothesis",
+      agents: [
+        {
+          capabilityId: "hey-talia",
+          role: "document-drafting",
+          dedicatedBrand: false,
+        },
+      ],
     },
+    teacherControl: {
+      status: "working-hypothesis",
+      outputs: "teacher-reviewable",
+    },
+  },
+  productExplorer: {
+    status: "proposed",
+    format: "guided-key-screen-explorer",
+    capabilityIds: [...capabilityIds],
+    maxStepsToAnyCapability: 3,
+    usesSyntheticDataOnly: true,
+    requiresBackend: false,
+    placement: null,
   },
   audiences: [
     {
@@ -468,11 +525,7 @@ export const landingPageV2Publication = {
   contentApprovedBy: null,
   claimsApprovedBy: null,
   studentScenarioApprovedBy: null,
-  testimonialCoverageRequired: [
-    "student-insights",
-    "hey-talia",
-    "posts",
-  ],
+  testimonialCoverageRequired: ["student-insights", "hey-talia", "posts"],
   support: {
     strategy: null,
     destinationUrl: null,
