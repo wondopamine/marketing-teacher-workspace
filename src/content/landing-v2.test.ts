@@ -1,4 +1,8 @@
+import { readFileSync } from "node:fs"
+
 import { describe, expect, expectTypeOf, it } from "vitest"
+
+import { siteConfig } from "@/config/site"
 
 import {
   getLandingPageV2LaunchDecisions,
@@ -6,8 +10,10 @@ import {
   getLandingPageV2StructureIssues,
 } from "./landing-v2-readiness"
 import {
+  audienceIds,
   capabilityIds,
   landingPageV2Content,
+  landingPageV2MeasurementPlan,
   landingPageV2Publication,
   proposedAiLayerMemberCapabilityIds,
 } from "./landing-v2"
@@ -17,9 +23,18 @@ import type { LandingPageV2Candidate } from "./landing-v2-readiness"
 import type {
   AudienceBlock,
   CapabilityId,
+  LandingPageV2MeasurementPlan,
   LandingPageV2Publication,
+  PrimaryCtaIntent,
+  ProductExplorer,
   Testimonial,
 } from "./landing-v2"
+
+const explorerComprehensionFlow = [
+  "choose-scenario",
+  "inspect-connected-context",
+  "preview-resulting-action",
+] as const
 
 function issueCodes(
   issues: ReturnType<typeof getLandingPageV2StructureIssues>
@@ -49,6 +64,45 @@ function withFirstTestimonial(
   }
 }
 
+function publicCopyFields(): ReadonlyArray<string> {
+  return [
+    landingPageV2Content.seoDraft.title,
+    landingPageV2Content.seoDraft.description,
+    landingPageV2Content.hero.eyebrow ?? "",
+    landingPageV2Content.hero.headline,
+    landingPageV2Content.hero.body,
+    ...landingPageV2Content.journey.flatMap((act) => [
+      act.moment,
+      act.headline,
+      act.body,
+    ]),
+    landingPageV2Content.reveal.headline,
+    landingPageV2Content.reveal.body,
+    landingPageV2Content.reveal.gaLaunchLine ?? "",
+    ...landingPageV2Content.capabilities.flatMap((capability) => [
+      capability.publicLabel,
+      capability.job,
+      capability.scenario,
+    ]),
+    ...landingPageV2Content.audiences.flatMap((audience) => [
+      audience.label,
+      audience.question ?? "",
+      audience.answer ?? "",
+    ]),
+    ...landingPageV2Content.testimonials.flatMap((testimonial) => [
+      testimonial.quote,
+      testimonial.role,
+      testimonial.schoolLevel,
+      testimonial.schoolName ?? "",
+    ]),
+    ...landingPageV2Content.supportResources.map((resource) => resource.label),
+    landingPageV2Content.close.headline,
+    landingPageV2Content.close.body,
+    landingPageV2Publication.primaryCta.label ?? "",
+    landingPageV2Publication.primaryCta.accessNote ?? "",
+  ]
+}
+
 const readyContent: LandingPageV2Candidate = {
   ...landingPageV2Content,
   editorialStatus: "approved",
@@ -59,11 +113,10 @@ const readyContent: LandingPageV2Candidate = {
   audiences: landingPageV2Content.audiences.map((audience) => ({
     ...audience,
     question: `What does ${audience.label} need?`,
-    answer: "A clear, launch-ready answer.",
+    answer: "A clear answer for launch.",
   })),
   testimonials: landingPageV2Content.testimonials.map((testimonial, index) => ({
     ...testimonial,
-    schoolName: "Example School",
     capabilityIds:
       index === 0
         ? (["student-insights", "hey-talia", "posts"] as const)
@@ -73,18 +126,25 @@ const readyContent: LandingPageV2Candidate = {
 }
 
 const readyPublication: LandingPageV2Publication = {
-  releasePositioning: "ga",
-  primaryCta: {
-    label: "Open Teacher Workspace",
-    href: "https://teacher.example.gov.sg/app",
-    intent: "open-restricted-product",
-  },
+  ...landingPageV2Publication,
   canonicalUrl: "https://teacher.example.gov.sg",
   socialImageUrl: "https://teacher.example.gov.sg/social.png",
   contentApprovedBy: "Content owner",
-  claimsApprovedBy: "Product owner",
-  studentScenarioApprovedBy: "Privacy reviewer",
-  testimonialCoverageRequired: ["student-insights", "hey-talia", "posts"],
+  gaAudience: {
+    ...landingPageV2Publication.gaAudience,
+    status: "confirmed",
+    confirmedBy: "Xingyu (PM)",
+  },
+  productClaimsApproval: {
+    ...landingPageV2Publication.productClaimsApproval,
+    status: "approved",
+    approvedBy: "Xingyu (PM)",
+  },
+  syntheticDemoApproval: {
+    ...landingPageV2Publication.syntheticDemoApproval,
+    status: "approved",
+    approvedBy: ["Designer", "Xingyu (PM)"],
+  },
   support: {
     strategy: "pair-assistant",
     destinationUrl: "https://pair-assistant.example.gov.sg",
@@ -95,7 +155,7 @@ const readyPublication: LandingPageV2Publication = {
 }
 
 describe("Landing Page v2 content contract", () => {
-  it("keeps the proposed five-act and four-capability structure coherent", () => {
+  it("keeps the five-act and four-capability structure coherent", () => {
     expect(getLandingPageV2StructureIssues()).toEqual([])
   })
 
@@ -105,20 +165,102 @@ describe("Landing Page v2 content contract", () => {
     ).toEqual(capabilityIds)
   })
 
-  it("uses Posts as the canonical capability identity and public name", () => {
+  it("uses plain public labels while retaining internal capability IDs", () => {
     expect(
-      landingPageV2Content.capabilities.find(
-        (capability) => capability.id === "posts"
+      landingPageV2Content.capabilities.map(
+        (capability) => capability.publicLabel
       )
-    ).toMatchObject({
-      id: "posts",
-      name: "Posts",
-      anchorId: "posts",
+    ).toEqual([
+      "Student Insights",
+      "Next-step guidance",
+      "Message drafting",
+      "Posts",
+    ])
+
+    expect(capabilityIds).toContain("contextual-intelligence")
+    expect(capabilityIds).toContain("hey-talia")
+    expect(
+      landingPageV2Content.aiPlanning.specialistAgentDirection.agents[0]
+        .capabilityId
+    ).toBe("hey-talia")
+
+    const publicCopy = publicCopyFields().join("\n")
+    expect(publicCopy).not.toContain("Contextual Intelligence")
+    expect(publicCopy).not.toContain("HeyTalia")
+  })
+
+  it.each(["Contextual Intelligence", "HeyTalia"] as const)(
+    "rejects %s as a public capability label",
+    (publicLabel) => {
+      const candidate: LandingPageV2Candidate = {
+        ...landingPageV2Content,
+        capabilities: landingPageV2Content.capabilities.map(
+          (capability, index) =>
+            index === 1 ? { ...capability, publicLabel } : capability
+        ),
+      }
+
+      expect(issueCodes(getLandingPageV2StructureIssues(candidate))).toContain(
+        "public-capability-labels"
+      )
+    }
+  )
+
+  it("records the confirmed Google access contract on the existing product link", () => {
+    expect(landingPageV2Publication.primaryCta).toEqual({
+      label: "Sign in with Google",
+      href: siteConfig.links.product,
+      intent: "google-sign-in",
+      identityProvider: "google",
+      requiredAccountDomain: "edu.gov.sg",
+      accessNote: "Use your @edu.gov.sg account.",
+    })
+    expect(issueCodes(getLandingPageV2LaunchDecisions())).not.toContain(
+      "primary-cta"
+    )
+  })
+
+  it("records the intended GA audience without treating owner assignment as confirmation", () => {
+    expect(
+      landingPageV2Content.audiences.map((audience) => ({
+        id: audience.id,
+        label: audience.label,
+      }))
+    ).toEqual([
+      { id: "teachers", label: "Form Teachers" },
+      { id: "key-personnel", label: "Key Personnel" },
+      { id: "school-leaders", label: "School Leaders" },
+    ])
+    expect(landingPageV2Publication.gaAudience).toEqual({
+      intendedAudienceIds: audienceIds,
+      status: "pending-pm-confirmation",
+      owner: "Xingyu (PM)",
+      confirmedBy: null,
+    })
+    expect(issueCodes(getLandingPageV2LaunchDecisions())).toContain(
+      "audience-confirmation"
+    )
+  })
+
+  it("accepts the exact backend-free synthetic explorer flow", () => {
+    expect(landingPageV2Content.productExplorer).toEqual({
+      status: "accepted",
+      format: "guided-key-screen-explorer",
+      comprehensionFlow: explorerComprehensionFlow,
+      capabilityIds,
+      maxStepsToAnyCapability: 3,
+      usesSyntheticDataOnly: true,
+      requiresBackend: false,
+      placement: null,
     })
   })
 
-  it("retains testimonial provenance without pretending approval or school names exist", () => {
+  it("accepts anonymous role-and-school-level proof without inventing school names", () => {
+    expect(landingPageV2Publication.testimonialAttributionPolicy).toBe(
+      "anonymous-role-and-school-level"
+    )
     expect(landingPageV2Content.testimonials.length).toBeGreaterThan(0)
+
     for (const testimonial of landingPageV2Content.testimonials) {
       expect(testimonial.verbatim).toBe(true)
       expect(testimonial.sourceUrl).toBe(
@@ -127,6 +269,89 @@ describe("Landing Page v2 content contract", () => {
       expect(testimonial.schoolName).toBeNull()
       expect(testimonial.publicationApproved).toBe(false)
     }
+
+    const codes = issueCodes(getLandingPageV2LaunchDecisions())
+    expect(codes).not.toContain("testimonial-school-names")
+    expect(codes).toContain("testimonial-approval")
+    expect(codes).toContain("testimonial-coverage-student-insights")
+    expect(codes).toContain("testimonial-coverage-hey-talia")
+  })
+
+  it("defines provider-neutral engagement, proxy, and true-conversion semantics", () => {
+    expect(landingPageV2MeasurementPlan).toEqual({
+      providerStrategy: "provider-neutral",
+      objectives: ["engagement", "conversion"],
+      engagement: {
+        scroll: {
+          event: "scroll-milestone",
+          owner: "marketing-surface",
+          milestones: [25, 50, 75, 100],
+        },
+        explorer: {
+          owner: "marketing-surface",
+          events: [
+            {
+              event: "explorer-scenario-selected",
+              step: "choose-scenario",
+            },
+            {
+              event: "explorer-connected-context-inspected",
+              step: "inspect-connected-context",
+            },
+            {
+              event: "explorer-resulting-action-previewed",
+              step: "preview-resulting-action",
+            },
+          ],
+        },
+      },
+      conversion: {
+        proxy: {
+          event: "primary-cta-selected",
+          owner: "marketing-surface",
+          classification: "interim-proxy",
+          placements: ["hero", "close"],
+        },
+        true: {
+          event: "product-access-completed",
+          owner: "product-auth-surface",
+          identityProvider: "google",
+          outcomes: ["sign-in", "sign-up"],
+          crossDomainAttribution: {
+            required: true,
+            purpose: "associate-product-access-with-landing-journey",
+          },
+        },
+      },
+      payloadPolicy: {
+        allowlistedFields: ["journey-id", "placement", "synthetic-scenario-id"],
+        prohibitedFields: [
+          "student-data",
+          "testimonial-text",
+          "teacher-email",
+          "account-identifier",
+        ],
+      },
+      marketingImplementationBoundary: "contract-only",
+    })
+
+    expect(JSON.stringify(landingPageV2MeasurementPlan)).not.toMatch(
+      /Google Analytics|Mixpanel|Amplitude|Segment/
+    )
+  })
+
+  it("keeps OAuth and analytics runtimes outside the content module", () => {
+    const source = readFileSync("src/content/landing-v2.ts", "utf8")
+    const imports = source.match(/^import .+$/gm)
+
+    expect(imports).toEqual([
+      'import type { HttpsUrl } from "@/config/site"',
+      'import { siteConfig } from "@/config/site"',
+    ])
+    expect(source).not.toMatch(/OAuth|analytics SDK|createAuth|track\(/)
+    expect(landingPageV2MeasurementPlan.marketingImplementationBoundary).toBe(
+      "contract-only"
+    )
   })
 
   it.each([
@@ -199,6 +424,17 @@ describe("Landing Page v2 content contract", () => {
       },
     },
     {
+      name: "explorer comprehension flow is out of order",
+      code: "product-explorer-flow",
+      candidate: {
+        ...landingPageV2Content,
+        productExplorer: {
+          ...landingPageV2Content.productExplorer,
+          comprehensionFlow: [...explorerComprehensionFlow].reverse(),
+        },
+      },
+    },
+    {
       name: "audience blocks are out of order",
       code: "audience-order",
       candidate: {
@@ -253,7 +489,6 @@ describe("Landing Page v2 content contract", () => {
         ...landingPageV2Content,
         productExplorer: {
           ...landingPageV2Content.productExplorer,
-          status: "accepted",
           capabilityIds: productExplorerCapabilityIds,
         },
       }
@@ -269,7 +504,6 @@ describe("Landing Page v2 content contract", () => {
       ...landingPageV2Content,
       productExplorer: {
         ...landingPageV2Content.productExplorer,
-        status: "accepted",
         capabilityIds: [...capabilityIds].reverse(),
       },
     }
@@ -279,21 +513,7 @@ describe("Landing Page v2 content contract", () => {
     ).not.toContain("product-explorer-capabilities")
   })
 
-  it("keeps the proposed product explorer outside launch readiness", () => {
-    const candidate: LandingPageV2Candidate = {
-      ...landingPageV2Content,
-      productExplorer: {
-        ...landingPageV2Content.productExplorer,
-        capabilityIds: [],
-      },
-    }
-
-    expect(
-      issueCodes(getLandingPageV2StructureIssues(candidate))
-    ).not.toContain("product-explorer-capabilities")
-  })
-
-  it("allows the product explorer proposal to be declined", () => {
+  it("allows the product explorer to be declined", () => {
     const candidate: LandingPageV2Candidate = {
       ...landingPageV2Content,
       productExplorer: {
@@ -304,53 +524,166 @@ describe("Landing Page v2 content contract", () => {
     expect(getLandingPageV2StructureIssues(candidate)).toEqual([])
   })
 
-  it("fails launch readiness loudly on the ticket's unresolved decisions", () => {
-    const codes = getLandingPageV2LaunchDecisions().map(
-      (decision) => decision.code
-    )
+  it("keeps every genuinely unresolved publication decision visible", () => {
+    const codes = issueCodes(getLandingPageV2LaunchDecisions())
 
-    expect(codes).toEqual(
-      expect.arrayContaining([
-        "release-copy",
-        "content-approval",
-        "primary-cta",
-        "canonical-url",
-        "social-image",
-        "product-claims",
-        "student-scenario",
-        "testimonial-coverage-student-insights",
-        "testimonial-coverage-hey-talia",
-        "testimonial-school-names",
-        "testimonial-approval",
-        "audience-copy",
-        "support-strategy",
-      ])
-    )
+    expect(codes).toEqual([
+      "release-copy",
+      "content-approval",
+      "canonical-url",
+      "social-image",
+      "audience-confirmation",
+      "product-claims",
+      "synthetic-demo-approval",
+      "testimonial-coverage-student-insights",
+      "testimonial-coverage-hey-talia",
+      "testimonial-approval",
+      "audience-copy",
+      "support-strategy",
+    ])
+    expect(codes).not.toContain("primary-cta")
+    expect(codes).not.toContain("student-scenario")
+    expect(codes).not.toContain("testimonial-school-names")
     expect(getLandingPageV2Readiness().ready).toBe(false)
   })
 
   it.each([
     {
       name: "a blank CTA label",
-      code: "primary-cta",
-      content: readyContent,
-      publication: {
-        ...readyPublication,
-        primaryCta: { ...readyPublication.primaryCta, label: "   " },
-      },
+      patch: { label: "   " },
     },
     {
-      name: "a malformed CTA URL",
-      code: "primary-cta",
-      content: readyContent,
-      publication: {
-        ...readyPublication,
-        primaryCta: {
-          ...readyPublication.primaryCta,
-          href: "https://",
-        },
-      },
+      name: "a different CTA URL",
+      patch: { href: "https://teacher.example.gov.sg/app" as HttpsUrl },
     },
+    {
+      name: "a missing Google identity provider",
+      patch: { identityProvider: null },
+    },
+    {
+      name: "a missing account domain",
+      patch: { requiredAccountDomain: null },
+    },
+    {
+      name: "a blank access note",
+      patch: { accessNote: "   " },
+    },
+  ] satisfies ReadonlyArray<{
+    readonly name: string
+    readonly patch: Partial<LandingPageV2Publication["primaryCta"]>
+  }>)("rejects $name", ({ patch }) => {
+    const publication: LandingPageV2Publication = {
+      ...readyPublication,
+      primaryCta: {
+        ...readyPublication.primaryCta,
+        ...patch,
+      },
+    }
+
+    expect(
+      issueCodes(getLandingPageV2LaunchDecisions(readyContent, publication))
+    ).toContain("primary-cta")
+  })
+
+  it("does not mistake the PM owner for GA audience confirmation", () => {
+    const ownerOnly: LandingPageV2Publication = {
+      ...readyPublication,
+      gaAudience: {
+        ...readyPublication.gaAudience,
+        status: "pending-pm-confirmation",
+        confirmedBy: null,
+      },
+    }
+    const statusWithoutRecord: LandingPageV2Publication = {
+      ...readyPublication,
+      gaAudience: {
+        ...readyPublication.gaAudience,
+        status: "confirmed",
+        confirmedBy: "   ",
+      },
+    }
+
+    expect(
+      issueCodes(getLandingPageV2LaunchDecisions(readyContent, ownerOnly))
+    ).toContain("audience-confirmation")
+    expect(
+      issueCodes(
+        getLandingPageV2LaunchDecisions(readyContent, statusWithoutRecord)
+      )
+    ).toContain("audience-confirmation")
+  })
+
+  it("does not mistake the product-claim owner for recorded approval", () => {
+    const ownerOnly: LandingPageV2Publication = {
+      ...readyPublication,
+      productClaimsApproval: {
+        owner: "Xingyu (PM)",
+        status: "pending-approval",
+        approvedBy: null,
+      },
+    }
+    const statusWithoutRecord: LandingPageV2Publication = {
+      ...readyPublication,
+      productClaimsApproval: {
+        owner: "Xingyu (PM)",
+        status: "approved",
+        approvedBy: "   ",
+      },
+    }
+
+    expect(
+      issueCodes(getLandingPageV2LaunchDecisions(readyContent, ownerOnly))
+    ).toContain("product-claims")
+    expect(
+      issueCodes(
+        getLandingPageV2LaunchDecisions(readyContent, statusWithoutRecord)
+      )
+    ).toContain("product-claims")
+  })
+
+  it("requires recorded approval from both synthetic-demo owners", () => {
+    const ownerOnly: LandingPageV2Publication = {
+      ...readyPublication,
+      syntheticDemoApproval: {
+        owners: ["Designer", "Xingyu (PM)"],
+        status: "pending-approval",
+        approvedBy: [],
+      },
+    }
+    const oneRecordedApproval: LandingPageV2Publication = {
+      ...readyPublication,
+      syntheticDemoApproval: {
+        owners: ["Designer", "Xingyu (PM)"],
+        status: "approved",
+        approvedBy: ["Designer"],
+      },
+    }
+
+    expect(
+      issueCodes(getLandingPageV2LaunchDecisions(readyContent, ownerOnly))
+    ).toContain("synthetic-demo-approval")
+    expect(
+      issueCodes(
+        getLandingPageV2LaunchDecisions(readyContent, oneRecordedApproval)
+      )
+    ).toContain("synthetic-demo-approval")
+  })
+
+  it("uses public capability labels in testimonial coverage decisions", () => {
+    const coverageDecisions = getLandingPageV2LaunchDecisions().filter(
+      (decision) => decision.code.startsWith("testimonial-coverage-")
+    )
+
+    expect(coverageDecisions.map((decision) => decision.message)).toEqual([
+      "Provide an approved testimonial covering Student Insights.",
+      "Provide an approved testimonial covering Message drafting.",
+    ])
+    expect(
+      coverageDecisions.map((decision) => decision.message).join(" ")
+    ).not.toContain("hey-talia")
+  })
+
+  it.each([
     {
       name: "a malformed canonical URL",
       code: "canonical-url",
@@ -376,27 +709,6 @@ describe("Landing Page v2 content contract", () => {
       publication: { ...readyPublication, contentApprovedBy: "   " },
     },
     {
-      name: "a blank claims approver",
-      code: "product-claims",
-      content: readyContent,
-      publication: { ...readyPublication, claimsApprovedBy: "   " },
-    },
-    {
-      name: "a blank student-scenario approver",
-      code: "student-scenario",
-      content: readyContent,
-      publication: {
-        ...readyPublication,
-        studentScenarioApprovedBy: "   ",
-      },
-    },
-    {
-      name: "a blank testimonial school",
-      code: "testimonial-school-names",
-      content: withFirstTestimonial({ schoolName: "   " }),
-      publication: readyPublication,
-    },
-    {
       name: "a blank audience question",
       code: "audience-copy",
       content: withFirstAudience({ question: "   " }),
@@ -406,6 +718,12 @@ describe("Landing Page v2 content contract", () => {
       name: "a blank audience answer",
       code: "audience-copy",
       content: withFirstAudience({ answer: "   " }),
+      publication: readyPublication,
+    },
+    {
+      name: "an unapproved testimonial",
+      code: "testimonial-approval",
+      content: withFirstTestimonial({ publicationApproved: false }),
       publication: readyPublication,
     },
   ] satisfies ReadonlyArray<{
@@ -465,7 +783,7 @@ describe("Landing Page v2 content contract", () => {
     ).toContain("content-approval")
   })
 
-  it("keeps Teacher Workspace as the sole brand for AI capabilities", () => {
+  it("keeps Teacher Workspace as the sole public brand for AI capabilities", () => {
     expect(landingPageV2Content.aiPlanning).toEqual({
       brandArchitecture: {
         status: "approved",
@@ -502,29 +820,9 @@ describe("Landing Page v2 content contract", () => {
         outputs: "teacher-reviewable",
       },
     })
-    expect(
-      proposedAiLayerMemberCapabilityIds.map(
-        (capabilityId) =>
-          landingPageV2Content.capabilities.find(
-            (capability) => capability.id === capabilityId
-          )?.name
-      )
-    ).toEqual(["Contextual Intelligence", "HeyTalia"])
     expect(issueCodes(getLandingPageV2LaunchDecisions())).not.toContain(
       "ga-ai-presentation"
     )
-  })
-
-  it("proposes a synthetic three-step explorer for every capability", () => {
-    expect(landingPageV2Content.productExplorer).toEqual({
-      status: "proposed",
-      format: "guided-key-screen-explorer",
-      capabilityIds,
-      maxStepsToAnyCapability: 3,
-      usesSyntheticDataOnly: true,
-      requiresBackend: false,
-      placement: null,
-    })
   })
 
   it("accepts a fully resolved candidate under the current contract", () => {
@@ -534,13 +832,29 @@ describe("Landing Page v2 content contract", () => {
     })
   })
 
-  it("retains readonly literal publication metadata", () => {
+  it("retains readonly literal publication and measurement metadata", () => {
     expectTypeOf(
       landingPageV2Publication
     ).toMatchTypeOf<LandingPageV2Publication>()
     expectTypeOf(
+      landingPageV2MeasurementPlan
+    ).toMatchTypeOf<LandingPageV2MeasurementPlan>()
+    expectTypeOf<PrimaryCtaIntent>().toEqualTypeOf<"google-sign-in">()
+    expectTypeOf(
       landingPageV2Publication.releasePositioning
     ).toEqualTypeOf<"ga">()
+    expectTypeOf(
+      landingPageV2Publication.primaryCta.intent
+    ).toEqualTypeOf<"google-sign-in">()
+    expectTypeOf(
+      landingPageV2Publication.primaryCta.requiredAccountDomain
+    ).toEqualTypeOf<"edu.gov.sg">()
+    expectTypeOf(
+      landingPageV2Publication.gaAudience.intendedAudienceIds
+    ).toEqualTypeOf<readonly ["teachers", "key-personnel", "school-leaders"]>()
+    expectTypeOf(
+      landingPageV2Publication.syntheticDemoApproval.owners
+    ).toEqualTypeOf<readonly ["Designer", "Xingyu (PM)"]>()
     expectTypeOf(
       landingPageV2Publication.testimonialCoverageRequired
     ).toEqualTypeOf<readonly ["student-insights", "hey-talia", "posts"]>()
@@ -548,32 +862,25 @@ describe("Landing Page v2 content contract", () => {
       readonly ["contextual-intelligence", "hey-talia"]
     >()
     expectTypeOf(
-      landingPageV2Content.aiPlanning.futureDirection
-        .proposedMemberCapabilityIds
-    ).toEqualTypeOf<readonly ["contextual-intelligence", "hey-talia"]>()
+      landingPageV2Content.productExplorer
+    ).toMatchTypeOf<ProductExplorer>()
     expectTypeOf(
-      landingPageV2Content.aiPlanning.brandArchitecture.publicBrand
-    ).toEqualTypeOf<"Teacher Workspace">()
-    expectTypeOf(
-      landingPageV2Content.productExplorer.capabilityIds
+      landingPageV2Content.productExplorer.comprehensionFlow
     ).toEqualTypeOf<
       readonly [
-        "student-insights",
-        "contextual-intelligence",
-        "hey-talia",
-        "posts",
+        "choose-scenario",
+        "inspect-connected-context",
+        "preview-resulting-action",
       ]
     >()
+    expectTypeOf(landingPageV2MeasurementPlan.objectives).toEqualTypeOf<
+      readonly ["engagement", "conversion"]
+    >()
     expectTypeOf(
-      landingPageV2Content.productExplorer.maxStepsToAnyCapability
-    ).toEqualTypeOf<3>()
-  })
-
-  it("does not silently point an unresolved v2 CTA at the restricted app", () => {
-    expect(landingPageV2Publication.primaryCta).toEqual({
-      label: null,
-      href: null,
-      intent: null,
-    })
+      landingPageV2MeasurementPlan.engagement.scroll.milestones
+    ).toEqualTypeOf<readonly [25, 50, 75, 100]>()
+    expectTypeOf(
+      landingPageV2MeasurementPlan.conversion.true.outcomes
+    ).toEqualTypeOf<readonly ["sign-in", "sign-up"]>()
   })
 })
