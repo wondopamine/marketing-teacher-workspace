@@ -30,7 +30,9 @@ pnpm build
 ```
 
 `pnpm build` also scans the generated public assets for known review-data
-leaks. The same core checks run in `.github/workflows/ci.yml`.
+leaks, then requests `/content-review` and `/` through the built TanStack Start
+handler to verify the draft metadata, public-safe output, and homepage
+isolation. The same core checks run in `.github/workflows/ci.yml`.
 
 ## Project shape
 
@@ -45,7 +47,8 @@ leaks. The same core checks run in `.github/workflows/ci.yml`.
 - `src/content/landing-v2-review.server.ts` owns the server-only ordered review
   registry and public-copy projection.
 - `src/content/landing-v2-review-state.server.ts` binds review state to item,
-  IA-order, and composed-story snapshots and produces the public-safe page DTO.
+  IA-order, and composed-story snapshots, composes server-side review
+  readiness, and produces the public-safe page DTO.
 - `src/components/content-review/` renders the neutral semantic review
   document; its presentation is disposable and is not a visual direction.
 - `src/server/content-review.ts` is the only route-facing RPC boundary for the

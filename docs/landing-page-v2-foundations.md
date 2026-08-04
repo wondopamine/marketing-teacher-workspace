@@ -39,7 +39,8 @@ remain editable draft content. They are not approved acceptance criteria.
   builds a public-copy projection without pending fields, raw sources, internal
   names, or unapproved proof.
 - `src/content/landing-v2-review-state.server.ts` derives revision-aware review
-  states and the narrow public-safe DTO returned to the route.
+  states, composes landing and review readiness on the server, and produces the
+  narrow public-safe DTO returned to the route.
 - `src/content/landing.ts` keeps the current v1 copy isolated from this
   foundation.
 
@@ -79,7 +80,7 @@ plausible placeholder.
 ## Review workflow
 
 Give feedback using the visible review reference and the current content
-snapshot, for example `TW-CAP-STUDENT-INSIGHTS / v1-sha256-…`. Do not refer to
+snapshot, for example `TW-CAP-STUDENT-INSIGHTS / v2-sha256-…`. Do not refer to
 visual position such as “the third card”; order can change while references
 stay stable. Restricted evidence and free-form reviewer discussion stay in the
 approved external channel and are cited there using the same reference and
@@ -96,12 +97,16 @@ snapshot. The review route must never contain that evidence.
 
 Three snapshot levels prevent stale decisions from silently surviving edits:
 
-- the item snapshot changes when that item’s reviewable content changes;
-- the IA-order snapshot changes when sections move;
+- each item snapshot changes when that item’s reviewable copy, destination, or
+  public capability mapping changes;
+- the IA-order snapshot changes when any section or within-section item moves;
 - the composed-story snapshot changes when order or connected context changes.
 
-An unchanged item can therefore remain current while a reordered or rewritten
-story correctly asks for contextual reconfirmation.
+The IA-order snapshot is derived from ordered server-only content IDs, while
+those IDs never enter the browser DTO. An unchanged item can therefore remain
+current while a reordered or rewritten story correctly asks for contextual
+reconfirmation. Separate record-bearing IA-order and composed-story artifacts
+track those aggregate reviews without mixing them into item registry coverage.
 
 ## Review responsibilities
 

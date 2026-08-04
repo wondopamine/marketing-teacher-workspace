@@ -1,7 +1,7 @@
 ---
 title: "feat: Add Teacher Workspace IA content review prototype"
 type: feat
-status: active
+status: completed
 date: 2026-08-04
 origin: docs/brainstorms/2026-08-04-teacher-workspace-ia-content-review-requirements.md
 deepened: 2026-08-04

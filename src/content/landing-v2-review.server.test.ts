@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest"
 
 import {
   buildReviewDraftProjection,
+  contentReviewArtifactManifest,
   contentReviewManifest,
   contentReviewRegistry,
   contentReviewSectionOrder,
   getContentReviewStructureIssues,
 } from "./landing-v2-review.server"
 import { landingPageV2Content } from "./landing-v2"
+import type { ContentReviewRegistryEntry } from "./landing-v2-review.server"
 
 describe("Landing Page v2 content-review projection", () => {
   it("covers the complete ordered IA with one manifest entry per registry item", () => {
@@ -27,6 +29,16 @@ describe("Landing Page v2 content-review projection", () => {
     expect(contentReviewManifest.map((item) => item.contentId).sort()).toEqual(
       contentReviewRegistry.map((item) => item.contentId).sort()
     )
+    expect(
+      contentReviewArtifactManifest.map((item) => item.reviewReference)
+    ).toEqual(["TW-IA-ORDER", "TW-STORY-COMPOSED"])
+    expect(
+      contentReviewArtifactManifest.some((artifact) =>
+        contentReviewManifest.some(
+          (item) => item.reviewReference === artifact.reviewReference
+        )
+      )
+    ).toBe(false)
     expect(
       new Set(contentReviewManifest.map((item) => item.reviewReference)).size
     ).toBe(contentReviewManifest.length)
@@ -61,6 +73,64 @@ describe("Landing Page v2 content-review projection", () => {
     expect(result.projection.sections.map((section) => section.kind)).toEqual(
       contentReviewSectionOrder
     )
+  })
+
+  it("projects the canonical journey-to-capability mapping with public labels only", () => {
+    const result = buildReviewDraftProjection()
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    const story = result.projection.sections.find(
+      (section) => section.kind === "connected-story"
+    )
+    expect(
+      story?.entries.map((entry) =>
+        entry.kind === "content" ? entry.capabilityLabel : undefined
+      )
+    ).toEqual([
+      null,
+      "Student Insights",
+      "Next-step guidance",
+      "Message drafting",
+      "Posts",
+    ])
+  })
+
+  it("fails projection when only the canonical journey capability mapping changes", () => {
+    const content = {
+      ...landingPageV2Content,
+      journey: [
+        landingPageV2Content.journey[0],
+        {
+          ...landingPageV2Content.journey[1],
+          capabilityId: "contextual-intelligence" as const,
+        },
+        {
+          ...landingPageV2Content.journey[2],
+          capabilityId: "student-insights" as const,
+        },
+        landingPageV2Content.journey[3],
+        landingPageV2Content.journey[4],
+      ] as const,
+    }
+
+    expect(
+      getContentReviewStructureIssues({ content }).map((issue) => issue.code)
+    ).toContain("journey-capability-mapping")
+    expect(buildReviewDraftProjection({ content }).ok).toBe(false)
+
+    const registry = contentReviewRegistry.map((item) =>
+      item.role === "entry" &&
+      item.contentId === "journey.notice" &&
+      item.entry.kind === "content"
+        ? {
+            ...item,
+            entry: { ...item.entry, capabilityLabel: "Message drafting" },
+          }
+        : item
+    ) as ReadonlyArray<ContentReviewRegistryEntry>
+    expect(buildReviewDraftProjection({ registry }).ok).toBe(false)
   })
 
   it("keeps omitted audience, proof, and support copy as referenced decisions", () => {
@@ -147,6 +217,42 @@ describe("Landing Page v2 content-review projection", () => {
     expect(
       getContentReviewStructureIssues({ manifest }).map((issue) => issue.code)
     ).toContain("link-display-mismatch")
+  })
+
+  it("fails closed when a content entry's inner and outer kinds disagree", () => {
+    const registry = contentReviewRegistry.map((item) =>
+      item.role === "entry" &&
+      item.contentId === "promise.hero" &&
+      item.entry.kind === "content"
+        ? {
+            ...item,
+            entry: { ...item.entry, contentKind: "claim" as const },
+          }
+        : item
+    ) as unknown as ReadonlyArray<ContentReviewRegistryEntry>
+
+    expect(
+      getContentReviewStructureIssues({ registry }).map((issue) => issue.code)
+    ).toContain("entry-content-kind-mismatch")
+    expect(buildReviewDraftProjection({ registry }).ok).toBe(false)
+
+    const metadataRegistry = contentReviewRegistry.map((item) =>
+      item.role === "metadata"
+        ? {
+            ...item,
+            entry: { ...item.entry, contentKind: "claim" as const },
+          }
+        : item
+    ) as unknown as ReadonlyArray<ContentReviewRegistryEntry>
+
+    expect(
+      getContentReviewStructureIssues({ registry: metadataRegistry }).map(
+        (issue) => issue.code
+      )
+    ).toContain("entry-content-kind-mismatch")
+    expect(buildReviewDraftProjection({ registry: metadataRegistry }).ok).toBe(
+      false
+    )
   })
 
   it("includes the confirmed footer and two CTA placements without v1 imports", () => {

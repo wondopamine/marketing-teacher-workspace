@@ -4,14 +4,19 @@ import {
   buildContentReviewPageDto,
   createReviewSnapshot,
   deriveContentReviewStatus,
+  getLandingPageV2CombinedReadiness,
   getReviewDraftSnapshots,
 } from "./landing-v2-review-state.server"
 import {
   buildReviewDraftProjection,
+  contentReviewArtifactManifest,
   contentReviewManifest,
+  contentReviewRegistry,
   createContentReviewRegistry,
 } from "./landing-v2-review.server"
+import { getLandingPageV2Readiness } from "./landing-v2-readiness"
 import { landingPageV2Content, landingPageV2Publication } from "./landing-v2"
+import type { ContentReviewReviewerRole } from "./landing-v2-review.server"
 
 describe("Landing Page v2 revision-aware review state", () => {
   it("normalises content deterministically without binding review metadata", () => {
@@ -30,13 +35,13 @@ describe("Landing Page v2 revision-aware review state", () => {
 
     expect(first).toBe(equivalent)
     expect(changed).not.toBe(first)
-    expect(first).toMatch(/^v1-sha256-[a-f0-9]{16}$/)
+    expect(first).toMatch(/^v2-sha256-[a-f0-9]{16}$/)
   })
 
   it("uses the documented display-state precedence", () => {
     const currentSnapshot = createReviewSnapshot({ copy: "Current" })
     const reviewed = (
-      reviewerRole: string,
+      reviewerRole: ContentReviewReviewerRole,
       reviewedSnapshot = currentSnapshot
     ) => ({
       reviewerRole,
@@ -60,7 +65,7 @@ describe("Landing Page v2 revision-aware review state", () => {
         blocked: false,
         explicitDecisionRequired: true,
         reviewerRequirement: "confirmed",
-        requiredReviewers: ["PM"],
+        requiredReviewers: ["Xingyu (PM)"],
         records: [],
       }).status
     ).toBe("decision-required")
@@ -70,8 +75,13 @@ describe("Landing Page v2 revision-aware review state", () => {
         blocked: false,
         explicitDecisionRequired: false,
         reviewerRequirement: "confirmed",
-        requiredReviewers: ["PM"],
-        records: [reviewed("PM", createReviewSnapshot({ copy: "Old" }))],
+        requiredReviewers: ["Xingyu (PM)"],
+        records: [
+          reviewed(
+            "Xingyu (PM)",
+            createReviewSnapshot({ copy: "Old" })
+          ),
+        ],
       }).status
     ).toBe("reconfirmation-required")
     expect(
@@ -80,7 +90,7 @@ describe("Landing Page v2 revision-aware review state", () => {
         blocked: false,
         explicitDecisionRequired: false,
         reviewerRequirement: "confirmed",
-        requiredReviewers: ["PM"],
+        requiredReviewers: ["Xingyu (PM)"],
         records: [],
       }).status
     ).toBe("unreviewed")
@@ -90,7 +100,7 @@ describe("Landing Page v2 revision-aware review state", () => {
         blocked: false,
         explicitDecisionRequired: false,
         reviewerRequirement: "confirmed",
-        requiredReviewers: ["Designer", "PM"],
+        requiredReviewers: ["Designer", "Xingyu (PM)"],
         records: [reviewed("Designer")],
       }).status
     ).toBe("partially-reviewed")
@@ -100,10 +110,40 @@ describe("Landing Page v2 revision-aware review state", () => {
         blocked: false,
         explicitDecisionRequired: false,
         reviewerRequirement: "confirmed",
-        requiredReviewers: ["Designer", "PM"],
-        records: [reviewed("Designer"), reviewed("PM")],
+        requiredReviewers: ["Designer", "Xingyu (PM)"],
+        records: [reviewed("Designer"), reviewed("Xingyu (PM)")],
       }).status
     ).toBe("reviewed-current")
+  })
+
+  it("keeps only roles without a current record in mixed reconfirmation", () => {
+    const currentSnapshot = createReviewSnapshot({ copy: "Current" })
+    const staleSnapshot = createReviewSnapshot({ copy: "Old" })
+
+    expect(
+      deriveContentReviewStatus({
+        currentSnapshot,
+        blocked: false,
+        explicitDecisionRequired: false,
+        reviewerRequirement: "confirmed",
+        requiredReviewers: ["Designer", "Xingyu (PM)"],
+        records: [
+          {
+            reviewerRole: "Designer",
+            reviewedSnapshot: currentSnapshot,
+            evidenceReference: "Decision channel: item 1",
+          },
+          {
+            reviewerRole: "Xingyu (PM)",
+            reviewedSnapshot: staleSnapshot,
+            evidenceReference: "Decision channel: item 2",
+          },
+        ],
+      })
+    ).toMatchObject({
+      status: "reconfirmation-required",
+      remainingReviewers: ["Xingyu (PM)"],
+    })
   })
 
   it("keeps item invalidation local while staling the composed story", () => {
@@ -168,8 +208,249 @@ describe("Landing Page v2 revision-aware review state", () => {
     expect(reordered.byReference["TW-PROMISE"]).toBe(
       original.byReference["TW-PROMISE"]
     )
+    expect(reordered.itemSnapshot).toBe(original.itemSnapshot)
     expect(reordered.iaOrderSnapshot).not.toBe(original.iaOrderSnapshot)
     expect(reordered.storySnapshot).not.toBe(original.storySnapshot)
+  })
+
+  it("binds every ordered internal content ID into IA without binding children to section items", () => {
+    const result = buildReviewDraftProjection()
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    const storyIndex = result.projection.sections.findIndex(
+      (section) => section.kind === "connected-story"
+    )
+    const story = result.projection.sections[storyIndex]
+    const reorderedStory = {
+      ...story,
+      entries: [story.entries[1], story.entries[0], ...story.entries.slice(2)],
+    }
+    const reorderedProjection = {
+      ...result.projection,
+      sections: result.projection.sections.map((section, index) =>
+        index === storyIndex ? reorderedStory : section
+      ),
+    }
+
+    const original = getReviewDraftSnapshots(
+      result.projection,
+      contentReviewManifest
+    )
+    const reordered = getReviewDraftSnapshots(
+      reorderedProjection,
+      contentReviewManifest
+    )
+
+    expect(original.iaOrderSnapshot).toBe(
+      createReviewSnapshot(contentReviewRegistry.map((item) => item.contentId))
+    )
+    expect(reordered.byReference[story.reviewReference]).toBe(
+      original.byReference[story.reviewReference]
+    )
+    for (const entry of story.entries) {
+      expect(reordered.byReference[entry.reviewReference]).toBe(
+        original.byReference[entry.reviewReference]
+      )
+    }
+    expect(reordered.itemSnapshot).toBe(original.itemSnapshot)
+    expect(reordered.iaOrderSnapshot).not.toBe(original.iaOrderSnapshot)
+    expect(reordered.storySnapshot).not.toBe(original.storySnapshot)
+  })
+
+  it("binds a public capability-label-only change to the item and story snapshots", () => {
+    const result = buildReviewDraftProjection()
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    const changedProjection = {
+      ...result.projection,
+      sections: result.projection.sections.map((section) => ({
+        ...section,
+        entries: section.entries.map((entry) =>
+          entry.kind === "content" &&
+          entry.reviewReference === "TW-STORY-INSIGHTS"
+            ? { ...entry, capabilityLabel: "Message drafting" }
+            : entry
+        ),
+      })),
+    }
+    const original = getReviewDraftSnapshots(result.projection)
+    const changed = getReviewDraftSnapshots(changedProjection)
+
+    expect(changed.byReference["TW-STORY-INSIGHTS"]).not.toBe(
+      original.byReference["TW-STORY-INSIGHTS"]
+    )
+    expect(changed.byReference["TW-STORY-NEXT-STEP"]).toBe(
+      original.byReference["TW-STORY-NEXT-STEP"]
+    )
+    expect(changed.iaOrderSnapshot).toBe(original.iaOrderSnapshot)
+    expect(changed.storySnapshot).not.toBe(original.storySnapshot)
+  })
+
+  it("binds decision-label-only edits to that item and the composed story", () => {
+    const result = buildReviewDraftProjection()
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    const changedProjection = {
+      ...result.projection,
+      sections: result.projection.sections.map((section) => ({
+        ...section,
+        entries: section.entries.map((entry) =>
+          entry.kind === "decision" && entry.reviewReference === "TW-PROOF"
+            ? { ...entry, reviewLabel: `${entry.reviewLabel} updated` }
+            : entry
+        ),
+      })),
+    }
+    const original = getReviewDraftSnapshots(result.projection)
+    const changed = getReviewDraftSnapshots(changedProjection)
+
+    expect(changed.byReference["TW-PROOF"]).not.toBe(
+      original.byReference["TW-PROOF"]
+    )
+    expect(changed.byReference["TW-SUPPORT"]).toBe(
+      original.byReference["TW-SUPPORT"]
+    )
+    expect(changed.byReference["TW-SECTION-PROOF"]).toBe(
+      original.byReference["TW-SECTION-PROOF"]
+    )
+    expect(changed.iaOrderSnapshot).toBe(original.iaOrderSnapshot)
+    expect(changed.storySnapshot).not.toBe(original.storySnapshot)
+  })
+
+  it("uses validated aggregate records for current and stale artifact states", () => {
+    const initial = buildContentReviewPageDto()
+    expect(initial.kind).toBe("ready")
+    if (initial.kind !== "ready") return
+
+    const records = (
+      reviewedSnapshot: string
+    ): ReadonlyArray<{
+      reviewerRole: "Designer" | "Xingyu (PM)"
+      reviewedSnapshot: string
+      evidenceReference: string
+    }> => [
+      {
+        reviewerRole: "Designer",
+        reviewedSnapshot,
+        evidenceReference: "Decision channel: IA",
+      },
+      {
+        reviewerRole: "Xingyu (PM)",
+        reviewedSnapshot,
+        evidenceReference: "Decision channel: PM",
+      },
+    ]
+
+    const dto = buildContentReviewPageDto({
+      artifactRecords: {
+        "TW-IA-ORDER": records(initial.iaOrderSnapshot),
+        "TW-STORY-COMPOSED": records(
+          createReviewSnapshot({ stale: initial.storySnapshot })
+        ),
+      },
+    })
+
+    expect(dto.kind).toBe("ready")
+    if (dto.kind !== "ready") return
+    expect(dto.artifactReview.iaOrder.status).toBe("reviewed-current")
+    expect(dto.artifactReview.composedStory.status).toBe(
+      "reconfirmation-required"
+    )
+  })
+
+  it("fails closed for invalid aggregate manifests and unknown confirmed reviewer roles", () => {
+    expect(
+      buildContentReviewPageDto({
+        artifactManifest: contentReviewArtifactManifest.slice(1),
+      }).kind
+    ).toBe("error")
+
+    const projection = buildReviewDraftProjection()
+    expect(projection.ok).toBe(true)
+    if (!projection.ok) return
+    const snapshots = getReviewDraftSnapshots(projection.projection)
+    const manifest = contentReviewManifest.map((item) =>
+      item.reviewReference === "TW-CAP-POSTS"
+        ? {
+            ...item,
+            reviewerRequirement: "confirmed" as const,
+            requiredReviewers: ["External approver" as never],
+            records: [
+              {
+                reviewerRole: "External approver" as never,
+                reviewedSnapshot: snapshots.byReference["TW-CAP-POSTS"],
+                evidenceReference: "Decision channel: external",
+              },
+            ],
+          }
+        : item
+    )
+
+    expect(buildContentReviewPageDto({ manifest }).kind).toBe("error")
+  })
+
+  it("combines landing and review readiness without claiming publishability", () => {
+    const initial = getLandingPageV2CombinedReadiness()
+    const landing = getLandingPageV2Readiness()
+
+    expect(initial.landing.issues).toEqual(landing.issues)
+    expect(initial.review.states).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          reviewReference: "TW-PROOF",
+          status: "decision-required",
+        }),
+      ])
+    )
+    expect(initial).not.toHaveProperty("publishable")
+
+    const invalid = getLandingPageV2CombinedReadiness({
+      manifest: contentReviewManifest.slice(1),
+    })
+    expect(invalid.review.errors.map((issue) => issue.code)).toContain(
+      "manifest-coverage"
+    )
+
+    const projection = buildReviewDraftProjection()
+    expect(projection.ok).toBe(true)
+    if (!projection.ok) return
+    const snapshots = getReviewDraftSnapshots(projection.projection)
+    const withRecord = (reviewedSnapshot: string) =>
+      contentReviewManifest.map((item) =>
+        item.reviewReference === "TW-CAP-POSTS"
+          ? {
+              ...item,
+              records: [
+                {
+                  reviewerRole: "Xingyu (PM)" as const,
+                  reviewedSnapshot,
+                  evidenceReference: "Decision channel: PM",
+                },
+              ],
+            }
+          : item
+      )
+
+    const current = getLandingPageV2CombinedReadiness({
+      manifest: withRecord(snapshots.byReference["TW-CAP-POSTS"]),
+    })
+    expect(
+      current.review.states.find(
+        (state) => state.reviewReference === "TW-CAP-POSTS"
+      )?.status
+    ).toBe("reviewed-current")
+
+    const stale = getLandingPageV2CombinedReadiness({
+      manifest: withRecord(createReviewSnapshot({ old: true })),
+    })
+    expect(
+      stale.review.states.find(
+        (state) => state.reviewReference === "TW-CAP-POSTS"
+      )?.status
+    ).toBe("reconfirmation-required")
   })
 
   it("builds a public-safe DTO with annotations and aggregate governance only", () => {
@@ -253,7 +534,7 @@ describe("Landing Page v2 revision-aware review state", () => {
     expect(dto).toEqual({
       kind: "error",
       code: "CONTENT_REVIEW_INVALID",
-      buildSnapshot: expect.stringMatching(/^v1-sha256-[a-f0-9]{16}$/),
+      buildSnapshot: expect.stringMatching(/^v2-sha256-[a-f0-9]{16}$/),
       feedback: {
         label: "Send feedback",
         href: landingPageV2Content.footer.feedbackHref,
@@ -261,6 +542,18 @@ describe("Landing Page v2 revision-aware review state", () => {
         purpose: "feedback",
       },
     })
+  })
+
+  it("fails closed for landing structure errors outside the review projection", () => {
+    const content = {
+      ...landingPageV2Content,
+      journey: [
+        { ...landingPageV2Content.journey[0], order: 99 },
+        ...landingPageV2Content.journey.slice(1),
+      ] as unknown as typeof landingPageV2Content.journey,
+    }
+
+    expect(buildContentReviewPageDto({ content }).kind).toBe("error")
   })
 
   it("fails unknown reviewer requirements closed without inventing owners", () => {

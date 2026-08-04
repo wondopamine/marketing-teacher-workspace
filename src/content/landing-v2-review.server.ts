@@ -2,12 +2,14 @@ import "@tanstack/react-start/server-only"
 
 import { contentReviewSectionKinds } from "./landing-v2-review.types"
 import {
+  capabilityIds,
   landingPageV2Content,
   landingPageV2Publication,
   productExplorerComprehensionFlow,
 } from "./landing-v2"
 
 import type {
+  CapabilityId,
   LandingPageV2Content,
   LandingPageV2Publication,
 } from "./landing-v2"
@@ -36,25 +38,32 @@ type RegistryMetadata = {
   readonly contentId: string
   readonly sectionKind: null
   readonly contentKind: "copy"
-  readonly entry: Omit<ReviewDraftContentEntryDto, "reviewReference">
+  readonly entry: ReviewDraftContentEntryInput<"copy">
 }
 
-type ReviewDraftContentEntryInput = Omit<
-  ReviewDraftContentEntryDto,
-  "reviewReference"
+type RegistryContentKind = Exclude<
+  ReviewContentKind,
+  "structure" | "omission"
 >
+
+type ReviewDraftContentEntryInput<TContentKind extends RegistryContentKind> = Omit<
+  ReviewDraftContentEntryDto,
+  "reviewReference" | "contentKind"
+> & {
+  readonly contentKind: TContentKind
+}
 
 type ReviewDraftDecisionEntryInput = Omit<
   ReviewDraftDecisionEntryDto,
   "reviewReference"
 >
 
-type RegistryContentEntry = {
+type RegistryContentEntry<TContentKind extends RegistryContentKind> = {
   readonly role: "entry"
   readonly contentId: string
   readonly sectionKind: ContentReviewSectionKind
-  readonly contentKind: Exclude<ReviewContentKind, "structure" | "omission">
-  readonly entry: ReviewDraftContentEntryInput
+  readonly contentKind: TContentKind
+  readonly entry: ReviewDraftContentEntryInput<TContentKind>
 }
 
 type RegistryDecisionEntry = {
@@ -65,15 +74,30 @@ type RegistryDecisionEntry = {
   readonly entry: ReviewDraftDecisionEntryInput
 }
 
-type RegistryEntry = RegistryContentEntry | RegistryDecisionEntry
+type RegistryEntry =
+  | {
+      [ContentKind in RegistryContentKind]: RegistryContentEntry<ContentKind>
+    }[RegistryContentKind]
+  | RegistryDecisionEntry
 
 export type ContentReviewRegistryEntry =
   | RegistrySection
   | RegistryMetadata
   | RegistryEntry
 
+export const contentReviewReviewerRoles = ["Designer", "Xingyu (PM)"] as const
+
+export type ContentReviewReviewerRole =
+  (typeof contentReviewReviewerRoles)[number]
+
+export function isContentReviewReviewerRole(
+  value: unknown
+): value is ContentReviewReviewerRole {
+  return contentReviewReviewerRoles.some((role) => role === value)
+}
+
 export type ContentReviewRecord = {
-  readonly reviewerRole: string
+  readonly reviewerRole: ContentReviewReviewerRole
   readonly reviewedSnapshot: string
   readonly evidenceReference: string
 }
@@ -84,7 +108,7 @@ export type ContentReviewManifestEntry = {
   readonly contentKind: ReviewContentKind
   readonly owner: string
   readonly reviewerRequirement: "confirmed" | "unresolved"
-  readonly requiredReviewers: ReadonlyArray<string>
+  readonly requiredReviewers: ReadonlyArray<ContentReviewReviewerRole>
   readonly concerns: ReadonlyArray<string>
   readonly sourceLabel: string
   readonly linkDisplay: "public-destination" | "label-only"
@@ -103,6 +127,27 @@ export type ReviewBuildOptions = {
   readonly manifest?: ReadonlyArray<ContentReviewManifestEntry>
 }
 
+export const contentReviewArtifactReferences = [
+  "TW-IA-ORDER",
+  "TW-STORY-COMPOSED",
+] as const satisfies ReadonlyArray<ReviewReference>
+
+export type ContentReviewArtifactReference =
+  (typeof contentReviewArtifactReferences)[number]
+
+export type ContentReviewArtifactManifestEntry = Omit<
+  ContentReviewManifestEntry,
+  "reviewReference"
+> & {
+  readonly reviewReference: ContentReviewArtifactReference
+}
+
+export type ContentReviewArtifactRecords = Readonly<
+  Partial<
+    Record<ContentReviewArtifactReference, ReadonlyArray<ContentReviewRecord>>
+  >
+>
+
 function section(
   contentId: string,
   sectionKind: ContentReviewSectionKind
@@ -116,12 +161,12 @@ function section(
   }
 }
 
-function contentEntry(
+function contentEntry<TContentKind extends RegistryContentKind>(
   contentId: string,
   sectionKind: ContentReviewSectionKind,
-  contentKind: RegistryContentEntry["contentKind"],
-  entry: ReviewDraftContentEntryInput
-): RegistryContentEntry {
+  contentKind: TContentKind,
+  entry: ReviewDraftContentEntryInput<NoInfer<TContentKind>>
+): RegistryContentEntry<TContentKind> {
   return { role: "entry", contentId, sectionKind, contentKind, entry }
 }
 
@@ -191,6 +236,17 @@ function explorerEntries(): ReadonlyArray<RegistryEntry> {
   ]
 }
 
+function publicCapabilityLabel(
+  content: LandingPageV2Content,
+  capabilityId: CapabilityId | null
+): string | null {
+  if (capabilityId === null) return null
+  return (
+    content.capabilities.find((capability) => capability.id === capabilityId)
+      ?.publicLabel ?? null
+  )
+}
+
 export function createContentReviewRegistry(
   content: LandingPageV2Content = landingPageV2Content,
   publication: LandingPageV2Publication = landingPageV2Publication
@@ -237,6 +293,7 @@ export function createContentReviewRegistry(
       contentEntry(`journey.${act.id}`, "connected-story", "claim", {
         kind: "content",
         contentKind: "claim",
+        capabilityLabel: publicCapabilityLabel(content, act.capabilityId),
         label: act.moment,
         heading: act.headline,
         body: [act.body],
@@ -349,7 +406,7 @@ function manifestEntry(
   contentKind: ReviewContentKind,
   options: {
     readonly owner?: string
-    readonly requiredReviewers?: ReadonlyArray<string>
+    readonly requiredReviewers?: ReadonlyArray<ContentReviewReviewerRole>
     readonly concerns?: ReadonlyArray<string>
     readonly sourceLabel?: string
     readonly linkDisplay?: "public-destination" | "label-only"
@@ -370,6 +427,32 @@ function manifestEntry(
     records: [],
   }
 }
+
+function artifactManifestEntry(
+  contentId: string,
+  reviewReference: ContentReviewArtifactReference,
+  concerns: ReadonlyArray<string>
+): ContentReviewArtifactManifestEntry {
+  return {
+    ...manifestEntry(contentId, reviewReference, "structure", {
+      owner: "Designer and Xingyu (PM)",
+      requiredReviewers: contentReviewReviewerRoles,
+      concerns,
+      sourceLabel: "Content-review structure",
+    }),
+    reviewReference,
+  }
+}
+
+export const contentReviewArtifactManifest = [
+  artifactManifestEntry("artifact.ia-order", "TW-IA-ORDER", [
+    "Information architecture",
+  ]),
+  artifactManifestEntry("artifact.composed-story", "TW-STORY-COMPOSED", [
+    "Content",
+    "Narrative coherence",
+  ]),
+] as const satisfies ReadonlyArray<ContentReviewArtifactManifestEntry>
 
 const syntheticReviewers = ["Designer", "Xingyu (PM)"] as const
 const productReviewer = ["Xingyu (PM)"] as const
@@ -689,6 +772,15 @@ export function getContentReviewStructureIssues(
     const manifestItem = manifest.find(
       (candidate) => candidate.contentId === item.contentId
     )
+    if (item.role !== "section" && item.contentKind !== item.entry.contentKind) {
+      issues.push(
+        issue(
+          "entry-content-kind-mismatch",
+          "A registry item's inner and outer content classifications must match."
+        )
+      )
+      break
+    }
     if (manifestItem && manifestItem.contentKind !== item.contentKind) {
       issues.push(
         issue(
@@ -770,6 +862,31 @@ export function getContentReviewStructureIssues(
     )
   }
 
+  const canonicalJourneyCapabilities = [null, ...capabilityIds] as const
+  const journeyCapabilityIds = content.journey.map((act) => act.capabilityId)
+  const journeyCapabilityLabels = content.journey.map((act) =>
+    publicCapabilityLabel(content, act.capabilityId)
+  )
+  if (
+    journeyCapabilityIds.length !== canonicalJourneyCapabilities.length ||
+    !journeyCapabilityIds.every(
+      (capabilityId, index) =>
+        capabilityId === canonicalJourneyCapabilities[index]
+    ) ||
+    journeyCapabilityLabels[0] !== null ||
+    journeyCapabilityLabels
+      .slice(1)
+      .some((label) => !isNonBlank(label)) ||
+    new Set(journeyCapabilityLabels.slice(1)).size !== capabilityIds.length
+  ) {
+    issues.push(
+      issue(
+        "journey-capability-mapping",
+        "The five journey acts must map once, in order, to the four public capability labels after the setup act."
+      )
+    )
+  }
+
   const projection = projectWithoutValidation(registry, manifest)
   if (!projection) {
     issues.push(
@@ -779,6 +896,29 @@ export function getContentReviewStructureIssues(
       )
     )
     return issues
+  }
+
+  const projectedStory = projection.sections.find(
+    (sectionValue) => sectionValue.kind === "connected-story"
+  )
+  const projectedCapabilityLabels = projectedStory?.entries.map((entry) =>
+    entry.kind === "content" ? entry.capabilityLabel : undefined
+  )
+  if (
+    !projectedCapabilityLabels ||
+    projectedCapabilityLabels.length !== journeyCapabilityLabels.length ||
+    !projectedCapabilityLabels.every(
+      (label, index) => label === journeyCapabilityLabels[index]
+    )
+  ) {
+    if (!issues.some((item) => item.code === "journey-capability-mapping")) {
+      issues.push(
+        issue(
+          "journey-capability-mapping",
+          "The projected journey must expose the canonical public capability mapping."
+        )
+      )
+    }
   }
 
   const serialisedProjection = normaliseSafetyText(JSON.stringify(projection))

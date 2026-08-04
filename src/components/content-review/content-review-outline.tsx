@@ -167,6 +167,12 @@ function ReviewEntry({ entry }: { entry: ContentReviewEntryDto }) {
           {paragraph}
         </p>
       ))}
+      {entry.capabilityLabel !== undefined ? (
+        <p className="mt-3 text-sm text-neutral-700">
+          <span className="font-medium">Capability mapping:</span>{" "}
+          {entry.capabilityLabel ?? "None — setup moment only"}
+        </p>
+      ) : null}
       <ContentLink entry={entry} />
       <ReviewAnnotation
         context={entry.review}

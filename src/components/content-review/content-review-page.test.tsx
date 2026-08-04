@@ -160,6 +160,8 @@ describe("ContentReviewPage", () => {
     expect(screen.getByText("Provider-neutral")).not.toBeNull()
     expect(screen.getAllByText("Student Insights").length).toBeGreaterThan(0)
     expect(screen.getAllByText("Message drafting").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Capability mapping:")).toHaveLength(5)
+    expect(screen.getByText("None — setup moment only")).not.toBeNull()
 
     const html = container.innerHTML.toLowerCase()
     for (const prohibitedValue of [

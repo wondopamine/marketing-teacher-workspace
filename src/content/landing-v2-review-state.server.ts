@@ -4,24 +4,32 @@ import { createHash } from "node:crypto"
 
 import {
   buildReviewDraftProjection,
+  contentReviewArtifactManifest,
+  contentReviewArtifactReferences,
   contentReviewManifest,
   createContentReviewRegistry,
+  isContentReviewReviewerRole,
 } from "./landing-v2-review.server"
 import {
   landingPageV2Content,
   landingPageV2MeasurementPlan,
   landingPageV2Publication,
 } from "./landing-v2"
+import { getLandingPageV2Readiness } from "./landing-v2-readiness"
 
 import type {
   LandingPageV2Content,
   LandingPageV2Publication,
 } from "./landing-v2"
 import type {
+  ContentReviewArtifactManifestEntry,
+  ContentReviewArtifactRecords,
   ContentReviewManifestEntry,
   ContentReviewRecord,
+  ContentReviewReviewerRole,
   ReviewBuildOptions,
 } from "./landing-v2-review.server"
+import type { LandingPageV2ReadinessIssue } from "./landing-v2-readiness"
 import type {
   ContentReviewAppendixDto,
   ContentReviewContextDto,
@@ -35,7 +43,7 @@ import type {
   ReviewReference,
 } from "./landing-v2-review.types"
 
-const snapshotVersion = "v1"
+const snapshotVersion = "v2"
 
 type SnapshotValue =
   | null
@@ -50,13 +58,13 @@ type ReviewStatusInput = {
   readonly blocked: boolean
   readonly explicitDecisionRequired: boolean
   readonly reviewerRequirement: "confirmed" | "unresolved"
-  readonly requiredReviewers: ReadonlyArray<string>
+  readonly requiredReviewers: ReadonlyArray<ContentReviewReviewerRole>
   readonly records: ReadonlyArray<ContentReviewRecord>
 }
 
-type ReviewStatusResult = {
+export type ReviewStatusResult = {
   readonly status: ContentReviewStatus
-  readonly remainingReviewers: ReadonlyArray<string>
+  readonly remainingReviewers: ReadonlyArray<ContentReviewReviewerRole>
   readonly blockers: ReadonlyArray<string>
 }
 
@@ -65,6 +73,21 @@ export type ReviewDraftSnapshots = {
   readonly itemSnapshot: string
   readonly iaOrderSnapshot: string
   readonly storySnapshot: string
+}
+
+export type ContentReviewStateBuildOptions = ReviewBuildOptions & {
+  readonly artifactManifest?: ReadonlyArray<ContentReviewArtifactManifestEntry>
+  readonly artifactRecords?: ContentReviewArtifactRecords
+}
+
+export type ContentReviewReadinessState = ReviewStatusResult & {
+  readonly reviewReference: ReviewReference
+}
+
+export type ContentReviewReadinessIssue = LandingPageV2ReadinessIssue & {
+  readonly source: "review-structure" | "review-state"
+  readonly reviewReference: ReviewReference | null
+  readonly reviewStatus: ContentReviewStatus | null
 }
 
 function normaliseSnapshotString(value: string): string {
@@ -102,11 +125,14 @@ export function createReviewSnapshot(value: unknown): string {
 }
 
 function entrySnapshotPayload(entry: ReviewDraftEntryDto): SnapshotValue {
-  if (entry.kind === "decision") return { kind: "omission" }
+  if (entry.kind === "decision") {
+    return { kind: "omission", reviewLabel: entry.reviewLabel }
+  }
 
   return {
     kind: "content",
     contentKind: entry.contentKind,
+    capabilityLabel: entry.capabilityLabel ?? null,
     label: entry.label,
     heading: entry.heading,
     body: entry.body,
@@ -126,7 +152,6 @@ function sectionSnapshotPayload(
 ): SnapshotValue {
   return {
     kind: section.kind,
-    entries: section.entries.map(entrySnapshotPayload),
   }
 }
 
@@ -153,30 +178,32 @@ export function getReviewDraftSnapshots(
   const manifestByReference = new Map(
     manifest.map((item) => [item.reviewReference, item])
   )
-  const orderedSectionIds = projection.sections.map(
-    (section) =>
-      manifestByReference.get(section.reviewReference)?.contentId ??
-      section.reviewReference
-  )
+  const contentIdFor = (reviewReference: ReviewReference): string => {
+    const contentId = manifestByReference.get(reviewReference)?.contentId
+    if (!contentId) {
+      throw new Error("A projected review reference is missing its content ID")
+    }
+    return contentId
+  }
+  const orderedContentIds = [
+    contentIdFor(projection.metadata.reviewReference),
+    ...projection.sections.flatMap((section) => [
+      contentIdFor(section.reviewReference),
+      ...section.entries.map((entry) => contentIdFor(entry.reviewReference)),
+    ]),
+  ]
   const storyPayload = {
     metadata: entrySnapshotPayload(projection.metadata),
-    sections: projection.sections.map(sectionSnapshotPayload),
+    sections: projection.sections.map((section) => ({
+      section: sectionSnapshotPayload(section),
+      entries: section.entries.map(entrySnapshotPayload),
+    })),
   }
-  const orderedItemSnapshots = [
-    projection.metadata.reviewReference,
-    ...projection.sections.flatMap((section) => [
-      section.reviewReference,
-      ...section.entries.map((entry) => entry.reviewReference),
-    ]),
-  ].map((reviewReference) => ({
-    reviewReference,
-    snapshot: byReference[reviewReference],
-  }))
 
   return {
     byReference,
-    itemSnapshot: createReviewSnapshot(orderedItemSnapshots),
-    iaOrderSnapshot: createReviewSnapshot(orderedSectionIds),
+    itemSnapshot: createReviewSnapshot(byReference),
+    iaOrderSnapshot: createReviewSnapshot(orderedContentIds),
     storySnapshot: createReviewSnapshot(storyPayload),
   }
 }
@@ -203,6 +230,15 @@ export function deriveContentReviewStatus(
     }
   }
 
+  const currentReviewerRoles = new Set(
+    input.records
+      .filter((record) => record.reviewedSnapshot === input.currentSnapshot)
+      .map((record) => record.reviewerRole)
+  )
+  const remainingReviewers = input.requiredReviewers.filter(
+    (reviewer) => !currentReviewerRoles.has(reviewer)
+  )
+
   if (
     input.records.some(
       (record) => record.reviewedSnapshot !== input.currentSnapshot
@@ -210,7 +246,7 @@ export function deriveContentReviewStatus(
   ) {
     return {
       status: "reconfirmation-required",
-      remainingReviewers: input.requiredReviewers,
+      remainingReviewers,
       blockers: ["The recorded review does not match the current snapshot."],
     }
   }
@@ -222,15 +258,6 @@ export function deriveContentReviewStatus(
       blockers: [],
     }
   }
-
-  const currentReviewerRoles = new Set(
-    input.records
-      .filter((record) => record.reviewedSnapshot === input.currentSnapshot)
-      .map((record) => record.reviewerRole)
-  )
-  const remainingReviewers = input.requiredReviewers.filter(
-    (reviewer) => !currentReviewerRoles.has(reviewer)
-  )
 
   return remainingReviewers.length > 0
     ? {
@@ -252,11 +279,21 @@ function hasValidRecords(
     const reviewerRoles = item.records.map((record) => record.reviewerRole)
     if (new Set(reviewerRoles).size !== reviewerRoles.length) return false
     if (item.reviewerRequirement === "unresolved") {
-      return item.records.length === 0
+      return item.requiredReviewers.length === 0 && item.records.length === 0
+    }
+    if (
+      item.requiredReviewers.length === 0 ||
+      new Set(item.requiredReviewers).size !== item.requiredReviewers.length ||
+      item.requiredReviewers.some(
+        (reviewerRole) => !isContentReviewReviewerRole(reviewerRole)
+      )
+    ) {
+      return false
     }
     if (
       item.records.some(
         (record) =>
+          !isContentReviewReviewerRole(record.reviewerRole) ||
           !normaliseSnapshotString(record.reviewerRole) ||
           !normaliseSnapshotString(record.reviewedSnapshot) ||
           !normaliseSnapshotString(record.evidenceReference)
@@ -270,19 +307,260 @@ function hasValidRecords(
   })
 }
 
-function reviewContext(
+function resolveArtifactManifest(
+  options: ContentReviewStateBuildOptions
+): ReadonlyArray<ContentReviewArtifactManifestEntry> {
+  const manifest = options.artifactManifest ?? contentReviewArtifactManifest
+  return manifest.map((item) => ({
+    ...item,
+    records: options.artifactRecords?.[item.reviewReference] ?? item.records,
+  }))
+}
+
+function hasValidArtifactManifest(
+  itemManifest: ReadonlyArray<ContentReviewManifestEntry>,
+  artifactManifest: ReadonlyArray<ContentReviewArtifactManifestEntry>,
+  artifactRecords: ContentReviewArtifactRecords | undefined
+): boolean {
+  const expectedContentIds = new Map([
+    ["TW-IA-ORDER", "artifact.ia-order"],
+    ["TW-STORY-COMPOSED", "artifact.composed-story"],
+  ] as const)
+  const artifactReferences = artifactManifest.map(
+    (item) => item.reviewReference
+  )
+  const recordReferences = Object.keys(artifactRecords ?? {})
+
+  return (
+    artifactManifest.length === contentReviewArtifactReferences.length &&
+    new Set(artifactReferences).size === artifactReferences.length &&
+    contentReviewArtifactReferences.every((reviewReference) =>
+      artifactReferences.includes(reviewReference)
+    ) &&
+    artifactManifest.every(
+      (item) =>
+        item.contentId === expectedContentIds.get(item.reviewReference) &&
+        item.contentKind === "structure" &&
+        item.reviewerRequirement === "confirmed" &&
+        item.linkDisplay === "label-only"
+    ) &&
+    recordReferences.every((reviewReference) =>
+      contentReviewArtifactReferences.includes(
+        reviewReference as (typeof contentReviewArtifactReferences)[number]
+      )
+    ) &&
+    itemManifest.every(
+      (item) =>
+        !contentReviewArtifactReferences.includes(
+          item.reviewReference as (typeof contentReviewArtifactReferences)[number]
+        )
+    ) &&
+    hasValidRecords(artifactManifest)
+  )
+}
+
+function reviewReadinessIssue(
+  code: string,
+  severity: ContentReviewReadinessIssue["severity"],
+  message: string,
+  source: ContentReviewReadinessIssue["source"],
+  reviewReference: ReviewReference | null = null,
+  reviewStatus: ContentReviewStatus | null = null
+): ContentReviewReadinessIssue {
+  return {
+    code,
+    severity,
+    message,
+    source,
+    reviewReference,
+    reviewStatus,
+  }
+}
+
+function reviewState(
   item: ContentReviewManifestEntry,
   currentSnapshot: string,
   explicitDecisionRequired: boolean
-): ContentReviewContextDto {
-  const state = deriveContentReviewStatus({
-    currentSnapshot,
-    blocked: false,
-    explicitDecisionRequired,
-    reviewerRequirement: item.reviewerRequirement,
-    requiredReviewers: item.requiredReviewers,
-    records: item.records,
+): ContentReviewReadinessState {
+  return {
+    reviewReference: item.reviewReference,
+    ...deriveContentReviewStatus({
+      currentSnapshot,
+      blocked: false,
+      explicitDecisionRequired,
+      reviewerRequirement: item.reviewerRequirement,
+      requiredReviewers: item.requiredReviewers,
+      records: item.records,
+    }),
+  }
+}
+
+export type LandingPageV2CombinedReadiness = {
+  readonly landing: ReturnType<typeof getLandingPageV2Readiness>
+  readonly review: {
+    readonly errors: ReadonlyArray<ContentReviewReadinessIssue>
+    readonly decisions: ReadonlyArray<ContentReviewReadinessIssue>
+    readonly states: ReadonlyArray<ContentReviewReadinessState>
+    readonly projection: ReviewDraftProjectionDto | null
+    readonly snapshots: ReviewDraftSnapshots | null
+  }
+  readonly issues: ReadonlyArray<
+    LandingPageV2ReadinessIssue | ContentReviewReadinessIssue
+  >
+}
+
+export function getLandingPageV2CombinedReadiness(
+  options: ContentReviewStateBuildOptions = {}
+): LandingPageV2CombinedReadiness {
+  const content = options.content ?? landingPageV2Content
+  const publication = options.publication ?? landingPageV2Publication
+  const registry =
+    options.registry ?? createContentReviewRegistry(content, publication)
+  const manifest = options.manifest ?? contentReviewManifest
+  const artifacts = resolveArtifactManifest(options)
+  const landing = getLandingPageV2Readiness(content, publication)
+  const projectionResult = buildReviewDraftProjection({
+    content,
+    publication,
+    registry,
+    manifest,
   })
+  const errors: Array<ContentReviewReadinessIssue> = projectionResult.ok
+    ? []
+    : projectionResult.issues.map((item) =>
+        reviewReadinessIssue(
+          item.code,
+          "error",
+          item.message,
+          "review-structure"
+        )
+      )
+
+  if (!hasValidRecords(manifest)) {
+    errors.push(
+      reviewReadinessIssue(
+        "invalid-review-record",
+        "error",
+        "Review records and confirmed reviewer roles must match the closed review manifest.",
+        "review-state"
+      )
+    )
+  }
+  if (!hasValidArtifactManifest(manifest, artifacts, options.artifactRecords)) {
+    errors.push(
+      reviewReadinessIssue(
+        "invalid-artifact-review",
+        "error",
+        "Aggregate review artifacts and their records must match the IA-order and composed-story manifests.",
+        "review-state"
+      )
+    )
+  }
+
+  if (!projectionResult.ok || errors.length > 0) {
+    return {
+      landing,
+      review: {
+        errors,
+        decisions: [],
+        states: [],
+        projection: null,
+        snapshots: null,
+      },
+      issues: [...landing.issues, ...errors],
+    }
+  }
+
+  const projection = projectionResult.projection
+  const snapshots = getReviewDraftSnapshots(projection, manifest)
+  const manifestByReference = new Map(
+    manifest.map((item) => [item.reviewReference, item])
+  )
+  const stateInputs = [
+    {
+      reviewReference: projection.metadata.reviewReference,
+      snapshot: snapshots.byReference[projection.metadata.reviewReference],
+      explicitDecisionRequired: false,
+    },
+    ...projection.sections.flatMap((section) => [
+      {
+        reviewReference: section.reviewReference,
+        snapshot: snapshots.byReference[section.reviewReference],
+        explicitDecisionRequired: false,
+      },
+      ...section.entries.map((entry) => ({
+        reviewReference: entry.reviewReference,
+        snapshot: snapshots.byReference[entry.reviewReference],
+        explicitDecisionRequired: entry.kind === "decision",
+      })),
+    ]),
+  ]
+  const states = stateInputs.map((input) => {
+    const item = manifestByReference.get(input.reviewReference)
+    if (!item) {
+      throw new Error("Validated projection is missing its review manifest")
+    }
+    return reviewState(item, input.snapshot, input.explicitDecisionRequired)
+  })
+  const artifactSnapshots = new Map([
+    ["TW-IA-ORDER", snapshots.iaOrderSnapshot],
+    ["TW-STORY-COMPOSED", snapshots.storySnapshot],
+  ] as const)
+  for (const artifact of artifacts) {
+    states.push(
+      reviewState(
+        artifact,
+        artifactSnapshots.get(artifact.reviewReference) ?? "",
+        false
+      )
+    )
+  }
+
+  const stateIssues = states
+    .filter((state) => state.status !== "reviewed-current")
+    .map((state) =>
+      reviewReadinessIssue(
+        `review-${state.status}-${state.reviewReference.toLowerCase()}`,
+        state.status === "blocked" ? "error" : "decision",
+        `Review ${state.reviewReference} is ${state.status}.`,
+        "review-state",
+        state.reviewReference,
+        state.status
+      )
+    )
+  const stateErrors = stateIssues.filter((item) => item.severity === "error")
+  const decisions = stateIssues.filter((item) => item.severity === "decision")
+  errors.push(...stateErrors)
+
+  return {
+    landing,
+    review: {
+      errors,
+      decisions,
+      states,
+      projection,
+      snapshots,
+    },
+    issues: [...landing.issues, ...errors, ...decisions],
+  }
+}
+
+function reviewContext(
+  item: ContentReviewManifestEntry,
+  currentSnapshot: string,
+  explicitDecisionRequired: boolean,
+  resolvedState?: ReviewStatusResult
+): ContentReviewContextDto {
+  const state =
+    resolvedState ??
+    deriveContentReviewStatus({
+      currentSnapshot,
+      blocked: false,
+      explicitDecisionRequired,
+      reviewerRequirement: item.reviewerRequirement,
+      requiredReviewers: item.requiredReviewers,
+      records: item.records,
+    })
 
   return {
     reviewReference: item.reviewReference,
@@ -318,7 +596,8 @@ function publicOwnerLabel(owner: string): string {
 function annotateEntry(
   entry: ReviewDraftEntryDto,
   manifestByReference: ReadonlyMap<ReviewReference, ContentReviewManifestEntry>,
-  snapshots: ReviewDraftSnapshots
+  snapshots: ReviewDraftSnapshots,
+  statesByReference: ReadonlyMap<ReviewReference, ContentReviewReadinessState>
 ): ContentReviewEntryDto {
   const item = manifestByReference.get(entry.reviewReference)
   if (!item) throw new Error("Validated review entry is missing its manifest")
@@ -328,7 +607,8 @@ function annotateEntry(
     review: reviewContext(
       item,
       snapshots.byReference[entry.reviewReference],
-      entry.kind === "decision"
+      entry.kind === "decision",
+      statesByReference.get(entry.reviewReference)
     ),
   }
 }
@@ -419,23 +699,11 @@ function buildAppendix(
 }
 
 function artifactContext(
-  reviewReference: ReviewReference,
+  artifact: ContentReviewArtifactManifestEntry,
   snapshot: string,
-  concerns: ReadonlyArray<string>
+  state: ContentReviewReadinessState | undefined
 ): ContentReviewContextDto {
-  const artifactManifest: ContentReviewManifestEntry = {
-    contentId: reviewReference,
-    reviewReference,
-    contentKind: "structure",
-    owner: "Designer and Xingyu (PM)",
-    reviewerRequirement: "confirmed",
-    requiredReviewers: ["Designer", "Xingyu (PM)"],
-    concerns,
-    sourceLabel: "Content-review structure",
-    linkDisplay: "label-only",
-    records: [],
-  }
-  return reviewContext(artifactManifest, snapshot, false)
+  return reviewContext(artifact, snapshot, false, state)
 }
 
 function errorDto(issueCodes: ReadonlyArray<string>): ContentReviewPageDto {
@@ -456,34 +724,42 @@ function errorDto(issueCodes: ReadonlyArray<string>): ContentReviewPageDto {
 }
 
 export function buildContentReviewPageDto(
-  options: ReviewBuildOptions = {}
+  options: ContentReviewStateBuildOptions = {}
 ): ContentReviewPageDto {
   const content = options.content ?? landingPageV2Content
   const publication = options.publication ?? landingPageV2Publication
-  const registry =
-    options.registry ?? createContentReviewRegistry(content, publication)
   const manifest = options.manifest ?? contentReviewManifest
-  const result = buildReviewDraftProjection({
-    content,
-    publication,
-    registry,
-    manifest,
-  })
+  const readiness = getLandingPageV2CombinedReadiness(options)
+  const landingStructureErrors = readiness.landing.issues.filter(
+    (item) => item.severity === "error"
+  )
+  if (
+    landingStructureErrors.length > 0 ||
+    readiness.review.errors.length > 0 ||
+    !readiness.review.projection ||
+    !readiness.review.snapshots
+  ) {
+    return errorDto([
+      ...landingStructureErrors.map((item) => item.code),
+      ...readiness.review.errors.map((item) => item.code),
+    ])
+  }
 
-  if (!result.ok) return errorDto(result.issues.map((issue) => issue.code))
-  if (!hasValidRecords(manifest)) return errorDto(["invalid-review-record"])
-
-  const snapshots = getReviewDraftSnapshots(result.projection, manifest)
+  const projection = readiness.review.projection
+  const snapshots = readiness.review.snapshots
   const manifestByReference = new Map(
     manifest.map((item) => [item.reviewReference, item])
   )
+  const statesByReference = new Map(
+    readiness.review.states.map((state) => [state.reviewReference, state])
+  )
   const metadataManifest = manifestByReference.get(
-    result.projection.metadata.reviewReference
+    projection.metadata.reviewReference
   )
   if (!metadataManifest) return errorDto(["metadata-manifest-missing"])
 
   const sections: Array<ContentReviewSectionDto> = []
-  for (const section of result.projection.sections) {
+  for (const section of projection.sections) {
     const sectionManifest = manifestByReference.get(section.reviewReference)
     if (!sectionManifest) return errorDto(["section-manifest-missing"])
     sections.push({
@@ -491,12 +767,22 @@ export function buildContentReviewPageDto(
       review: reviewContext(
         sectionManifest,
         snapshots.byReference[section.reviewReference],
-        false
+        false,
+        statesByReference.get(section.reviewReference)
       ),
       entries: section.entries.map((entry) =>
-        annotateEntry(entry, manifestByReference, snapshots)
+        annotateEntry(entry, manifestByReference, snapshots, statesByReference)
       ),
     })
+  }
+
+  const artifactByReference = new Map(
+    resolveArtifactManifest(options).map((item) => [item.reviewReference, item])
+  )
+  const iaOrderArtifact = artifactByReference.get("TW-IA-ORDER")
+  const composedStoryArtifact = artifactByReference.get("TW-STORY-COMPOSED")
+  if (!iaOrderArtifact || !composedStoryArtifact) {
+    return errorDto(["artifact-manifest-missing"])
   }
 
   const dto: ContentReviewReadyPageDto = {
@@ -508,21 +794,24 @@ export function buildContentReviewPageDto(
     iaOrderSnapshot: snapshots.iaOrderSnapshot,
     storySnapshot: snapshots.storySnapshot,
     artifactReview: {
-      iaOrder: artifactContext("TW-IA-ORDER", snapshots.iaOrderSnapshot, [
-        "Information architecture",
-      ]),
+      iaOrder: artifactContext(
+        iaOrderArtifact,
+        snapshots.iaOrderSnapshot,
+        statesByReference.get("TW-IA-ORDER")
+      ),
       composedStory: artifactContext(
-        "TW-STORY-COMPOSED",
+        composedStoryArtifact,
         snapshots.storySnapshot,
-        ["Content", "Narrative coherence"]
+        statesByReference.get("TW-STORY-COMPOSED")
       ),
     },
     metadata: {
-      ...result.projection.metadata,
+      ...projection.metadata,
       review: reviewContext(
         metadataManifest,
-        snapshots.byReference[result.projection.metadata.reviewReference],
-        false
+        snapshots.byReference[projection.metadata.reviewReference],
+        false,
+        statesByReference.get(projection.metadata.reviewReference)
       ),
     },
     sections,

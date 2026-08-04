@@ -34,6 +34,7 @@ export type ReviewDraftContentEntryDto = {
   readonly kind: "content"
   readonly reviewReference: ReviewReference
   readonly contentKind: Exclude<ReviewContentKind, "structure" | "omission">
+  readonly capabilityLabel?: string | null
   readonly label: string | null
   readonly heading: string | null
   readonly body: ReadonlyArray<string>
