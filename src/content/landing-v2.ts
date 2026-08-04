@@ -349,7 +349,7 @@ export const landingPageV2Content = {
   hero: {
     eyebrow: null,
     headline: "See the progress worth building on.",
-    body: "Teacher Workspace brings the signals, next steps, family communication, and record together so a positive moment can keep moving.",
+    body: "Teacher Workspace brings recent observations, next steps, family communication, and the student record together so you can build on positive progress.",
     ctaPlacements: ["hero", "close"],
   },
   journey: [
@@ -401,7 +401,7 @@ export const landingPageV2Content = {
   ],
   reveal: {
     headline: "This is Teacher Workspace.",
-    body: "The care and judgment stay with you. Teacher Workspace brings the context, possible next step, and communication into one connected flow.",
+    body: "You keep the care and judgment. Teacher Workspace brings the context, possible next step, and communication into one flow.",
     gaLaunchLine: null,
     editorialStatus: "proposed",
   },
@@ -409,7 +409,7 @@ export const landingPageV2Content = {
     {
       id: "student-insights",
       publicLabel: "Student Insights",
-      job: "Bring the signals around one student into a usable view.",
+      job: "See one student's recent notes and classroom moments together.",
       scenario:
         "See a positive change across recent notes and classroom moments.",
       anchorId: "student-insights",
@@ -418,7 +418,7 @@ export const landingPageV2Content = {
     {
       id: "contextual-intelligence",
       publicLabel: "Next-step guidance",
-      job: "Surface the relevant process and next step in context.",
+      job: "See a relevant process and possible next step in context.",
       scenario:
         "Consider a practical way to reinforce the student's progress.",
       anchorId: "contextual-intelligence",
@@ -427,7 +427,7 @@ export const landingPageV2Content = {
     {
       id: "hey-talia",
       publicLabel: "Message drafting",
-      job: "Turn student context into a clear first draft for the teacher.",
+      job: "Prepare a first draft from the student context, then review and edit it.",
       scenario:
         "Prepare a warm family update for the teacher to review and edit.",
       anchorId: "hey-talia",
@@ -606,7 +606,7 @@ export const landingPageV2Content = {
   ],
   close: {
     headline: "Notice growth. Help it continue.",
-    body: "Teacher Workspace connects the context, next step, family message, and record while the teacher stays in control.",
+    body: "Teacher Workspace keeps the context, possible next step, family message, and record together. You decide what to do next.",
     editorialStatus: "proposed",
   },
   footer: {
