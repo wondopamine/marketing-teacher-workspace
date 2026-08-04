@@ -1,6 +1,6 @@
 # Landing Page v2 foundations
 
-Status: foundation ready; launch decisions outstanding
+Status: content-review foundation implemented; launch decisions outstanding
 
 Source: [GitHub issue #3](https://github.com/String-dxd/marketing-teacher-workspace/issues/3)
 
@@ -8,6 +8,9 @@ Source: [GitHub issue #3](https://github.com/String-dxd/marketing-teacher-worksp
 
 - Tell one connected student-care story across Student Insights, Next-step
   guidance, Message drafting, and Posts.
+- Use the proposed positive-growth narrative as the canonical review story.
+  The financial-assistance/bursary example is non-canonical and may return only
+  as a separately approved, fully synthetic example.
 - Lead with the student's journey and the teacher's job.
 - Use Teacher Workspace as the only public brand.
 - Use one primary CTA: `Sign in with Google`.
@@ -32,6 +35,11 @@ remain editable draft content. They are not approved acceptance criteria.
   explorer, proof policy, approval governance, and measurement contract.
 - `src/content/landing-v2-readiness.ts` separates structural errors from launch
   decisions.
+- `src/content/landing-v2-review.server.ts` owns the ordered review registry and
+  builds a public-copy projection without pending fields, raw sources, internal
+  names, or unapproved proof.
+- `src/content/landing-v2-review-state.server.ts` derives revision-aware review
+  states and the narrow public-safe DTO returned to the route.
 - `src/content/landing.ts` keeps the current v1 copy isolated from this
   foundation.
 
@@ -48,6 +56,99 @@ components. Layout and motion may change while these relationships remain:
 7. The explorer keeps its confirmed comprehension flow and four-capability
    coverage.
 8. Approval owners never count as recorded approvers.
+
+## Content-review prototype
+
+Open `/content-review` directly on the implementation branch or an explicitly
+authorised non-production preview. The route is not linked from `/`, inherits
+the existing skip link and SGDS masthead, and declares `noindex, nofollow`.
+The public homepage, its metadata, and its current choreography remain
+unchanged.
+
+The route is an unauthenticated semantic review document. It deliberately has
+no imagery, themed component system, motion, product simulation, analytics,
+form submission, or review backend. `noindex` and an unshared URL are not
+security controls, so every rendered value and server-function response must
+remain safe for public retrieval.
+
+Review annotations are informational aids. They do not record authenticated
+approval, grant publication authority, or replace the external decision
+record. Missing public copy renders as an explicit decision slot instead of a
+plausible placeholder.
+
+## Review workflow
+
+Give feedback using the visible review reference and the current content
+snapshot, for example `TW-CAP-STUDENT-INSIGHTS / v1-sha256-…`. Do not refer to
+visual position such as “the third card”; order can change while references
+stay stable. Restricted evidence and free-form reviewer discussion stay in the
+approved external channel and are cited there using the same reference and
+snapshot. The review route must never contain that evidence.
+
+| Display state | Meaning | Required next action |
+| --- | --- | --- |
+| `blocked` | Structural or public-safety validation failed. | Stop review until the validation issue is fixed. |
+| `decision-required` | Copy, evidence, ownership, or reviewer requirements are unresolved. | Supply and record the missing decision in the approved external channel. |
+| `reconfirmation-required` | A recorded review targets an older snapshot. | Review the current snapshot again. |
+| `unreviewed` | No review is recorded for the current snapshot. | Review this item against the displayed snapshot. |
+| `partially-reviewed` | Some, but not all, confirmed reviewer roles have reviewed the current snapshot. | Ask the remaining roles to review it. |
+| `reviewed-current` | Every required role has a record for the current snapshot. | Treat it as current review evidence only, never as publication approval. |
+
+Three snapshot levels prevent stale decisions from silently surviving edits:
+
+- the item snapshot changes when that item’s reviewable content changes;
+- the IA-order snapshot changes when sections move;
+- the composed-story snapshot changes when order or connected context changes.
+
+An unchanged item can therefore remain current while a reordered or rewritten
+story correctly asks for contextual reconfirmation.
+
+## Review responsibilities
+
+- The Designer facilitates review, collates reference-and-snapshot feedback,
+  and owns the positive, opportunity-led story rubric.
+- The product manager validates audience intent, product behaviour, and product
+  claims. The public route displays this role without a personal name.
+- Policy and security reviewers decide publication, sensitive-content,
+  synthetic-data, proof, access, and measurement questions in an approved
+  external channel.
+
+The canonical external channel and its steward are still unresolved. Until
+they are named, repository state and role ownership are display aids only. A
+person being listed as an owner is never evidence that they approved the copy.
+
+## Preview lifecycle
+
+Creating or deploying a review preview requires explicit authorisation. Before
+sharing it, verify that its project and alias are non-production and record:
+
+- preview URL and project/alias;
+- owner;
+- reviewed item, IA-order, and composed-story snapshots;
+- creation date and expiry;
+- retirement date and evidence that the old URL no longer serves the artifact.
+
+Never promote this route to production from this phase. Retire a superseded
+preview before sharing its replacement. If future review content cannot remain
+public-safe, do not deploy this unauthenticated route; use an approved protected
+channel instead.
+
+## Visual handoff
+
+The reviewed draft projection, stable references, and accepted section order
+are inputs to visual design, not publication authority. The neutral classes and
+all review annotations can be removed without rewriting the public-copy
+outline. The later visual phase must preserve semantic order, accessibility,
+public naming, CTA/access rules, and unresolved publication gates.
+
+Media, themed components, responsive art direction, the interactive explorer,
+analytics, a publication-only projection, and production routing are follow-up
+work. Before that phase begins, run a short review pilot with the Designer, the
+product manager, and an available policy or security reviewer. The pilot is a
+handoff gate—not yet a completed activity—and succeeds only if participants can
+cite stable references, interpret each state and next action, identify omitted
+content, and focus on IA/content without treating the neutral layout as a
+visual proposal.
 
 ## Public naming and approval governance
 
