@@ -107,7 +107,7 @@
     --cta-ground: color-mix(in oklab, var(--mauve-12) 88%, var(--blue-12));
 
     --memo-bg: #fdfaf2;
-    --memo-section-bg: #92CAEB;
+    --memo-section-bg: #cfe6ff;
     --memo-tape-1: rgb(229 86 65 / 0.55);
     --memo-tape-2: rgb(229 86 65 / 0.45);
     --memo-tape-3: rgb(229 86 65 / 0.65);

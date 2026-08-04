@@ -63,7 +63,7 @@ export function SchoolsToday() {
             <h2 className="font-heading text-[clamp(1.75rem,4vw,3.5rem)] leading-[1.08] font-medium tracking-tight text-balance text-[color:var(--paper-ink)]">
               {schoolsTodayCopy.heading}
             </h2>
-            <p className="mt-6 text-base leading-[1.7] text-balance text-[color:var(--paper-ink)]/70 sm:text-lg">
+            <p className="mt-6 text-base leading-[1.7] text-balance text-[color:var(--paper-muted)] sm:text-lg">
               {schoolsTodayCopy.subheading}
             </p>
           </div>
