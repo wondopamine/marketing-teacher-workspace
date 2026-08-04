@@ -19,6 +19,8 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "build": "vite build",
+    "postbuild": "pnpm verify:content-review-output",
+    "verify:content-review-output": "node scripts/verify-content-review-public-output.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint",
