@@ -151,6 +151,49 @@ describe("Landing Page v2 content contract", () => {
     expect(getLandingPageV2StructureIssues()).toEqual([])
   })
 
+  it("uses a proposed positive-growth story instead of the bursary example", () => {
+    const narrative = [
+      landingPageV2Content.seoDraft.description,
+      landingPageV2Content.hero.headline,
+      landingPageV2Content.hero.body,
+      ...landingPageV2Content.journey.flatMap((act) => [
+        act.moment,
+        act.headline,
+        act.body,
+      ]),
+      landingPageV2Content.reveal.body,
+      ...landingPageV2Content.capabilities.map(
+        (capability) => capability.scenario
+      ),
+      landingPageV2Content.close.headline,
+      landingPageV2Content.close.body,
+    ].join("\n")
+
+    expect(narrative.toLowerCase()).toContain("progress")
+
+    for (const supersededTerm of [
+      "Xiao Ming",
+      "FAS",
+      "bursary",
+      "eligibility",
+      "application window",
+      "matching scheme",
+    ]) {
+      expect(narrative.toLowerCase()).not.toContain(
+        supersededTerm.toLowerCase()
+      )
+    }
+
+    expect(
+      landingPageV2Content.journey.map((act) => act.capabilityId)
+    ).toEqual([null, ...capabilityIds])
+    expect(
+      landingPageV2Content.journey.every(
+        (act) => act.editorialStatus === "proposed"
+      )
+    ).toBe(true)
+  })
+
   it("keeps the capability discovery layer in journey order", () => {
     expect(
       landingPageV2Content.capabilities.map((capability) => capability.id)

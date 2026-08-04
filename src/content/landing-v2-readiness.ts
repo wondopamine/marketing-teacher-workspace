@@ -342,7 +342,7 @@ function checkProductClaims(
     : issue(
         "product-claims",
         "decision",
-        "Record Xingyu's approval of the eligibility, recommendation, drafting, tracking, and record claims."
+        "Record Xingyu's review of the progress visibility, next-step guidance, teacher-reviewable drafting, and Posts claims."
       )
 }
 

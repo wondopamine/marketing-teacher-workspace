@@ -201,6 +201,12 @@ export type LandingPageV2Content = {
     readonly body: string
     readonly editorialStatus: EditorialStatus
   }
+  readonly footer: {
+    readonly copyright: string
+    readonly brand: "Teacher Workspace"
+    readonly feedbackLabel: string
+    readonly feedbackHref: HttpsUrl
+  }
 }
 
 export type PrimaryCtaIntent = "google-sign-in"
@@ -336,66 +342,66 @@ export const landingPageV2Content = {
     bursaryExampleComment: siteConfig.links.landingPageV2BursaryExampleComment,
   },
   seoDraft: {
-    title: "Teacher Workspace | Every student, cared for in one journey",
+    title: "Teacher Workspace | Notice growth and build on it",
     description:
-      "Notice what a student needs, find the next step, reach the family, and keep the record together with Teacher Workspace.",
+      "See a student's progress, consider a constructive next step, prepare a family message, and keep the celebration connected with Teacher Workspace.",
   },
   hero: {
     eyebrow: null,
-    headline: "Every student. No support left unclaimed.",
-    body: "From the first sign of eligibility to a family that applied, on the record, in one place.",
+    headline: "See the progress worth building on.",
+    body: "Teacher Workspace brings the signals, next steps, family communication, and record together so a positive moment can keep moving.",
     ctaPlacements: ["hero", "close"],
   },
   journey: [
     {
       id: "promise",
       order: 1,
-      moment: "The promise",
-      headline: "Every student. No support left unclaimed.",
-      body: "From the first sign of eligibility to a family that applied, on the record, in one place.",
+      moment: "A positive moment",
+      headline: "A student is beginning to contribute with growing confidence.",
+      body: "You want to understand the progress and help it continue.",
       capabilityId: null,
       editorialStatus: "proposed",
     },
     {
       id: "notice",
       order: 2,
-      moment: "You notice",
-      headline: "Xiao Ming's family may qualify. Nobody has applied.",
-      body: "A sibling on FAS, a household update, and no active bursary appear together before the application window closes.",
+      moment: "You see the pattern",
+      headline: "The growth is visible in context.",
+      body: "Recent notes and classroom moments come together so the progress is easier to recognise.",
       capabilityId: "student-insights",
       editorialStatus: "proposed",
     },
     {
       id: "next-steps",
       order: 3,
-      moment: "You know the steps",
-      headline: "The right scheme finds you.",
-      body: "The fit, documents, submission route, and closing date are surfaced on the student's profile.",
+      moment: "You plan what comes next",
+      headline: "A constructive next step is ready to consider.",
+      body: "Teacher Workspace surfaces a practical way to reinforce the progress, with the teacher still deciding what fits.",
       capabilityId: "contextual-intelligence",
       editorialStatus: "proposed",
     },
     {
       id: "words",
       order: 4,
-      moment: "The words are ready",
-      headline: "A clean and clear message, already drafted.",
-      body: "The family note starts with the student's context, the teacher's tone, and the practical steps laid out plainly.",
+      moment: "You prepare the message",
+      headline: "A warm family update starts with the progress.",
+      body: "Message drafting helps organise a positive note for the teacher to review, edit, and send.",
       capabilityId: "hey-talia",
       editorialStatus: "proposed",
     },
     {
       id: "family-and-record",
       order: 5,
-      moment: "The family is in the loop. So is the record.",
-      headline: "Sent. Seen. On file.",
-      body: "Delivery, response, application, and approval status stay visible without rebuilding the record elsewhere.",
+      moment: "You celebrate and keep the thread",
+      headline: "Shared with the family. Kept with the record.",
+      body: "Posts helps share or record the celebration so the communication stays connected to the student's journey.",
       capabilityId: "posts",
       editorialStatus: "proposed",
     },
   ],
   reveal: {
     headline: "This is Teacher Workspace.",
-    body: "The care was always yours. The chasing, cross-referencing, and drafting between the moments is what we removed.",
+    body: "The care and judgment stay with you. Teacher Workspace brings the context, possible next step, and communication into one connected flow.",
     gaLaunchLine: null,
     editorialStatus: "proposed",
   },
@@ -405,7 +411,7 @@ export const landingPageV2Content = {
       publicLabel: "Student Insights",
       job: "Bring the signals around one student into a usable view.",
       scenario:
-        "Spot a family who may qualify for support before the application window closes.",
+        "See a positive change across recent notes and classroom moments.",
       anchorId: "student-insights",
       editorialStatus: "proposed",
     },
@@ -414,7 +420,7 @@ export const landingPageV2Content = {
       publicLabel: "Next-step guidance",
       job: "Surface the relevant process and next step in context.",
       scenario:
-        "View the matching scheme, required documents, submission route, and deadline from the profile.",
+        "Consider a practical way to reinforce the student's progress.",
       anchorId: "contextual-intelligence",
       editorialStatus: "proposed",
     },
@@ -423,7 +429,7 @@ export const landingPageV2Content = {
       publicLabel: "Message drafting",
       job: "Turn student context into a clear first draft for the teacher.",
       scenario:
-        "Prepare a sensitive family message with the practical details already organised.",
+        "Prepare a warm family update for the teacher to review and edit.",
       anchorId: "hey-talia",
       editorialStatus: "proposed",
     },
@@ -432,7 +438,7 @@ export const landingPageV2Content = {
       publicLabel: "Posts",
       job: "Reach the family and keep the communication on record.",
       scenario:
-        "Track delivery and response without recreating the communication trail in another system.",
+        "Share or record the celebration while keeping the communication connected.",
       anchorId: "posts",
       editorialStatus: "proposed",
     },
@@ -599,9 +605,15 @@ export const landingPageV2Content = {
     },
   ],
   close: {
-    headline: "The care was always yours.",
-    body: "Teacher Workspace removes the chasing, cross-referencing, and drafting between the moments.",
+    headline: "Notice growth. Help it continue.",
+    body: "Teacher Workspace connects the context, next step, family message, and record while the teacher stays in control.",
     editorialStatus: "proposed",
+  },
+  footer: {
+    copyright: "© MOE 2026",
+    brand: siteConfig.name,
+    feedbackLabel: "Send feedback",
+    feedbackHref: siteConfig.links.feedback,
   },
 } as const satisfies LandingPageV2Content
 
