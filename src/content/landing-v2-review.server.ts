@@ -1,15 +1,6 @@
 import "@tanstack/react-start/server-only"
 
-import {
-  contentReviewSectionKinds,
-  type ContentReviewSectionKind,
-  type ReviewContentKind,
-  type ReviewDraftContentEntryDto,
-  type ReviewDraftDecisionEntryDto,
-  type ReviewDraftEntryDto,
-  type ReviewDraftProjectionDto,
-  type ReviewReference,
-} from "./landing-v2-review.types"
+import { contentReviewSectionKinds } from "./landing-v2-review.types"
 import {
   landingPageV2Content,
   landingPageV2Publication,
@@ -20,6 +11,15 @@ import type {
   LandingPageV2Content,
   LandingPageV2Publication,
 } from "./landing-v2"
+import type {
+  ContentReviewSectionKind,
+  ReviewContentKind,
+  ReviewDraftContentEntryDto,
+  ReviewDraftDecisionEntryDto,
+  ReviewDraftEntryDto,
+  ReviewDraftProjectionDto,
+  ReviewReference,
+} from "./landing-v2-review.types"
 
 export const contentReviewSectionOrder = contentReviewSectionKinds
 
@@ -53,10 +53,7 @@ type RegistryContentEntry = {
   readonly role: "entry"
   readonly contentId: string
   readonly sectionKind: ContentReviewSectionKind
-  readonly contentKind: Exclude<
-    ReviewContentKind,
-    "structure" | "omission"
-  >
+  readonly contentKind: Exclude<ReviewContentKind, "structure" | "omission">
   readonly entry: ReviewDraftContentEntryInput
 }
 
@@ -266,28 +263,17 @@ export function createContentReviewRegistry(
             link: null,
           }),
         ]
-      : [
-          decisionEntry(
-            "reveal.ga-launch-line",
-            "reveal",
-            "GA launch line"
-          ),
-        ]),
+      : [decisionEntry("reveal.ga-launch-line", "reveal", "GA launch line")]),
     section("section.capabilities", "capabilities"),
     ...content.capabilities.map((capability) =>
-      contentEntry(
-        `capability.${capability.id}`,
-        "capabilities",
-        "claim",
-        {
-          kind: "content",
-          contentKind: "claim",
-          label: capability.publicLabel,
-          heading: capability.job,
-          body: [capability.scenario],
-          link: null,
-        }
-      )
+      contentEntry(`capability.${capability.id}`, "capabilities", "claim", {
+        kind: "content",
+        contentKind: "claim",
+        label: capability.publicLabel,
+        heading: capability.job,
+        body: [capability.scenario],
+        link: null,
+      })
     ),
     section("section.explorer", "explorer"),
     ...explorerEntries(),
@@ -563,6 +549,14 @@ function isHttpsUrl(value: string): boolean {
   }
 }
 
+function normaliseSafetyText(value: string): string {
+  return value
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+}
+
 function projectWithoutValidation(
   registry: ReadonlyArray<ContentReviewRegistryEntry>,
   manifest: ReadonlyArray<ContentReviewManifestEntry>
@@ -599,7 +593,7 @@ function projectWithoutValidation(
         return {
           ...item.entry,
           reviewReference: manifestItem.reviewReference,
-        } as ReviewDraftEntryDto
+        }
       })
 
     if (entries.some((entry) => entry === null)) return null
@@ -705,6 +699,24 @@ export function getContentReviewStructureIssues(
       break
     }
 
+    if (manifestItem && item.role !== "section") {
+      const hasPublicDestination =
+        item.entry.kind === "content" && item.entry.link !== null
+      const expectedLinkDisplay = hasPublicDestination
+        ? "public-destination"
+        : "label-only"
+
+      if (manifestItem.linkDisplay !== expectedLinkDisplay) {
+        issues.push(
+          issue(
+            "link-display-mismatch",
+            "Manifest link-display policy must match the projected destination."
+          )
+        )
+        break
+      }
+    }
+
     if (item.role === "section") continue
     if (item.entry.kind === "decision") {
       if (!isNonBlank(item.entry.reviewLabel)) {
@@ -744,9 +756,6 @@ export function getContentReviewStructureIssues(
 
   if (
     content.productExplorer.status !== "accepted" ||
-    content.productExplorer.requiresBackend ||
-    !content.productExplorer.usesSyntheticDataOnly ||
-    content.productExplorer.maxStepsToAnyCapability !== 3 ||
     content.productExplorer.comprehensionFlow.length !==
       productExplorerComprehensionFlow.length ||
     !content.productExplorer.comprehensionFlow.every(
@@ -772,17 +781,18 @@ export function getContentReviewStructureIssues(
     return issues
   }
 
-  const serialisedProjection = JSON.stringify(projection).toLowerCase()
+  const serialisedProjection = normaliseSafetyText(JSON.stringify(projection))
   const prohibitedValues = [
     "xiao ming",
     "bursary",
     "contextual intelligence",
     "heytalia",
-    content.sources.bursaryExampleComment.toLowerCase(),
+    "hey talia",
+    normaliseSafetyText(content.sources.bursaryExampleComment),
   ]
   if (
     prohibitedValues.some((value) => serialisedProjection.includes(value)) ||
-    /(^|[^a-z])fas([^a-z]|$)/i.test(serialisedProjection)
+    /(^| )fas( |$)/.test(serialisedProjection)
   ) {
     issues.push(
       issue(
@@ -795,9 +805,7 @@ export function getContentReviewStructureIssues(
   return issues
 }
 
-export function buildReviewDraftProjection(
-  options: ReviewBuildOptions = {}
-):
+export function buildReviewDraftProjection(options: ReviewBuildOptions = {}):
   | { readonly ok: true; readonly projection: ReviewDraftProjectionDto }
   | {
       readonly ok: false

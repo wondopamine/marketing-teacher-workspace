@@ -11,7 +11,7 @@ import {
   contentReviewManifest,
   createContentReviewRegistry,
 } from "./landing-v2-review.server"
-import { landingPageV2Content } from "./landing-v2"
+import { landingPageV2Content, landingPageV2Publication } from "./landing-v2"
 
 describe("Landing Page v2 revision-aware review state", () => {
   it("normalises content deterministically without binding review metadata", () => {
@@ -35,7 +35,10 @@ describe("Landing Page v2 revision-aware review state", () => {
 
   it("uses the documented display-state precedence", () => {
     const currentSnapshot = createReviewSnapshot({ copy: "Current" })
-    const reviewed = (reviewerRole: string, reviewedSnapshot = currentSnapshot) => ({
+    const reviewed = (
+      reviewerRole: string,
+      reviewedSnapshot = currentSnapshot
+    ) => ({
       reviewerRole,
       reviewedSnapshot,
       evidenceReference: "Decision channel: item 1",
@@ -115,7 +118,9 @@ describe("Landing Page v2 revision-aware review state", () => {
         headline: `${landingPageV2Content.hero.headline} Today.`,
       },
     }
-    const changedResult = buildReviewDraftProjection({ content: changedContent })
+    const changedResult = buildReviewDraftProjection({
+      content: changedContent,
+    })
     expect(changedResult.ok).toBe(true)
     if (!changedResult.ok) return
 
@@ -187,7 +192,7 @@ describe("Landing Page v2 revision-aware review state", () => {
     const serialised = JSON.stringify(dto).toLowerCase()
     for (const prohibitedValue of [
       "contentid",
-      "reviewersnapshot",
+      "reviewedsnapshot",
       "evidencereference",
       "contextual-intelligence",
       "hey-talia",
@@ -198,6 +203,47 @@ describe("Landing Page v2 revision-aware review state", () => {
       expect(serialised).not.toContain(prohibitedValue)
     }
     expect(serialised).toContain("product manager")
+  })
+
+  it("builds appendix summaries from the requested content and publication", () => {
+    const content = {
+      ...landingPageV2Content,
+      testimonials: [
+        {
+          ...landingPageV2Content.testimonials[0],
+          capabilityIds: ["student-insights"] as const,
+          publicationApproved: true,
+        },
+        {
+          ...landingPageV2Content.testimonials[1],
+          capabilityIds: ["hey-talia"] as const,
+          publicationApproved: true,
+        },
+        ...landingPageV2Content.testimonials.slice(2).map((testimonial) => ({
+          ...testimonial,
+          publicationApproved: true,
+        })),
+      ],
+    }
+    const publication = {
+      ...landingPageV2Publication,
+      primaryCta: {
+        ...landingPageV2Publication.primaryCta,
+        label: "Continue with Google",
+      },
+      support: {
+        ...landingPageV2Publication.support,
+        strategy: "human-support" as const,
+      },
+    }
+
+    const dto = buildContentReviewPageDto({ content, publication })
+    expect(dto.kind).toBe("ready")
+    if (dto.kind !== "ready") return
+
+    expect(dto.appendix.proof.missingCapabilityLabels).toEqual([])
+    expect(dto.appendix.access.label).toBe("Continue with Google")
+    expect(dto.appendix.support.summary).toContain("selected")
   })
 
   it("returns only the safe error contract when structure validation fails", () => {

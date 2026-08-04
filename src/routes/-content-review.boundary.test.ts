@@ -2,18 +2,13 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
-const routeSource = readFileSync(
-  join(process.cwd(), "src/routes/content-review.tsx"),
-  "utf8"
-)
-const homeSource = readFileSync(
-  join(process.cwd(), "src/routes/index.tsx"),
-  "utf8"
-)
-const serverSource = readFileSync(
-  join(process.cwd(), "src/server/content-review.ts"),
-  "utf8"
-)
+function readSource(relativePath: string): string {
+  return readFileSync(join(process.cwd(), relativePath), "utf8")
+}
+
+const routeSource = readSource("src/routes/content-review.tsx")
+const homeSource = readSource("src/routes/index.tsx")
+const serverSource = readSource("src/server/content-review.ts")
 
 describe("content-review route boundary", () => {
   it("loads only the public-safe server function from the route", () => {

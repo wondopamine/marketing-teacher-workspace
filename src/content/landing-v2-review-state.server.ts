@@ -6,9 +6,6 @@ import {
   buildReviewDraftProjection,
   contentReviewManifest,
   createContentReviewRegistry,
-  type ContentReviewManifestEntry,
-  type ContentReviewRecord,
-  type ReviewBuildOptions,
 } from "./landing-v2-review.server"
 import {
   landingPageV2Content,
@@ -16,6 +13,15 @@ import {
   landingPageV2Publication,
 } from "./landing-v2"
 
+import type {
+  LandingPageV2Content,
+  LandingPageV2Publication,
+} from "./landing-v2"
+import type {
+  ContentReviewManifestEntry,
+  ContentReviewRecord,
+  ReviewBuildOptions,
+} from "./landing-v2-review.server"
 import type {
   ContentReviewAppendixDto,
   ContentReviewContextDto,
@@ -66,7 +72,11 @@ function normaliseSnapshotString(value: string): string {
 }
 
 function normaliseSnapshotValue(value: unknown): SnapshotValue {
-  if (value === null || typeof value === "boolean" || typeof value === "number") {
+  if (
+    value === null ||
+    typeof value === "boolean" ||
+    typeof value === "number"
+  ) {
     return value
   }
   if (typeof value === "string") return normaliseSnapshotString(value)
@@ -84,7 +94,10 @@ function normaliseSnapshotValue(value: unknown): SnapshotValue {
 
 export function createReviewSnapshot(value: unknown): string {
   const canonical = JSON.stringify(normaliseSnapshotValue(value))
-  const digest = createHash("sha256").update(canonical).digest("hex").slice(0, 16)
+  const digest = createHash("sha256")
+    .update(canonical)
+    .digest("hex")
+    .slice(0, 16)
   return `${snapshotVersion}-sha256-${digest}`
 }
 
@@ -326,22 +339,23 @@ function humaniseField(value: string): string {
 }
 
 function buildAppendix(
-  sections: ReadonlyArray<ContentReviewSectionDto>
+  sections: ReadonlyArray<ContentReviewSectionDto>,
+  content: LandingPageV2Content,
+  publication: LandingPageV2Publication
 ): ContentReviewAppendixDto {
   const approvedCoverage = new Set<string>(
-    landingPageV2Content.testimonials
+    content.testimonials
       .filter((testimonial) => testimonial.publicationApproved)
       .flatMap((testimonial) => testimonial.capabilityIds)
   )
-  const missingCapabilityLabels =
-    landingPageV2Publication.testimonialCoverageRequired
-      .filter((capabilityId) => !approvedCoverage.has(capabilityId))
-      .map(
-        (capabilityId) =>
-          landingPageV2Content.capabilities.find(
-            (capability) => capability.id === capabilityId
-          )?.publicLabel ?? "Required capability"
-      )
+  const missingCapabilityLabels = publication.testimonialCoverageRequired
+    .filter((capabilityId) => !approvedCoverage.has(capabilityId))
+    .map(
+      (capabilityId) =>
+        content.capabilities.find(
+          (capability) => capability.id === capabilityId
+        )?.publicLabel ?? "Required capability"
+    )
   const unresolvedClaims = sections
     .flatMap((section) => section.entries)
     .filter(
@@ -370,15 +384,14 @@ function buildAppendix(
       missingCapabilityLabels,
     },
     access: {
-      label: landingPageV2Publication.primaryCta.label ?? "Sign-in decision",
+      label: publication.primaryCta.label ?? "Sign-in decision",
       accountNote:
-        landingPageV2Publication.primaryCta.accessNote ??
-        "Account access note required.",
+        publication.primaryCta.accessNote ?? "Account access note required.",
       implementationBoundary:
         "Authentication and completed product access remain on the product/auth surface.",
     },
     support: {
-      summary: landingPageV2Publication.support.strategy
+      summary: publication.support.strategy
         ? "A support strategy is selected but remains subject to its access and destination review."
         : "A public support strategy, destination, owner, and access explanation are still required.",
     },
@@ -429,7 +442,10 @@ function errorDto(issueCodes: ReadonlyArray<string>): ContentReviewPageDto {
   return {
     kind: "error",
     code: "CONTENT_REVIEW_INVALID",
-    buildSnapshot: createReviewSnapshot({ code: "CONTENT_REVIEW_INVALID", issueCodes }),
+    buildSnapshot: createReviewSnapshot({
+      code: "CONTENT_REVIEW_INVALID",
+      issueCodes,
+    }),
     feedback: {
       label: landingPageV2Content.footer.feedbackLabel,
       href: landingPageV2Content.footer.feedbackHref,
@@ -510,7 +526,7 @@ export function buildContentReviewPageDto(
       ),
     },
     sections,
-    appendix: buildAppendix(sections),
+    appendix: buildAppendix(sections, content, publication),
   }
 
   return dto

@@ -58,9 +58,9 @@ describe("Landing Page v2 content-review projection", () => {
       expect(lowercase).not.toContain(prohibitedValue)
     }
 
-    expect(
-      result.projection.sections.map((section) => section.kind)
-    ).toEqual(contentReviewSectionOrder)
+    expect(result.projection.sections.map((section) => section.kind)).toEqual(
+      contentReviewSectionOrder
+    )
   })
 
   it("keeps omitted audience, proof, and support copy as referenced decisions", () => {
@@ -115,9 +115,38 @@ describe("Landing Page v2 content-review projection", () => {
         manifest: duplicateReferenceManifest,
       }).map((issue) => issue.code)
     ).toContain("duplicate-review-reference")
+    expect(buildReviewDraftProjection({ content: unacceptedExplorer }).ok).toBe(
+      false
+    )
+  })
+
+  it.each(["Contextual-Intelligence", "Hey Talia", "hey_talia"])(
+    "normalises and rejects the internal public name %s",
+    (internalName) => {
+      const content = {
+        ...landingPageV2Content,
+        hero: {
+          ...landingPageV2Content.hero,
+          body: `Draft copy mentions ${internalName}.`,
+        },
+      }
+
+      expect(
+        getContentReviewStructureIssues({ content }).map((issue) => issue.code)
+      ).toContain("public-copy-safety")
+    }
+  )
+
+  it("enforces the manifest link-display policy", () => {
+    const manifest = contentReviewManifest.map((item) =>
+      item.contentId === "destination.cta.hero"
+        ? { ...item, linkDisplay: "label-only" as const }
+        : item
+    )
+
     expect(
-      buildReviewDraftProjection({ content: unacceptedExplorer }).ok
-    ).toBe(false)
+      getContentReviewStructureIssues({ manifest }).map((issue) => issue.code)
+    ).toContain("link-display-mismatch")
   })
 
   it("includes the confirmed footer and two CTA placements without v1 imports", () => {

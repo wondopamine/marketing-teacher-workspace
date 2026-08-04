@@ -2,12 +2,21 @@ import { render, screen, within } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import { ContentReviewPage } from "./content-review-page"
+import type { ContentReviewReadyPageDto } from "@/content/landing-v2-review.types"
 import { buildContentReviewPageDto } from "@/content/landing-v2-review-state.server"
+import { contentReviewStatuses } from "@/content/landing-v2-review.types"
+
+function buildReadyReviewPage(): ContentReviewReadyPageDto {
+  const data = buildContentReviewPageDto()
+  if (data.kind !== "ready") {
+    throw new Error("Expected the default content-review DTO to be ready")
+  }
+  return data
+}
 
 describe("ContentReviewPage", () => {
   it("renders one neutral semantic document with the footer outside main", () => {
-    const data = buildContentReviewPageDto()
-    expect(data.kind).toBe("ready")
+    const data = buildReadyReviewPage()
 
     const { container } = render(<ContentReviewPage data={data} />)
     const main = screen.getByRole("main")
@@ -44,9 +53,7 @@ describe("ContentReviewPage", () => {
   })
 
   it("renders the accepted IA, static explorer, decisions, and status actions", () => {
-    const data = buildContentReviewPageDto()
-    expect(data.kind).toBe("ready")
-    if (data.kind !== "ready") return
+    const data = buildReadyReviewPage()
 
     const { container } = render(<ContentReviewPage data={data} />)
     const sectionReferences = Array.from(
@@ -82,36 +89,23 @@ describe("ContentReviewPage", () => {
     ).not.toBeNull()
     expect(screen.getByText("Public support route")).not.toBeNull()
 
-    for (const status of [
-      "blocked",
-      "decision-required",
-      "reconfirmation-required",
-      "unreviewed",
-      "partially-reviewed",
-      "reviewed-current",
-    ]) {
+    for (const status of contentReviewStatuses) {
       expect(screen.getByText(status, { selector: "dt" })).not.toBeNull()
     }
   })
 
   it("renders exactly two product links and one feedback link as native links", () => {
-    const data = buildContentReviewPageDto()
-    expect(data.kind).toBe("ready")
-    if (data.kind !== "ready") return
+    const data = buildReadyReviewPage()
 
     render(<ContentReviewPage data={data} />)
 
-    const productHref = data.sections
-      .flatMap((section) => section.entries)
-      .find(
-        (entry) => entry.kind === "content" && entry.link?.purpose === "product"
-      )
-    const feedbackHref = data.sections
-      .flatMap((section) => section.entries)
-      .find(
-        (entry) =>
-          entry.kind === "content" && entry.link?.purpose === "feedback"
-      )
+    const entries = data.sections.flatMap((section) => section.entries)
+    const productHref = entries.find(
+      (entry) => entry.kind === "content" && entry.link?.purpose === "product"
+    )
+    const feedbackHref = entries.find(
+      (entry) => entry.kind === "content" && entry.link?.purpose === "feedback"
+    )
 
     expect(productHref?.kind).toBe("content")
     expect(feedbackHref?.kind).toBe("content")
@@ -157,8 +151,7 @@ describe("ContentReviewPage", () => {
   })
 
   it("renders the governance appendix without leaking raw server material", () => {
-    const data = buildContentReviewPageDto()
-    expect(data.kind).toBe("ready")
+    const data = buildReadyReviewPage()
 
     const { container } = render(<ContentReviewPage data={data} />)
     expect(

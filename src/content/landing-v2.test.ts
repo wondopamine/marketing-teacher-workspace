@@ -184,14 +184,12 @@ describe("Landing Page v2 content contract", () => {
       )
     }
 
+    expect(landingPageV2Content.journey.map((act) => act.capabilityId)).toEqual(
+      [null, ...capabilityIds]
+    )
     expect(
-      landingPageV2Content.journey.map((act) => act.capabilityId)
-    ).toEqual([null, ...capabilityIds])
-    expect(
-      landingPageV2Content.journey.every(
-        (act) => act.editorialStatus === "proposed"
-      )
-    ).toBe(true)
+      landingPageV2Content.journey.map((act) => act.editorialStatus)
+    ).toEqual(["proposed", "proposed", "proposed", "proposed", "proposed"])
   })
 
   it("keeps the capability discovery layer in journey order", () => {

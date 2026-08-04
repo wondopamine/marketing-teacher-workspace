@@ -1,5 +1,6 @@
 import { ReviewAnnotation } from "./content-review-outline"
 
+import type { ReactNode } from "react"
 import type {
   ContentReviewAppendixDto,
   ContentReviewReadyPageDto,
@@ -12,6 +13,25 @@ function TextList({ values }: { values: ReadonlyArray<string> }) {
         <li key={value}>{value}</li>
       ))}
     </ul>
+  )
+}
+
+function AppendixSection({
+  children,
+  id,
+  title,
+}: {
+  children: ReactNode
+  id: string
+  title: string
+}) {
+  return (
+    <section aria-labelledby={id} className="pt-8">
+      <h3 id={id} className="text-lg font-semibold">
+        {title}
+      </h3>
+      {children}
+    </section>
   )
 }
 
@@ -61,10 +81,7 @@ export function ContentReviewAppendix({
         Review appendix
       </h2>
 
-      <section aria-labelledby="content-review-metadata" className="pt-8">
-        <h3 id="content-review-metadata" className="text-lg font-semibold">
-          Page metadata draft
-        </h3>
+      <AppendixSection id="content-review-metadata" title="Page metadata draft">
         <dl className="mt-3 grid gap-x-4 gap-y-2 sm:grid-cols-[7rem_1fr]">
           <dt className="font-medium">Title</dt>
           <dd>{metadata.heading}</dd>
@@ -72,39 +89,33 @@ export function ContentReviewAppendix({
           <dd>{metadata.body.join(" ")}</dd>
         </dl>
         <ReviewAnnotation context={metadata.review} headingLevel={4} />
-      </section>
+      </AppendixSection>
 
-      <section aria-labelledby="content-review-synthetic" className="pt-8">
-        <h3 id="content-review-synthetic" className="text-lg font-semibold">
-          Synthetic-data boundary
-        </h3>
+      <AppendixSection
+        id="content-review-synthetic"
+        title="Synthetic-data boundary"
+      >
         <p className="mt-3">{appendix.syntheticData.rule}</p>
         <TextList values={appendix.syntheticData.prohibitedData} />
-      </section>
+      </AppendixSection>
 
-      <section aria-labelledby="content-review-claims" className="pt-8">
-        <h3 id="content-review-claims" className="text-lg font-semibold">
-          Product claims
-        </h3>
+      <AppendixSection id="content-review-claims" title="Product claims">
         <p className="mt-3">{appendix.claims.summary}</p>
         <p className="mt-2">
           Unresolved claim items: {appendix.claims.unresolvedCount}
         </p>
-      </section>
+      </AppendixSection>
 
-      <section aria-labelledby="content-review-proof" className="pt-8">
-        <h3 id="content-review-proof" className="text-lg font-semibold">
-          Proof and testimonial permission
-        </h3>
+      <AppendixSection
+        id="content-review-proof"
+        title="Proof and testimonial permission"
+      >
         <p className="mt-3">{appendix.proof.summary}</p>
         <p className="mt-4 font-medium">Missing approved coverage</p>
         <TextList values={appendix.proof.missingCapabilityLabels} />
-      </section>
+      </AppendixSection>
 
-      <section aria-labelledby="content-review-access" className="pt-8">
-        <h3 id="content-review-access" className="text-lg font-semibold">
-          Access boundary
-        </h3>
+      <AppendixSection id="content-review-access" title="Access boundary">
         <dl className="mt-3 grid gap-x-4 gap-y-2 sm:grid-cols-[8rem_1fr]">
           <dt className="font-medium">Action</dt>
           <dd>{appendix.access.label}</dd>
@@ -113,14 +124,11 @@ export function ContentReviewAppendix({
           <dt className="font-medium">Boundary</dt>
           <dd>{appendix.access.implementationBoundary}</dd>
         </dl>
-      </section>
+      </AppendixSection>
 
-      <section aria-labelledby="content-review-support" className="pt-8">
-        <h3 id="content-review-support" className="text-lg font-semibold">
-          Support readiness
-        </h3>
+      <AppendixSection id="content-review-support" title="Support readiness">
         <p className="mt-3">{appendix.support.summary}</p>
-      </section>
+      </AppendixSection>
 
       <Measurement measurement={appendix.measurement} />
     </section>
