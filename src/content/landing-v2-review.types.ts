@@ -138,6 +138,10 @@ export type ContentReviewReadyPageDto = {
   readonly itemSnapshot: string
   readonly iaOrderSnapshot: string
   readonly storySnapshot: string
+  readonly artifactReview: {
+    readonly iaOrder: ContentReviewContextDto
+    readonly composedStory: ContentReviewContextDto
+  }
   readonly metadata: ReviewDraftContentEntryDto & {
     readonly review: ContentReviewContextDto
   }

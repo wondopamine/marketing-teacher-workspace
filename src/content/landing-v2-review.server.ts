@@ -99,7 +99,7 @@ export type ContentReviewStructureIssue = {
   readonly message: string
 }
 
-type ReviewBuildOptions = {
+export type ReviewBuildOptions = {
   readonly content?: LandingPageV2Content
   readonly publication?: LandingPageV2Publication
   readonly registry?: ReadonlyArray<ContentReviewRegistryEntry>
