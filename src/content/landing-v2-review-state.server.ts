@@ -274,14 +274,32 @@ function reviewContext(
   return {
     reviewReference: item.reviewReference,
     status: state.status,
-    owner: item.owner,
-    requiredReviewers: item.requiredReviewers,
-    remainingReviewers: state.remainingReviewers,
+    owner: publicOwnerLabel(item.owner),
+    requiredReviewers: item.requiredReviewers.map(publicReviewerRole),
+    remainingReviewers: state.remainingReviewers.map(publicReviewerRole),
     concerns: item.concerns,
     sourceLabel: item.sourceLabel,
     snapshot: currentSnapshot,
     blockers: state.blockers,
   }
+}
+
+const publicReviewerRoles = new Map<string, string>([
+  ["Designer", "Designer"],
+  ["Xingyu (PM)", "Product manager"],
+])
+
+function publicReviewerRole(role: string): string {
+  return publicReviewerRoles.get(role) ?? "Reviewer role to be confirmed"
+}
+
+function publicOwnerLabel(owner: string): string {
+  if (owner === "Not assigned") return owner
+
+  const roles = owner.split(" and ").map(publicReviewerRole)
+  return roles.includes("Reviewer role to be confirmed")
+    ? "Review owner role to be confirmed"
+    : roles.join(" and ")
 }
 
 function annotateEntry(

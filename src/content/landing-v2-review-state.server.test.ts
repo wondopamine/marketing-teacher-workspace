@@ -191,11 +191,13 @@ describe("Landing Page v2 revision-aware review state", () => {
       "evidencereference",
       "contextual-intelligence",
       "hey-talia",
+      "xingyu",
       landingPageV2Content.sources.bursaryExampleComment.toLowerCase(),
       landingPageV2Content.testimonials[0].quote.toLowerCase(),
     ]) {
       expect(serialised).not.toContain(prohibitedValue)
     }
+    expect(serialised).toContain("product manager")
   })
 
   it("returns only the safe error contract when structure validation fails", () => {

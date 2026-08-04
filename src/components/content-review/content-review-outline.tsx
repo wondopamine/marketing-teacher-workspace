@@ -84,7 +84,7 @@ export function ReviewAnnotation({
         id={id}
         className="text-sm font-semibold tracking-wide uppercase"
       >
-        {heading}
+        {heading} — {context.reviewReference}
       </Heading>
       <ReviewDetails context={context} />
     </aside>
@@ -98,9 +98,16 @@ function ContentLink({
 }) {
   if (!entry.link) return null
 
+  const descriptionRoot = `${reviewId(entry.reviewReference)}-link`
+  const noteId = entry.link.note ? `${descriptionRoot}-note` : null
+  const destinationId =
+    entry.link.purpose === "product" ? `${descriptionRoot}-destination` : null
+  const describedBy = [noteId, destinationId].filter(Boolean).join(" ")
+
   return (
     <div className="mt-4">
       <a
+        aria-describedby={describedBy || undefined}
         className="rounded-sm font-medium underline decoration-1 underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neutral-950"
         href={entry.link.href}
         rel="noreferrer"
@@ -109,10 +116,15 @@ function ContentLink({
         {entry.link.label}
       </a>
       {entry.link.note ? (
-        <p className="mt-2 text-sm">{entry.link.note}</p>
+        <p className="mt-2 text-sm" id={noteId ?? undefined}>
+          {entry.link.note}
+        </p>
       ) : null}
       {entry.link.purpose === "product" ? (
-        <p className="mt-1 text-sm text-neutral-600">
+        <p
+          className="mt-1 text-sm text-neutral-600"
+          id={destinationId ?? undefined}
+        >
           Opens the live Teacher Workspace product in a new tab.
         </p>
       ) : null}
@@ -141,7 +153,7 @@ function ReviewEntry({ entry }: { entry: ContentReviewEntryDto }) {
   }
 
   return (
-    <article data-review-reference={entry.reviewReference}>
+    <div data-review-reference={entry.reviewReference}>
       {entry.label ? (
         <p className="text-sm font-medium tracking-wide text-neutral-600 uppercase">
           {entry.label}
@@ -160,7 +172,7 @@ function ReviewEntry({ entry }: { entry: ContentReviewEntryDto }) {
         context={entry.review}
         headingLevel={entry.heading ? 4 : 3}
       />
-    </article>
+    </div>
   )
 }
 
@@ -221,10 +233,10 @@ export function ContentReviewOutline({
   sections: ReadonlyArray<ContentReviewSectionDto>
 }) {
   return (
-    <div aria-label="Draft content outline">
+    <>
       {sections.map((section) => (
         <ContentReviewSection key={section.kind} section={section} />
       ))}
-    </div>
+    </>
   )
 }

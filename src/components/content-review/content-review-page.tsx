@@ -72,7 +72,7 @@ export function ContentReviewPage({ data }: { data: ContentReviewPageDto }) {
         id="main"
         className="min-h-screen bg-white px-6 pt-[calc(var(--masthead-h)+2rem)] pb-16 text-neutral-950 sm:px-10"
       >
-        <article className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-3xl">
           <p className="text-sm font-medium tracking-wide uppercase">
             {data.artifactLabel}
           </p>
@@ -122,7 +122,7 @@ export function ContentReviewPage({ data }: { data: ContentReviewPageDto }) {
             appendix={data.appendix}
             metadata={data.metadata}
           />
-        </article>
+        </div>
       </main>
 
       {footerSection ? (

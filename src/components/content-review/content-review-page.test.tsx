@@ -20,6 +20,7 @@ describe("ContentReviewPage", () => {
       "Teacher Workspace content review"
     )
     expect(within(main).queryByRole("contentinfo")).toBeNull()
+    expect(screen.queryAllByRole("article")).toHaveLength(0)
     expect(container.querySelectorAll("img, video, canvas")).toHaveLength(0)
 
     const levels = Array.from(container.querySelectorAll("h1, h2, h3, h4")).map(
@@ -31,6 +32,15 @@ describe("ContentReviewPage", () => {
     }
 
     expect(footer.previousElementSibling).toBe(main)
+
+    const complementaryNames = screen
+      .getAllByRole("complementary")
+      .map((landmark) => landmark.getAttribute("aria-labelledby"))
+      .map((labelledBy) =>
+        labelledBy ? document.getElementById(labelledBy)?.textContent : null
+      )
+    expect(complementaryNames.every(Boolean)).toBe(true)
+    expect(new Set(complementaryNames).size).toBe(complementaryNames.length)
   })
 
   it("renders the accepted IA, static explorer, decisions, and status actions", () => {
@@ -132,6 +142,18 @@ describe("ContentReviewPage", () => {
       expect(link.getAttribute("target")).toBe("_blank")
       expect(link.getAttribute("rel")).toBe("noreferrer")
     }
+
+    for (const link of productLinks) {
+      const descriptionIds =
+        link.getAttribute("aria-describedby")?.split(" ") ?? []
+      const description = descriptionIds
+        .map((id) => document.getElementById(id)?.textContent)
+        .join(" ")
+
+      expect(descriptionIds).toHaveLength(2)
+      expect(description).toContain("@edu.gov.sg")
+      expect(description).toContain("new tab")
+    }
   })
 
   it("renders the governance appendix without leaking raw server material", () => {
@@ -150,6 +172,7 @@ describe("ContentReviewPage", () => {
     for (const prohibitedValue of [
       "contextual-intelligence",
       "hey-talia",
+      "xingyu",
       "xiao ming",
       "bursary",
       "reviewedsnapshot",

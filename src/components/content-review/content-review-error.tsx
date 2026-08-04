@@ -11,7 +11,7 @@ export function ContentReviewError({
         id="main"
         className="min-h-screen bg-white px-6 pt-[calc(var(--masthead-h)+2rem)] pb-16 text-neutral-950 sm:px-10"
       >
-        <article className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-3xl">
           <p className="text-sm font-medium tracking-wide uppercase">
             Internal content review
           </p>
@@ -26,7 +26,7 @@ export function ContentReviewError({
           <p className="mt-3 text-sm text-neutral-700">
             Build snapshot: <code>{data.buildSnapshot}</code>
           </p>
-        </article>
+        </div>
       </main>
       <footer
         aria-label="Content review"
