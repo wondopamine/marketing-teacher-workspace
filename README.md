@@ -17,10 +17,11 @@ The local site runs at `http://127.0.0.1:3000/`.
 The current public landing page remains at `/`. A PM-facing Landing V2
 wireframe is available directly at `/content-review`; it is intentionally
 unlinked, greyscale, static, unauthenticated, and marked `noindex, nofollow`.
-It presents the actual canonical public-safe draft copy in a landing-page flow,
-keeps unresolved content explicit, and contains no live CTAs, product
-interaction, or media. It is a communication artifact, not publication
-approval, a final visual direction, or access control.
+It leads with a product-shaped teacher workspace, groups five journey records
+and three explorer records into three visible acts, and keeps three approval
+requests within the landing flow. It contains no live CTAs, product interaction,
+or media. It is a communication artifact, not publication approval, a final
+visual direction, or access control.
 
 ## Verification
 

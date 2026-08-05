@@ -81,9 +81,10 @@ review can proceed in parallel with website implementation. `noindex` and an
 unshared URL are not security controls, so every rendered value and
 server-function response must remain safe for public retrieval.
 
-Review annotations are informational aids and remain secondary to the
-landing-page flow. They do not record authenticated approval, grant publication
-authority, or replace the external decision record.
+The route does not render external review annotations after the footer. Approval
+requests appear only as three clearly marked slots within the landing flow. They
+do not record authenticated approval, grant publication authority, or replace
+the external decision record.
 
 ## Review workflow
 
@@ -316,3 +317,25 @@ must both record approval before publication.
 
 Design and future UI work can proceed against this foundation. Publishing stays
 blocked until every decision listed above has a recorded resolution.
+
+## Competitive wireframe amendment — 2026-08-05
+
+The canonical DTO remains unchanged: five ordered journey records and three
+accepted explorer records remain available to review and future product work.
+The PM-facing presentation now groups those eight records into three visible
+acts: Notice the progress, Choose the next step, and Keep everyone aligned.
+
+The route begins with a dominant product-shaped workspace, then places a compact
+trust strip after the hero. It distributes approval requests rather than adding a
+late proof or external review appendix:
+
+1. Verified adoption metric follows the hero.
+2. Approved anonymous teacher quote, role, and school level follows the four
+   connected teaching jobs.
+3. Approved security and data-handling assurance sits with access and support.
+
+The visible product stages use synthetic general-class information only. They
+show a positive change for Student A, a teacher-reviewable next step, and an
+unsent family update/Posts preview. The presentation does not expose internal
+capability identifiers, real student information, automated sharing, or
+unapproved evidence.

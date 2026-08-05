@@ -421,3 +421,28 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
 - Extend TYP-1 verification to check body/display role mapping and approved weights, not only broad font-family allowlisting.
 - Require evaluator inventories to enumerate every discriminated render branch so a fail-closed state cannot escape interaction and share-safety review.
 - Require unauthenticated review routes to inspect the built SSR hydration payload, not only the visible DOM, for server-only fields and unused destinations. This gate is now implemented in `verify-content-review-routes.mjs`.
+
+## Competitive product-story amendment — 2026-08-05
+
+This amendment supersedes the prior one-to-one wireframe presentation while
+preserving its canonical content, public-safe DTO, noindex route, static
+interaction boundary, and external decision record.
+
+The presentation now uses one promise, a dominant product-shaped stage, an early
+trust strip, and three progressive acts. The five journey records and three
+explorer records are composed as follows:
+
+1. Notice the progress: journey records 1–2 with explorer record 1.
+2. Choose the next step: journey record 3 with explorer record 2.
+3. Keep everyone aligned: journey records 4–5 with explorer record 3.
+
+Four route-local product stages replace the earlier nine interface briefs: the
+hero workspace, class progress view, next-step review, and family update with
+record. Every stage is static, greyscale, synthetic, and teacher-reviewable.
+
+The external status banner, wireframe badge, standalone explorer, late proof
+section, and post-footer appendix are removed. Evidence remains request-only in
+three distributed approval slots: verified adoption metric; approved anonymous
+teacher quote, role, and school level; and approved security and data-handling
+assurance. The route remains free of live controls, media, links, motion,
+analytics, and internal capability names.

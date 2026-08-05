@@ -64,7 +64,7 @@ assert(
   countMatches(reviewHtml, /<main\b/g) === 1 &&
     countMatches(reviewHtml, /<h1\b/g) === 1 &&
     reviewHtml.includes('<main id="main"') &&
-    reviewHtml.includes("See the progress worth building on."),
+    reviewHtml.includes("See what is changing. Know what to do next."),
   "The content-review route does not render one main landmark and one H1."
 )
 assert(
@@ -80,11 +80,22 @@ assert(
   "The content-review route published canonical, social-image, or preload metadata."
 )
 assert(
-  countMatches(reviewHtml, /data-interface-description/g) === 9 &&
+  countMatches(reviewHtml, /data-interface-description/g) === 4 &&
+    countMatches(reviewHtml, /data-product-stage/g) === 4 &&
+    countMatches(reviewHtml, /data-journey-act(?:=|\s|>)/g) === 3 &&
     countMatches(reviewHtml, /data-wireframe-placeholder/g) === 0 &&
-    reviewHtml.includes("Positive student profile") &&
-    reviewHtml.includes("Positive growth · Growing confidence tag"),
-  "The content-review route lost its complete set of descriptive interface briefs."
+    !reviewHtml.includes("data-wireframe-appendix") &&
+    reviewHtml.includes("Growing confidence") &&
+    reviewHtml.includes("Synthetic class example") &&
+    reviewHtml.includes("Posts preview · Not shared"),
+  "The content-review route lost its product stages or complete set of interface briefs."
+)
+assert(
+  !reviewHtml.includes("<aside") &&
+    !reviewHtml.includes("Wireframe status") &&
+    !reviewHtml.includes("Landing page wireframe") &&
+    !reviewHtml.includes("PM review notes"),
+  "The content-review route still renders external review chrome."
 )
 
 const prohibitedReviewOutput = [
