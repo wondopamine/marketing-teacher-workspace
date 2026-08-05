@@ -107,7 +107,7 @@ describe("ContentReviewPage", () => {
     expect(screen.getByText("Placement to confirm")).not.toBeNull()
   })
 
-  it("shows exactly two CTA placements and feedback as inert wireframe affordances", () => {
+  it("shows two inert product actions and feedback without redundant UI captions", () => {
     const data = buildReadyReviewPage()
 
     const { container } = render(<ContentReviewPage data={data} />)
@@ -136,13 +136,14 @@ describe("ContentReviewPage", () => {
       container.querySelectorAll("[data-wireframe-action]")
     )
     expect(productActions).toHaveLength(2)
-    expect(screen.getAllByText("Static CTA placement")).toHaveLength(2)
     expect(
       productActions.every(
         (action) => action.textContent === productAction.action?.label
       )
     ).toBe(true)
     expect(screen.getByText(feedbackAction.action.label)).not.toBeNull()
+    expect(screen.queryByText("Static CTA placement")).toBeNull()
+    expect(screen.queryByText("Feedback link placement")).toBeNull()
     expect(screen.queryAllByRole("link")).toHaveLength(0)
     expect(screen.queryAllByRole("button")).toHaveLength(0)
     expect(container.querySelectorAll("[href]")).toHaveLength(0)

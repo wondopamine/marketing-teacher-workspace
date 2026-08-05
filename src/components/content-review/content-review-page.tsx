@@ -93,14 +93,9 @@ export function ContentReviewPage({
             ))}
           </div>
           {feedback?.action ? (
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Feedback link placement
-              </p>
-              <span className="mt-1 block text-sm font-medium select-none">
-                {feedback.action.label}
-              </span>
-            </div>
+            <span className="text-sm font-medium select-none">
+              {feedback.action.label}
+            </span>
           ) : null}
         </div>
       </footer>

@@ -39,7 +39,6 @@ function InertAction({ entry }: { entry: ContentEntry | undefined }) {
 
   return (
     <div className="mt-7">
-      <p className="mb-2 text-xs text-muted-foreground">Static CTA placement</p>
       <span
         className="inline-flex min-h-12 items-center justify-center border-2 border-foreground bg-foreground px-6 py-3 font-semibold text-background select-none"
         data-wireframe-action
