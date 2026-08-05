@@ -2,11 +2,10 @@ import { render, screen, within } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import { ContentReviewPage } from "./content-review-page"
-import type { ContentReviewReadyPageDto } from "@/content/landing-v2-review.types"
+import type { ContentReviewWireframeReadyPageDto } from "@/content/landing-v2-review.types"
 import { buildContentReviewPageDto } from "@/content/landing-v2-review-state.server"
-import { contentReviewStatuses } from "@/content/landing-v2-review.types"
 
-function buildReadyReviewPage(): ContentReviewReadyPageDto {
+function buildReadyReviewPage(): ContentReviewWireframeReadyPageDto {
   const data = buildContentReviewPageDto()
   if (data.kind !== "ready") {
     throw new Error("Expected the default content-review DTO to be ready")
@@ -15,22 +14,32 @@ function buildReadyReviewPage(): ContentReviewReadyPageDto {
 }
 
 describe("ContentReviewPage", () => {
-  it("renders one neutral semantic document with the footer outside main", () => {
+  it("renders one greyscale landing-page wireframe with the footer outside main", () => {
     const data = buildReadyReviewPage()
 
     const { container } = render(<ContentReviewPage data={data} />)
     const main = screen.getByRole("main")
-    const footer = screen.getByRole("contentinfo", { name: "Content review" })
+    const footer = screen.getByRole("contentinfo", {
+      name: "Teacher Workspace wireframe",
+    })
+    const reviewNotes = screen.getByRole("complementary", {
+      name: "PM review notes",
+    })
 
     expect(main.id).toBe("main")
     expect(screen.getAllByRole("main")).toHaveLength(1)
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
-      "Teacher Workspace content review"
+      "See the progress worth building on."
     )
     expect(within(main).queryByRole("contentinfo")).toBeNull()
+    expect(within(main).queryByRole("complementary")).toBeNull()
     expect(screen.queryAllByRole("article")).toHaveLength(0)
     expect(container.querySelectorAll("img, video, canvas")).toHaveLength(0)
+    expect(
+      container.querySelectorAll("[data-wireframe-placeholder]").length
+    ).toBeGreaterThan(0)
+    expect(container.querySelector("[data-wireframe-appendix]")).not.toBeNull()
 
     const levels = Array.from(container.querySelectorAll("h1, h2, h3, h4")).map(
       (heading) => Number(heading.tagName.slice(1))
@@ -41,30 +50,28 @@ describe("ContentReviewPage", () => {
     }
 
     expect(footer.previousElementSibling).toBe(main)
-
-    const complementaryNames = screen
-      .getAllByRole("complementary")
-      .map((landmark) => landmark.getAttribute("aria-labelledby"))
-      .map((labelledBy) =>
-        labelledBy ? document.getElementById(labelledBy)?.textContent : null
-      )
-    expect(complementaryNames.every(Boolean)).toBe(true)
-    expect(new Set(complementaryNames).size).toBe(complementaryNames.length)
+    expect(reviewNotes.previousElementSibling).toBe(footer)
   })
 
-  it("renders the accepted IA, static explorer, decisions, and status actions", () => {
+  it("renders the accepted IA, actual story content, and explicit pending slots", () => {
     const data = buildReadyReviewPage()
 
     const { container } = render(<ContentReviewPage data={data} />)
-    const sectionReferences = Array.from(
-      container.querySelectorAll("[data-review-section]")
-    ).map((element) => element.getAttribute("data-review-reference"))
+    const sectionKinds = Array.from(
+      container.querySelectorAll("[data-wireframe-section]")
+    ).map((element) => element.getAttribute("data-wireframe-section"))
 
-    expect(sectionReferences).toEqual(
-      data.sections.map((section) => section.review.reviewReference)
-    )
-    expect(screen.getByText("TW-IA-ORDER")).not.toBeNull()
-    expect(screen.getByText("TW-STORY-COMPOSED")).not.toBeNull()
+    expect(sectionKinds).toEqual(data.sections.map((section) => section.kind))
+    expect(
+      screen.getByRole("heading", {
+        name: "A student is beginning to contribute with growing confidence.",
+      })
+    ).not.toBeNull()
+    expect(
+      screen.getByRole("heading", {
+        name: "Shared with the family. Kept with the record.",
+      })
+    ).not.toBeNull()
 
     const explorerHeading = screen.getByRole("heading", {
       name: "Explore the flow in three steps",
@@ -82,72 +89,63 @@ describe("ContentReviewPage", () => {
     expect(screen.queryAllByRole("dialog")).toHaveLength(0)
 
     expect(
-      screen.getByText("Form Teachers: question and answer")
+      screen.getByRole("heading", { name: "Form Teachers" })
     ).not.toBeNull()
+    expect(
+      screen.getByRole("heading", { name: "Key Personnel" })
+    ).not.toBeNull()
+    expect(
+      screen.getByRole("heading", { name: "School Leaders" })
+    ).not.toBeNull()
+    expect(screen.getAllByText("Audience-specific copy pending")).toHaveLength(
+      3
+    )
     expect(
       screen.getByText("Proof copy and testimonial permission")
     ).not.toBeNull()
     expect(screen.getByText("Public support route")).not.toBeNull()
-
-    for (const status of contentReviewStatuses) {
-      expect(screen.getByText(status, { selector: "dt" })).not.toBeNull()
-    }
+    expect(screen.getByText("Placement to confirm")).not.toBeNull()
   })
 
-  it("renders exactly two product links and one feedback link as native links", () => {
+  it("shows exactly two CTA placements and feedback as inert wireframe affordances", () => {
     const data = buildReadyReviewPage()
 
-    render(<ContentReviewPage data={data} />)
+    const { container } = render(<ContentReviewPage data={data} />)
 
     const entries = data.sections.flatMap((section) => section.entries)
-    const productHref = entries.find(
-      (entry) => entry.kind === "content" && entry.link?.purpose === "product"
+    const productAction = entries.find(
+      (entry) => entry.kind === "content" && entry.action?.purpose === "product"
     )
-    const feedbackHref = entries.find(
-      (entry) => entry.kind === "content" && entry.link?.purpose === "feedback"
+    const feedbackAction = entries.find(
+      (entry) =>
+        entry.kind === "content" && entry.action?.purpose === "feedback"
     )
 
-    expect(productHref?.kind).toBe("content")
-    expect(feedbackHref?.kind).toBe("content")
+    expect(productAction?.kind).toBe("content")
+    expect(feedbackAction?.kind).toBe("content")
     if (
-      productHref?.kind !== "content" ||
-      feedbackHref?.kind !== "content" ||
-      !productHref.link ||
-      !feedbackHref.link
+      productAction?.kind !== "content" ||
+      feedbackAction?.kind !== "content" ||
+      !productAction.action ||
+      !feedbackAction.action
     ) {
       return
     }
 
-    const productLinks = screen.getAllByRole("link", {
-      name: productHref.link.label,
-    })
-    expect(productLinks).toHaveLength(2)
+    const productActions = Array.from(
+      container.querySelectorAll("[data-wireframe-action]")
+    )
+    expect(productActions).toHaveLength(2)
+    expect(screen.getAllByText("Static CTA placement")).toHaveLength(2)
     expect(
-      screen.getAllByText(productHref.link.note ?? "").length
-    ).toBeGreaterThanOrEqual(2)
-    expect(
-      screen.getAllByRole("link", { name: feedbackHref.link.label })
-    ).toHaveLength(1)
-
-    for (const link of [
-      ...productLinks,
-      ...screen.getAllByRole("link", { name: feedbackHref.link.label }),
-    ]) {
-      expect(link.getAttribute("target")).toBe("_blank")
-      expect(link.getAttribute("rel")).toBe("noreferrer")
-    }
-
-    for (const link of productLinks) {
-      const descriptionIds =
-        link.getAttribute("aria-describedby")?.split(" ") ?? []
-      const description = descriptionIds
-        .map((id) => document.getElementById(id)?.textContent)
-        .join(" ")
-
-      expect(descriptionIds).toHaveLength(2)
-      expect(description).toContain("@edu.gov.sg")
-      expect(description).toContain("new tab")
-    }
+      productActions.every(
+        (action) => action.textContent === productAction.action?.label
+      )
+    ).toBe(true)
+    expect(screen.getByText(feedbackAction.action.label)).not.toBeNull()
+    expect(screen.queryAllByRole("link")).toHaveLength(0)
+    expect(screen.queryAllByRole("button")).toHaveLength(0)
+    expect(container.querySelectorAll("[href]")).toHaveLength(0)
   })
 
   it("renders the governance appendix without leaking raw server material", () => {
@@ -155,16 +153,18 @@ describe("ContentReviewPage", () => {
 
     const { container } = render(<ContentReviewPage data={data} />)
     expect(
-      screen.getByRole("heading", { name: "Review appendix" })
+      screen.getByRole("heading", { name: "PM review notes" })
     ).not.toBeNull()
     expect(screen.getByText("Provider-neutral")).not.toBeNull()
     expect(screen.getAllByText("Student Insights").length).toBeGreaterThan(0)
     expect(screen.getAllByText("Message drafting").length).toBeGreaterThan(0)
-    expect(screen.getAllByText("Capability mapping:")).toHaveLength(5)
-    expect(screen.getByText("None — setup moment only")).not.toBeNull()
+    expect(screen.queryByText("Capability mapping:")).toBeNull()
+    expect(container.querySelector("[data-review-reference]")).toBeNull()
 
     const html = container.innerHTML.toLowerCase()
     for (const prohibitedValue of [
+      "tw-ia-order",
+      "tw-story-composed",
       "contextual-intelligence",
       "hey-talia",
       "xingyu",
@@ -188,12 +188,18 @@ describe("ContentReviewPage", () => {
     const main = screen.getByRole("main")
 
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
-    expect(screen.getByText("CONTENT_REVIEW_INVALID")).not.toBeNull()
-    expect(within(main).getByText(/stop this review/i)).not.toBeNull()
-    expect(screen.getByRole("link", { name: "Send feedback" })).not.toBeNull()
+    expect(
+      screen.getByRole("heading", { name: "Wireframe unavailable" })
+    ).not.toBeNull()
+    expect(within(main).getByText(/review is paused/i)).not.toBeNull()
+    expect(screen.queryAllByRole("link")).toHaveLength(0)
+    expect(screen.queryAllByRole("button")).toHaveLength(0)
+    expect(container.querySelectorAll("[href]")).toHaveLength(0)
     expect(container.textContent).not.toContain(
       "See the progress worth building on"
     )
     expect(container.innerHTML).not.toContain("manifest-coverage")
+    expect(container.innerHTML).not.toContain("CONTENT_REVIEW_INVALID")
+    expect(container.innerHTML).not.toContain("build snapshot")
   })
 })

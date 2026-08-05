@@ -19,13 +19,15 @@ describe("content-review route boundary", () => {
     expect(routeSource).not.toContain("landing-v2.ts")
   })
 
-  it("keeps the raw DTO builder behind a literal dynamic server import", () => {
+  it("keeps the wireframe DTO builder behind a literal dynamic server import", () => {
     expect(serverSource).toMatch(
       /createServerFn\(\{\s*method:\s*"GET",?\s*\}\)/
     )
     expect(serverSource).toMatch(
       /import\(\s*"\.\.\/content\/landing-v2-review-state\.server"\s*\)/
     )
+    expect(serverSource).toContain("return buildContentReviewPageDto()")
+    expect(serverSource).not.toContain("buildContentReviewAnnotatedPageDto")
     expect(serverSource).not.toMatch(
       /^import .*landing-v2-review-state\.server/m
     )

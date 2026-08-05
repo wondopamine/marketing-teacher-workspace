@@ -47,9 +47,9 @@ const reviewHtmlLower = reviewHtml.toLowerCase()
 assert(
   countMatches(reviewHtml, /<title>/g) === 1 &&
     reviewHtml.includes(
-      "<title>Teacher Workspace content review — Draft</title>"
+      "<title>Teacher Workspace landing wireframe — Draft</title>"
     ),
-  "The content-review route did not resolve exactly one draft title."
+  "The content-review route did not resolve exactly one wireframe draft title."
 )
 assert(
   countMatches(reviewHtml, /<meta name="description"/g) === 1,
@@ -57,15 +57,14 @@ assert(
 )
 assert(
   countMatches(reviewHtml, /<meta name="robots"/g) === 1 &&
-    reviewHtml.includes(
-      '<meta name="robots" content="noindex, nofollow"/>'
-    ),
+    reviewHtml.includes('<meta name="robots" content="noindex, nofollow"/>'),
   "The content-review route is missing its noindex, nofollow policy."
 )
 assert(
   countMatches(reviewHtml, /<main\b/g) === 1 &&
     countMatches(reviewHtml, /<h1\b/g) === 1 &&
-    reviewHtml.includes('<main id="main"'),
+    reviewHtml.includes('<main id="main"') &&
+    reviewHtml.includes("See the progress worth building on."),
   "The content-review route does not render one main landmark and one H1."
 )
 assert(
@@ -85,6 +84,22 @@ const prohibitedReviewOutput = [
   "contentid",
   "reviewedsnapshot",
   "evidencereference",
+  "reviewreference",
+  "contentkind",
+  "itemsnapshot",
+  "iaordersnapshot",
+  "storysnapshot",
+  "artifactreview",
+  "concerns",
+  "prohibiteddata",
+  "v2-sha256",
+  "tw-",
+  "requiredreviewers",
+  "remainingreviewers",
+  "sourcelabel",
+  "blockers",
+  "teacher.digital.moe.gov.sg",
+  "teacherworkspace-feedback",
   "contextual-intelligence",
   "hey-talia",
   "xingyu",

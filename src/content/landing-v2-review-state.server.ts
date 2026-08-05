@@ -31,13 +31,16 @@ import type {
 } from "./landing-v2-review.server"
 import type { LandingPageV2ReadinessIssue } from "./landing-v2-readiness"
 import type {
+  ContentReviewAnnotatedPageDto,
+  ContentReviewAnnotatedReadyPageDto,
   ContentReviewAppendixDto,
   ContentReviewContextDto,
   ContentReviewEntryDto,
+  ContentReviewErrorPageDto,
   ContentReviewPageDto,
-  ContentReviewReadyPageDto,
   ContentReviewSectionDto,
   ContentReviewStatus,
+  ContentReviewWireframeEntryDto,
   ReviewDraftEntryDto,
   ReviewDraftProjectionDto,
   ReviewReference,
@@ -706,26 +709,13 @@ function artifactContext(
   return reviewContext(artifact, snapshot, false, state)
 }
 
-function errorDto(issueCodes: ReadonlyArray<string>): ContentReviewPageDto {
-  return {
-    kind: "error",
-    code: "CONTENT_REVIEW_INVALID",
-    buildSnapshot: createReviewSnapshot({
-      code: "CONTENT_REVIEW_INVALID",
-      issueCodes,
-    }),
-    feedback: {
-      label: landingPageV2Content.footer.feedbackLabel,
-      href: landingPageV2Content.footer.feedbackHref,
-      note: null,
-      purpose: "feedback",
-    },
-  }
+function errorDto(): ContentReviewErrorPageDto {
+  return { kind: "error" }
 }
 
-export function buildContentReviewPageDto(
+export function buildContentReviewAnnotatedPageDto(
   options: ContentReviewStateBuildOptions = {}
-): ContentReviewPageDto {
+): ContentReviewAnnotatedPageDto {
   const content = options.content ?? landingPageV2Content
   const publication = options.publication ?? landingPageV2Publication
   const manifest = options.manifest ?? contentReviewManifest
@@ -739,10 +729,7 @@ export function buildContentReviewPageDto(
     !readiness.review.projection ||
     !readiness.review.snapshots
   ) {
-    return errorDto([
-      ...landingStructureErrors.map((item) => item.code),
-      ...readiness.review.errors.map((item) => item.code),
-    ])
+    return errorDto()
   }
 
   const projection = readiness.review.projection
@@ -756,12 +743,12 @@ export function buildContentReviewPageDto(
   const metadataManifest = manifestByReference.get(
     projection.metadata.reviewReference
   )
-  if (!metadataManifest) return errorDto(["metadata-manifest-missing"])
+  if (!metadataManifest) return errorDto()
 
   const sections: Array<ContentReviewSectionDto> = []
   for (const section of projection.sections) {
     const sectionManifest = manifestByReference.get(section.reviewReference)
-    if (!sectionManifest) return errorDto(["section-manifest-missing"])
+    if (!sectionManifest) return errorDto()
     sections.push({
       kind: section.kind,
       review: reviewContext(
@@ -782,10 +769,10 @@ export function buildContentReviewPageDto(
   const iaOrderArtifact = artifactByReference.get("TW-IA-ORDER")
   const composedStoryArtifact = artifactByReference.get("TW-STORY-COMPOSED")
   if (!iaOrderArtifact || !composedStoryArtifact) {
-    return errorDto(["artifact-manifest-missing"])
+    return errorDto()
   }
 
-  const dto: ContentReviewReadyPageDto = {
+  const dto: ContentReviewAnnotatedReadyPageDto = {
     kind: "ready",
     artifactLabel: "Internal content review — not approved for publication",
     warning:
@@ -819,4 +806,58 @@ export function buildContentReviewPageDto(
   }
 
   return dto
+}
+
+function buildWireframeEntry(
+  entry: ContentReviewEntryDto
+): ContentReviewWireframeEntryDto {
+  if (entry.kind === "decision") {
+    return {
+      kind: "decision",
+      reviewLabel: entry.reviewLabel,
+    }
+  }
+
+  return {
+    kind: "content",
+    capabilityLabel: entry.capabilityLabel,
+    label: entry.label,
+    heading: entry.heading,
+    body: entry.body,
+    action: entry.link
+      ? {
+          label: entry.link.label,
+          note: entry.link.note,
+          purpose: entry.link.purpose,
+        }
+      : null,
+  }
+}
+
+export function buildContentReviewPageDto(
+  options: ContentReviewStateBuildOptions = {}
+): ContentReviewPageDto {
+  const review = buildContentReviewAnnotatedPageDto(options)
+  if (review.kind === "error") return review
+
+  return {
+    kind: "ready",
+    artifactLabel: "Landing-page wireframe — not approved for publication",
+    warning: review.warning,
+    metadata: {
+      heading: review.metadata.heading ?? "Teacher Workspace",
+      body: review.metadata.body,
+      status: review.metadata.review.status,
+    },
+    sections: review.sections.map((section) => ({
+      kind: section.kind,
+      entries: section.entries.map(buildWireframeEntry),
+    })),
+    appendix: {
+      ...review.appendix,
+      syntheticData: {
+        rule: review.appendix.syntheticData.rule,
+      },
+    },
+  }
 }

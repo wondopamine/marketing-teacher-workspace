@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  buildContentReviewAnnotatedPageDto,
   buildContentReviewPageDto,
   createReviewSnapshot,
   deriveContentReviewStatus,
@@ -17,6 +18,23 @@ import {
 import { getLandingPageV2Readiness } from "./landing-v2-readiness"
 import { landingPageV2Content, landingPageV2Publication } from "./landing-v2"
 import type { ContentReviewReviewerRole } from "./landing-v2-review.server"
+
+function collectObjectKeys(
+  value: unknown,
+  keys = new Set<string>()
+): Set<string> {
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectObjectKeys(item, keys))
+    return keys
+  }
+  if (!value || typeof value !== "object") return keys
+
+  for (const [key, item] of Object.entries(value)) {
+    keys.add(key)
+    collectObjectKeys(item, keys)
+  }
+  return keys
+}
 
 describe("Landing Page v2 revision-aware review state", () => {
   it("normalises content deterministically without binding review metadata", () => {
@@ -77,10 +95,7 @@ describe("Landing Page v2 revision-aware review state", () => {
         reviewerRequirement: "confirmed",
         requiredReviewers: ["Xingyu (PM)"],
         records: [
-          reviewed(
-            "Xingyu (PM)",
-            createReviewSnapshot({ copy: "Old" })
-          ),
+          reviewed("Xingyu (PM)", createReviewSnapshot({ copy: "Old" })),
         ],
       }).status
     ).toBe("reconfirmation-required")
@@ -321,7 +336,7 @@ describe("Landing Page v2 revision-aware review state", () => {
   })
 
   it("uses validated aggregate records for current and stale artifact states", () => {
-    const initial = buildContentReviewPageDto()
+    const initial = buildContentReviewAnnotatedPageDto()
     expect(initial.kind).toBe("ready")
     if (initial.kind !== "ready") return
 
@@ -344,7 +359,7 @@ describe("Landing Page v2 revision-aware review state", () => {
       },
     ]
 
-    const dto = buildContentReviewPageDto({
+    const dto = buildContentReviewAnnotatedPageDto({
       artifactRecords: {
         "TW-IA-ORDER": records(initial.iaOrderSnapshot),
         "TW-STORY-COMPOSED": records(
@@ -453,8 +468,8 @@ describe("Landing Page v2 revision-aware review state", () => {
     ).toBe("reconfirmation-required")
   })
 
-  it("builds a public-safe DTO with annotations and aggregate governance only", () => {
-    const dto = buildContentReviewPageDto()
+  it("builds the internal annotated DTO used to derive review state", () => {
+    const dto = buildContentReviewAnnotatedPageDto()
 
     expect(dto.kind).toBe("ready")
     if (dto.kind !== "ready") return
@@ -484,6 +499,65 @@ describe("Landing Page v2 revision-aware review state", () => {
       expect(serialised).not.toContain(prohibitedValue)
     }
     expect(serialised).toContain("product manager")
+  })
+
+  it("projects a minimal wireframe DTO without review identifiers, snapshots, or destinations", () => {
+    const dto = buildContentReviewPageDto()
+
+    expect(dto.kind).toBe("ready")
+    if (dto.kind !== "ready") return
+
+    expect(dto.sections).toHaveLength(10)
+    expect(dto.metadata.status).toBe("decision-required")
+    expect(dto.appendix.proof.missingCapabilityLabels).toEqual([
+      "Student Insights",
+      "Message drafting",
+      "Posts",
+    ])
+
+    const keys = collectObjectKeys(dto)
+    for (const prohibitedKey of [
+      "reviewReference",
+      "contentKind",
+      "review",
+      "link",
+      "href",
+      "snapshot",
+      "owner",
+      "requiredReviewers",
+      "remainingReviewers",
+      "concerns",
+      "sourceLabel",
+      "blockers",
+      "itemSnapshot",
+      "iaOrderSnapshot",
+      "storySnapshot",
+      "artifactReview",
+      "prohibitedData",
+    ]) {
+      expect(keys).not.toContain(prohibitedKey)
+    }
+
+    const serialised = JSON.stringify(dto).toLowerCase()
+    for (const prohibitedValue of [
+      "reviewreference",
+      "contentkind",
+      "itemsnapshot",
+      "iaordersnapshot",
+      "storysnapshot",
+      "artifactreview",
+      "v2-sha256",
+      "tw-",
+      "requiredreviewers",
+      "remainingreviewers",
+      "sourcelabel",
+      "blockers",
+      '"href"',
+      "teacher.digital.moe.gov.sg",
+      "go.gov.sg/teacherworkspace-feedback",
+    ]) {
+      expect(serialised).not.toContain(prohibitedValue)
+    }
   })
 
   it("builds appendix summaries from the requested content and publication", () => {
@@ -529,19 +603,11 @@ describe("Landing Page v2 revision-aware review state", () => {
 
   it("returns only the safe error contract when structure validation fails", () => {
     const invalidManifest = contentReviewManifest.slice(1)
-    const dto = buildContentReviewPageDto({ manifest: invalidManifest })
-
-    expect(dto).toEqual({
-      kind: "error",
-      code: "CONTENT_REVIEW_INVALID",
-      buildSnapshot: expect.stringMatching(/^v2-sha256-[a-f0-9]{16}$/),
-      feedback: {
-        label: "Send feedback",
-        href: landingPageV2Content.footer.feedbackHref,
-        note: null,
-        purpose: "feedback",
-      },
+    const dto = buildContentReviewPageDto({
+      manifest: invalidManifest,
     })
+
+    expect(dto).toEqual({ kind: "error" })
   })
 
   it("fails closed for landing structure errors outside the review projection", () => {
@@ -557,7 +623,7 @@ describe("Landing Page v2 revision-aware review state", () => {
   })
 
   it("fails unknown reviewer requirements closed without inventing owners", () => {
-    const dto = buildContentReviewPageDto({
+    const dto = buildContentReviewAnnotatedPageDto({
       registry: createContentReviewRegistry(),
     })
 

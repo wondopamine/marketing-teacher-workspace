@@ -27,6 +27,18 @@ const routeProhibitedValues = [
   ["superseded bursary story", "bursary"],
   ["internal capability id", "contextual-intelligence"],
   ["internal agent id", "hey-talia"],
+  ["raw review reference field", "reviewreference"],
+  ["raw content-kind field", "contentkind"],
+  ["raw item snapshot field", "itemsnapshot"],
+  ["raw IA snapshot field", "iaordersnapshot"],
+  ["raw story snapshot field", "storysnapshot"],
+  ["raw artifact-review field", "artifactreview"],
+  ["raw review-concern field", "concerns"],
+  ["unused synthetic-data field", "prohibiteddata"],
+  ["raw snapshot value", "v2-sha256"],
+  ["raw review reference", "tw-"],
+  ["unused product destination", "teacher.digital.moe.gov.sg"],
+  ["unused feedback destination", "teacherworkspace-feedback"],
 ]
 
 function publicFiles(directory) {
@@ -49,9 +61,7 @@ function scan(outputDirectory, paths, prohibitedValues) {
 }
 
 export function verifyContentReviewPublicOutput(
-  outputDirectory = fileURLToPath(
-    new URL("../.output/public", import.meta.url)
-  )
+  outputDirectory = fileURLToPath(new URL("../.output/public", import.meta.url))
 ) {
   if (!existsSync(outputDirectory)) {
     throw new Error(

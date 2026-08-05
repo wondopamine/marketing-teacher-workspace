@@ -132,7 +132,7 @@ export type ContentReviewAppendixDto = {
   }
 }
 
-export type ContentReviewReadyPageDto = {
+export type ContentReviewAnnotatedReadyPageDto = {
   readonly kind: "ready"
   readonly artifactLabel: string
   readonly warning: string
@@ -152,11 +152,61 @@ export type ContentReviewReadyPageDto = {
 
 export type ContentReviewErrorPageDto = {
   readonly kind: "error"
-  readonly code: "CONTENT_REVIEW_INVALID"
-  readonly buildSnapshot: string
-  readonly feedback: ContentReviewLinkDto
 }
 
-export type ContentReviewPageDto =
-  | ContentReviewReadyPageDto
+export type ContentReviewAnnotatedPageDto =
+  | ContentReviewAnnotatedReadyPageDto
   | ContentReviewErrorPageDto
+
+export type ContentReviewWireframeActionDto = Omit<ContentReviewLinkDto, "href">
+
+export type ContentReviewWireframeContentEntryDto = {
+  readonly kind: "content"
+  readonly capabilityLabel?: string | null
+  readonly label: string | null
+  readonly heading: string | null
+  readonly body: ReadonlyArray<string>
+  readonly action: ContentReviewWireframeActionDto | null
+}
+
+export type ContentReviewWireframeDecisionEntryDto = {
+  readonly kind: "decision"
+  readonly reviewLabel: string
+}
+
+export type ContentReviewWireframeEntryDto =
+  | ContentReviewWireframeContentEntryDto
+  | ContentReviewWireframeDecisionEntryDto
+
+export type ContentReviewWireframeSectionDto = {
+  readonly kind: ContentReviewSectionKind
+  readonly entries: ReadonlyArray<ContentReviewWireframeEntryDto>
+}
+
+export type ContentReviewWireframeAppendixDto = Omit<
+  ContentReviewAppendixDto,
+  "syntheticData"
+> & {
+  readonly syntheticData: {
+    readonly rule: string
+  }
+}
+
+export type ContentReviewWireframeReadyPageDto = {
+  readonly kind: "ready"
+  readonly artifactLabel: string
+  readonly warning: string
+  readonly metadata: {
+    readonly heading: string
+    readonly body: ReadonlyArray<string>
+    readonly status: ContentReviewStatus
+  }
+  readonly sections: ReadonlyArray<ContentReviewWireframeSectionDto>
+  readonly appendix: ContentReviewWireframeAppendixDto
+}
+
+export type ContentReviewWireframePageDto =
+  | ContentReviewWireframeReadyPageDto
+  | ContentReviewErrorPageDto
+
+export type ContentReviewPageDto = ContentReviewWireframePageDto

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
+import "@fontsource-variable/inter"
 
 import { ContentReviewPage } from "@/components/content-review/content-review-page"
 import { getContentReviewPageData } from "@/server/content-review"
@@ -7,11 +8,11 @@ export const Route = createFileRoute("/content-review")({
   loader: () => getContentReviewPageData(),
   head: () => ({
     meta: [
-      { title: "Teacher Workspace content review — Draft" },
+      { title: "Teacher Workspace landing wireframe — Draft" },
       {
         name: "description",
         content:
-          "Review the draft information architecture and content for Teacher Workspace.",
+          "Review the proposed Teacher Workspace landing-page structure and content.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],

@@ -21,11 +21,11 @@ function getHead() {
 describe("content-review route metadata", () => {
   it("labels the page as a draft and keeps it out of search indexes", () => {
     expect(getHead()?.meta).toEqual([
-      { title: "Teacher Workspace content review — Draft" },
+      { title: "Teacher Workspace landing wireframe — Draft" },
       {
         name: "description",
         content:
-          "Review the draft information architecture and content for Teacher Workspace.",
+          "Review the proposed Teacher Workspace landing-page structure and content.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ])

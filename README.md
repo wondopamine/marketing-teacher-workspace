@@ -14,11 +14,13 @@ pnpm dev
 
 The local site runs at `http://127.0.0.1:3000/`.
 
-The current public landing page remains at `/`. The content-first Landing V2
-review artifact is available directly at `/content-review`; it is intentionally
-unlinked, unthemed, unauthenticated, and marked `noindex, nofollow`. It contains
-public-safe draft material only and is not publication approval or access
-control.
+The current public landing page remains at `/`. A PM-facing Landing V2
+wireframe is available directly at `/content-review`; it is intentionally
+unlinked, greyscale, static, unauthenticated, and marked `noindex, nofollow`.
+It presents the actual canonical public-safe draft copy in a landing-page flow,
+keeps unresolved content explicit, and contains no live CTAs, product
+interaction, or media. It is a communication artifact, not publication
+approval, a final visual direction, or access control.
 
 ## Verification
 
@@ -48,11 +50,13 @@ isolation. The same core checks run in `.github/workflows/ci.yml`.
   registry and public-copy projection.
 - `src/content/landing-v2-review-state.server.ts` binds review state to item,
   IA-order, and composed-story snapshots, composes server-side review
-  readiness, and produces the public-safe page DTO.
-- `src/components/content-review/` renders the neutral semantic review
-  document; its presentation is disposable and is not a visual direction.
-- `src/server/content-review.ts` is the only route-facing RPC boundary for the
-  review DTO.
+  readiness, then projects a minimal wireframe DTO with references, snapshots,
+  and unused destinations removed.
+- `src/components/content-review/` renders the share-safe, greyscale, static
+  landing-page wireframe for PM review; its presentation is disposable and is
+  not a final visual direction.
+- `src/server/content-review.ts` is the only route-facing RPC boundary and
+  returns only the minimal wireframe DTO.
 - `src/config/site.ts` centralises product, feedback, support, and source links.
 - `docs/landing-page-v2-foundations.md` explains the v2 handoff and why no
   backend or analytics integration exists without a product/governance

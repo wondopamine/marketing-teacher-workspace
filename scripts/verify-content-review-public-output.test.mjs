@@ -1,9 +1,4 @@
-import {
-  mkdirSync,
-  mkdtempSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import { afterEach, describe, expect, it } from "vitest"
@@ -91,6 +86,40 @@ describe("verifyContentReviewPublicOutput", () => {
     expect(() => verifyContentReviewPublicOutput(output)).toThrowError(
       "Known prohibited value found in public build output:\n" +
         "internal person name: assets/content-review-route.js"
+    )
+  })
+
+  it("fails when a content-review chunk contains internal hydration fields", () => {
+    const output = makeOutput({
+      "assets/content-review-route.js": '"itemSnapshot":"v2-sha256-deadbeef"',
+      "index.html": "clean public page",
+    })
+
+    expect(() => verifyContentReviewPublicOutput(output)).toThrowError(
+      "raw item snapshot field: assets/content-review-route.js"
+    )
+  })
+
+  it("fails when a content-review chunk contains an unused product destination", () => {
+    const output = makeOutput({
+      "assets/content-review-route.js": "https://teacher.digital.moe.gov.sg",
+      "index.html": "clean public page",
+    })
+
+    expect(() => verifyContentReviewPublicOutput(output)).toThrowError(
+      "unused product destination: assets/content-review-route.js"
+    )
+  })
+
+  it("fails when a content-review chunk contains an unused feedback destination", () => {
+    const output = makeOutput({
+      "assets/content-review-route.js":
+        "https://go.gov.sg/teacherworkspace-feedback",
+      "index.html": "clean public page",
+    })
+
+    expect(() => verifyContentReviewPublicOutput(output)).toThrowError(
+      "unused feedback destination: assets/content-review-route.js"
     )
   })
 })
