@@ -79,6 +79,13 @@ assert(
     !reviewHtmlLower.includes('rel="preload"'),
   "The content-review route published canonical, social-image, or preload metadata."
 )
+assert(
+  countMatches(reviewHtml, /data-interface-description/g) === 9 &&
+    countMatches(reviewHtml, /data-wireframe-placeholder/g) === 0 &&
+    reviewHtml.includes("Positive student profile") &&
+    reviewHtml.includes("Positive growth · Growing confidence tag"),
+  "The content-review route lost its complete set of descriptive interface briefs."
+)
 
 const prohibitedReviewOutput = [
   "contentid",
@@ -104,6 +111,7 @@ const prohibitedReviewOutput = [
   "hey-talia",
   "xingyu",
   "bursary",
+  "swan",
 ]
 for (const value of prohibitedReviewOutput) {
   assert(

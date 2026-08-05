@@ -534,6 +534,8 @@ describe("Landing Page v2 revision-aware review state", () => {
       "storySnapshot",
       "artifactReview",
       "prohibitedData",
+      "interfaceDescription",
+      "interfaceBrief",
     ]) {
       expect(keys).not.toContain(prohibitedKey)
     }
@@ -555,6 +557,8 @@ describe("Landing Page v2 revision-aware review state", () => {
       '"href"',
       "teacher.digital.moe.gov.sg",
       "go.gov.sg/teacherworkspace-feedback",
+      "connected positive-growth view",
+      "positive student profile",
     ]) {
       expect(serialised).not.toContain(prohibitedValue)
     }

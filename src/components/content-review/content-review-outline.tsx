@@ -1,3 +1,5 @@
+import { contentReviewInterfaceDescriptions } from "./content-review-interface-descriptions"
+import type { ContentReviewInterfaceDescription } from "./content-review-interface-descriptions"
 import type {
   ContentReviewWireframeAppendixDto,
   ContentReviewWireframeEntryDto,
@@ -66,43 +68,77 @@ function PendingSlot({ label }: { label: string }) {
   )
 }
 
-function ProductFrame({ label }: { label: string }) {
+function InterfaceDescription({
+  className = "border border-border bg-background p-5",
+  description,
+  headingLevel,
+  location,
+}: {
+  className?: string
+  description: ContentReviewInterfaceDescription
+  headingLevel: 2 | 4
+  location: string
+}) {
+  const Heading = headingLevel === 2 ? "h2" : "h4"
+
   return (
     <div
-      aria-hidden="true"
-      className="border-2 border-foreground/30 bg-background p-3"
-      data-wireframe-placeholder="product-view"
+      className={className}
+      data-interface-description
+      data-wireframe-interface={location}
     >
-      <div className="flex items-center justify-between border-b border-border pb-3">
+      <p className="text-xs font-medium tracking-[0.08em] text-muted-foreground">
+        Proposed interface
+      </p>
+      <Heading className="mt-3 font-heading text-lg leading-snug font-semibold">
+        {description.heading}
+      </Heading>
+      <p className="mt-3 max-w-[72ch] text-sm leading-[1.5] text-muted-foreground">
+        {description.body}
+      </p>
+      <ul className="mt-4 max-w-[72ch] border-t border-border pt-2 text-sm text-foreground">
+        {description.keyElements.map((element) => (
+          <li
+            className="border-b border-border py-2 last:border-b-0"
+            key={element}
+          >
+            {element}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function ProductFrame({
+  description,
+}: {
+  description: ContentReviewInterfaceDescription
+}) {
+  return (
+    <div
+      className="border-2 border-foreground/30 bg-background p-3"
+      data-wireframe-interface-frame="product-view"
+    >
+      <div
+        aria-hidden="true"
+        className="flex items-center justify-between border-b border-border pb-3"
+      >
         <div className="flex gap-1.5">
           <span className="size-2.5 rounded-full bg-muted-foreground/50" />
           <span className="size-2.5 rounded-full bg-muted-foreground/30" />
           <span className="size-2.5 rounded-full bg-muted-foreground/30" />
         </div>
         <span className="text-xs tracking-[0.12em] text-muted-foreground">
-          {label}
+          Teacher Workspace
         </span>
       </div>
-      <div className="grid min-h-64 grid-cols-[4.5rem_1fr] gap-4 pt-4 sm:min-h-72 sm:grid-cols-[6rem_1fr]">
-        <div className="space-y-3 border-r border-border pr-3">
-          <div className="h-3 w-10 bg-muted-foreground/30" />
-          <div className="h-3 w-12 bg-border" />
-          <div className="h-3 w-8 bg-border" />
-          <div className="h-3 w-11 bg-border" />
-        </div>
-        <div className="space-y-4">
-          <div className="h-6 w-2/3 bg-muted-foreground/30" />
-          <div className="grid grid-cols-2 gap-3">
-            <div className="h-20 border border-border bg-background" />
-            <div className="h-20 border border-border bg-background" />
-          </div>
-          <div className="space-y-2 border border-border bg-background p-3">
-            <div className="h-3 w-full bg-border" />
-            <div className="h-3 w-5/6 bg-border" />
-            <div className="h-3 w-2/3 bg-border" />
-          </div>
-        </div>
-      </div>
+      <InterfaceDescription
+        className="pt-5"
+        description={description}
+        headingLevel={2}
+        location="hero-product-view"
+      />
     </div>
   )
 }
@@ -121,7 +157,7 @@ function HeroSection({
   return (
     <section
       aria-labelledby="wireframe-hero-heading"
-      className="grid gap-12 border-b border-border px-6 py-16 md:grid-cols-[minmax(0,0.9fr)_minmax(24rem,1.1fr)] md:items-center md:px-10 md:py-24 lg:px-16"
+      className="grid gap-12 border-b border-border px-6 py-16 md:px-10 md:py-24 lg:grid-cols-[minmax(0,0.9fr)_minmax(24rem,1.1fr)] lg:items-center lg:px-16"
       data-wireframe-section={section.kind}
     >
       <div>
@@ -143,7 +179,7 @@ function HeroSection({
         <InertAction entry={action} />
       </div>
 
-      <ProductFrame label="Product view placeholder" />
+      <ProductFrame description={contentReviewInterfaceDescriptions.hero} />
     </section>
   )
 }
@@ -178,7 +214,7 @@ function ConnectedStorySection({
       <ol className="mt-12 border-t border-border">
         {entries.map((entry, index) => (
           <li
-            className="grid gap-8 border-b border-border py-10 md:grid-cols-[4rem_minmax(0,1fr)_minmax(15rem,0.75fr)] md:items-start"
+            className="grid gap-8 border-b border-border py-10 lg:grid-cols-[4rem_minmax(0,1fr)_minmax(18rem,0.9fr)] lg:items-start"
             key={entry.heading ?? entry.label ?? `story-${index}`}
           >
             <p className="text-[32px] font-normal text-muted-foreground tabular-nums">
@@ -210,18 +246,11 @@ function ConnectedStorySection({
                 </p>
               ) : null}
             </div>
-            <div
-              aria-hidden="true"
-              className="border border-border p-4"
-              data-wireframe-placeholder="story-screen"
-            >
-              <div className="h-4 w-1/3 bg-muted-foreground/30" />
-              <div className="mt-5 space-y-2">
-                <div className="h-3 w-full bg-border" />
-                <div className="h-3 w-5/6 bg-border" />
-              </div>
-              <div className="mt-7 h-16 border border-border bg-background" />
-            </div>
+            <InterfaceDescription
+              description={contentReviewInterfaceDescriptions.story[index]}
+              headingLevel={4}
+              location={`story-step-${index + 1}`}
+            />
           </li>
         ))}
       </ol>
@@ -306,9 +335,9 @@ function CapabilitiesSection({
         </h2>
       </div>
 
-      <div className="mt-12 border-t border-foreground/30">
+      <ol className="mt-12 border-t border-foreground/30">
         {entries.map((entry, index) => (
-          <div
+          <li
             className="grid gap-5 border-b border-border py-8 md:grid-cols-[3rem_minmax(10rem,0.55fr)_minmax(0,1.45fr)]"
             key={entry.label ?? entry.heading ?? `capability-${index}`}
           >
@@ -324,16 +353,16 @@ function CapabilitiesSection({
               ) : null}
               {entry.body.map((paragraph) => (
                 <p
-                  className="mt-3 leading-6 text-muted-foreground"
+                  className="mt-3 max-w-[72ch] leading-6 text-muted-foreground"
                   key={paragraph}
                 >
                   {paragraph}
                 </p>
               ))}
             </div>
-          </div>
+          </li>
         ))}
-      </div>
+      </ol>
     </section>
   )
 }
@@ -362,16 +391,16 @@ function ExplorerSection({
         >
           Explore the flow in three steps
         </h2>
-        <p className="mt-4 leading-6 text-muted-foreground">
+        <p className="mt-4 max-w-[72ch] leading-6 text-muted-foreground">
           This wireframe shows the sequence only. It is not an interactive
           product demo.
         </p>
       </div>
 
-      <ol className="mt-12 border-2 border-foreground/30 bg-background md:grid md:grid-cols-3">
+      <ol className="mt-12 border-2 border-foreground/30 bg-background lg:grid lg:grid-cols-3">
         {entries.map((entry, index) => (
           <li
-            className="border-b border-border p-6 last:border-b-0 md:border-r md:border-b-0 md:last:border-r-0 lg:p-8"
+            className="border-b border-border p-6 last:border-b-0 lg:border-r lg:border-b-0 lg:p-8 lg:last:border-r-0"
             key={entry.heading ?? entry.label ?? `explorer-${index}`}
           >
             <p className="text-sm font-medium text-muted-foreground">
@@ -395,14 +424,12 @@ function ExplorerSection({
                 {paragraph}
               </p>
             ))}
-            <div
-              aria-hidden="true"
+            <InterfaceDescription
               className="mt-8 border-t border-border pt-5"
-              data-wireframe-placeholder="explorer-screen"
-            >
-              <div className="h-24 border border-border bg-background" />
-              <div className="mt-3 h-3 w-2/3 bg-border" />
-            </div>
+              description={contentReviewInterfaceDescriptions.explorer[index]}
+              headingLevel={4}
+              location={`explorer-step-${index + 1}`}
+            />
           </li>
         ))}
       </ol>
@@ -438,9 +465,9 @@ function AudiencesSection({
         </h2>
       </div>
 
-      <div className="mt-12 border-y border-foreground/30 md:grid md:grid-cols-3">
+      <ul className="mt-12 border-y border-foreground/30 md:grid md:grid-cols-3">
         {content.map((entry) => (
-          <div
+          <li
             className="border-b border-border py-7 last:border-b-0 md:border-r md:border-b-0 md:px-6 md:first:pl-0 md:last:border-r-0 md:last:pr-0"
             key={entry.label ?? entry.heading}
           >
@@ -450,37 +477,28 @@ function AudiencesSection({
             {entry.heading ? <p className="mt-4">{entry.heading}</p> : null}
             {entry.body.map((paragraph) => (
               <p
-                className="mt-3 leading-6 text-muted-foreground"
+                className="mt-3 max-w-[72ch] leading-6 text-muted-foreground"
                 key={paragraph}
               >
                 {paragraph}
               </p>
             ))}
-          </div>
+          </li>
         ))}
         {decisions.map((entry) => (
-          <div
+          <li
             className="border-b border-border py-7 last:border-b-0 md:border-r md:border-b-0 md:px-6 md:first:pl-0 md:last:border-r-0 md:last:pr-0"
             key={entry.reviewLabel}
           >
             <h3 className="font-heading text-xl font-semibold">
               {audienceLabel(entry.reviewLabel)}
             </h3>
-            <p className="mt-4 text-sm font-medium text-muted-foreground">
-              Audience-specific copy pending
+            <p className="mt-4 max-w-[72ch] text-sm leading-[1.5] text-muted-foreground">
+              PM to confirm the question and approved answer for this audience.
             </p>
-            <div
-              aria-hidden="true"
-              className="mt-5 space-y-2"
-              data-wireframe-placeholder="audience-copy"
-            >
-              <div className="h-3 w-full bg-border" />
-              <div className="h-3 w-4/5 bg-border" />
-              <div className="h-3 w-2/3 bg-border" />
-            </div>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   )
 }

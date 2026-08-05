@@ -36,9 +36,20 @@ describe("ContentReviewPage", () => {
     expect(within(main).queryByRole("complementary")).toBeNull()
     expect(screen.queryAllByRole("article")).toHaveLength(0)
     expect(container.querySelectorAll("img, video, canvas")).toHaveLength(0)
+    const interfaceDescriptions = Array.from(
+      container.querySelectorAll("[data-interface-description]")
+    )
+    expect(interfaceDescriptions).toHaveLength(9)
     expect(
-      container.querySelectorAll("[data-wireframe-placeholder]").length
-    ).toBeGreaterThan(0)
+      interfaceDescriptions.every(
+        (description) =>
+          description.getAttribute("aria-hidden") === null &&
+          description.textContent.trim().length > 0
+      )
+    ).toBe(true)
+    expect(
+      container.querySelectorAll("[data-wireframe-placeholder]")
+    ).toHaveLength(0)
     expect(container.querySelector("[data-wireframe-appendix]")).not.toBeNull()
 
     const levels = Array.from(container.querySelectorAll("h1, h2, h3, h4")).map(
@@ -88,23 +99,65 @@ describe("ContentReviewPage", () => {
     expect(screen.queryAllByRole("combobox")).toHaveLength(0)
     expect(screen.queryAllByRole("dialog")).toHaveLength(0)
 
-    expect(
-      screen.getByRole("heading", { name: "Form Teachers" })
-    ).not.toBeNull()
+    const capabilities = screen
+      .getByRole("heading", {
+        name: "What Teacher Workspace brings together",
+      })
+      .closest("section")
+    expect(capabilities?.querySelectorAll("ol > li")).toHaveLength(4)
+
+    const formTeachers = screen.getByRole("heading", {
+      name: "Form Teachers",
+    })
+    const audiences = formTeachers.closest("section")
+    expect(formTeachers).not.toBeNull()
+    expect(audiences?.querySelectorAll("ul > li")).toHaveLength(3)
     expect(
       screen.getByRole("heading", { name: "Key Personnel" })
     ).not.toBeNull()
     expect(
       screen.getByRole("heading", { name: "School Leaders" })
     ).not.toBeNull()
-    expect(screen.getAllByText("Audience-specific copy pending")).toHaveLength(
-      3
-    )
+    expect(
+      screen.getAllByText(
+        "PM to confirm the question and approved answer for this audience."
+      )
+    ).toHaveLength(3)
     expect(
       screen.getByText("Proof copy and testimonial permission")
     ).not.toBeNull()
     expect(screen.getByText("Public support route")).not.toBeNull()
     expect(screen.getByText("Placement to confirm")).not.toBeNull()
+  })
+
+  it("describes every proposed interface with a synthetic positive-growth story", () => {
+    const data = buildReadyReviewPage()
+
+    const { container } = render(<ContentReviewPage data={data} />)
+    const descriptions = Array.from(
+      container.querySelectorAll("[data-interface-description]")
+    )
+
+    expect(descriptions).toHaveLength(9)
+    expect(
+      descriptions.every(
+        (description) =>
+          description.querySelector("h2, h4") &&
+          description.querySelectorAll("ul > li").length === 3
+      )
+    ).toBe(true)
+    expect(
+      screen.getByRole("heading", { name: "Positive student profile" })
+    ).not.toBeNull()
+    expect(
+      screen.getAllByText("Positive growth · Growing confidence tag")
+    ).toHaveLength(2)
+    expect(
+      screen.getByText(
+        "Help teachers recognise a student’s progress at a glance. Use a synthetic student from the general class list, highlight the positive-growth tag, and show no additional-needs or attention tag."
+      )
+    ).not.toBeNull()
+    expect(JSON.stringify(data).toLowerCase()).not.toContain("swan")
   })
 
   it("shows two inert product actions and feedback without redundant UI captions", () => {

@@ -89,6 +89,17 @@ describe("verifyContentReviewPublicOutput", () => {
     )
   })
 
+  it("fails when a content-review chunk labels the synthetic student with a support classification", () => {
+    const output = makeOutput({
+      "assets/content-review-route.js": "SwAN",
+      "index.html": "clean public page",
+    })
+
+    expect(() => verifyContentReviewPublicOutput(output)).toThrowError(
+      "student-support classification: assets/content-review-route.js"
+    )
+  })
+
   it("fails when a content-review chunk contains internal hydration fields", () => {
     const output = makeOutput({
       "assets/content-review-route.js": '"itemSnapshot":"v2-sha256-deadbeef"',

@@ -59,7 +59,181 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
 - **Approved by:** Designer and workspace owner
 - **Approved on:** 2026-08-05 — “ok let's do it now. I consider this wireframe as a comm tool for PMs”
 
+## Scoped amendment — descriptive interface blocks
+
+- **Approved on:** 2026-08-05 — “For each interface blocks, plz include the description of what interface should be.”
+- **Intent:** Help PM, policy, and security reviewers understand which product screen, image, and interface elements each landing-page slot may show.
+- **Scope:** Replace the hero, five story, and three explorer ghosts with nine static interface briefs. Each brief names the screen, its purpose, and three concrete elements.
+- **Positive-story guardrail:** Use a synthetic student from the general class list. Lead with a positive-growth tag and show no additional-needs or attention tag.
+- **Audience decisions:** Remove the three audience skeletons. Keep a plain request for PM to confirm each question and approved answer.
+- **Boundary:** Store descriptions in a typed route-local map. Do not add them to the content registry, review snapshots, annotated DTO, browser DTO, or eventual public copy.
+- **Presentation:** Preserve the approved greyscale system, static behaviour, IA, CTA positions, pending decisions, and public-home isolation.
+- **Responsive structure:** Stack story and explorer briefs at 360 and 768 pixels. Use side-by-side story and three-step explorer layouts at 1280 pixels.
+- **Interaction and motion:** None. The route still has no route-local controls, async states, simulation, or motion.
+- **Controls pulled in:** A11Y-6, A11Y-7, CNT-2, CNT-3, CNT-4, CNT-6, CNT-7, SLP-9, LAY-2, LAY-4, LAY-5, LAY-6, and LAY-7.
+- **Waivers:** None.
+- **Tradeoff:** The page becomes longer because the interface intent is explicit. That cost is acceptable for a PM communication artifact.
+
+### Amendment grill
+
+- **Intent drift:** Resolved. Briefs explain proposed imagery without introducing actual visuals, branding, or interaction.
+- **Cheaper design:** Resolved. Route-local typed descriptions meet the need without widening the safe DTO or approval snapshot model.
+- **Control at risk:** CNT-4 and the public-output boundary carry the most risk. Synthetic wording, accessible visible descriptions, and SSR denylist checks cover both.
+- **Sensitive classification:** Resolved. The visible brief describes the absence of additional-needs or attention tags. The unauthenticated route denylist rejects the `SwAN` label.
+
 ## Verify verdict
+
+- **Screenshots:**
+  - `/private/tmp/tw-interface-brief-evidence/content-review-320.png` — 320 × 900 viewport; full page; document scroll width 320.
+  - `/private/tmp/tw-interface-brief-evidence/content-review-360.png` — 360 × 900 viewport; full page; document scroll width 360.
+  - `/private/tmp/tw-interface-brief-evidence/content-review-768.png` — 768 × 1024 viewport; full page; document scroll width 768.
+  - `/private/tmp/tw-interface-brief-evidence/content-review-1280.png` — 1280 × 900 viewport; full page; document scroll width 1280.
+  - `/private/tmp/tw-interface-brief-evidence/public-home-1280.png` — current public-home isolation check.
+- **Capture environment:** Production preview at `http://127.0.0.1:3003`; no development editing toolbar is present in the evidence.
+- **320-pixel reflow:** Document width and scroll width both resolve to 320 pixels. All nine briefs and the positive-growth tag remain present.
+- **Component inventory:** `ContentReviewPage` renders `ContentReviewOutline`, one hero `ProductFrame`, nine route-local `InterfaceDescription` blocks, and the unchanged reveal, capabilities, proof, access, close, footer, appendix, and error regions.
+- **Interaction inventory:** Zero route-local controls. Two inert CTA spans remain in separate hero and closing regions.
+- **Live DOM evidence:** Nine visible interface descriptions, three concrete list elements per brief, no ghost placeholders, no hidden brief, logical H1–H4 nesting, semantic capability and audience lists, and no `SwAN` label.
+- **Public-home isolation:** The current `/` title, width, and structure remain intact. It contains no interface descriptions and no link to `/content-review`.
+- **Automated checks:** 170 tests passed. TypeScript, ESLint, production build, public-output scanner, built-SSR route scanner, and five available TFX detector checks passed.
+- **Build environment note:** Checks ran on Node 25.9.0 while the repository requests Node 24.x.
+- **Dark mode:** N/A. The review route has no user-facing theme control and makes no dark-mode claim.
+
+- **Evaluator verdict (verbatim):**
+
+    VERDICT: pass
+
+    BLOCKING
+
+    - None. No blocking or P2-or-higher findings remain.
+
+    ADVISORY
+
+    - None.
+
+    SUGGESTIONS
+
+    - Ensure the untracked `content-review-interface-descriptions.ts` file is included when staging.
+    - For archival evidence, capture the 320px page in segments; its height exceeds the browser’s tall-raster limit, causing a small wrapped strip at the PNG tail. This is a capture artifact, not repeated DOM content or overflow.
+
+    CONTRACT ASSESSMENT
+
+    1. **Met — greyscale static PM wireframe.** The route identifies itself as “PM communication wireframe · Content and order only.” Production-preview captures show restrained neutral styling with no product simulation or development toolbar.
+    2. **Met — exactly nine accessible interface briefs.** The typed map contains one hero, five story, and three explorer entries. The DOM exposes nine `[data-interface-description]` regions, zero ghost placeholders, descriptive H2/H4 headings, and three semantic list items per brief.
+    3. **Met — safe positive-growth story.** “Positive student profile” says, “Help teachers recognise a student’s progress at a glance,” uses a synthetic student from the general class list, and names the distinct “Positive growth · Growing confidence tag.” No additional-needs, attention, or `SwAN` classification is rendered.
+    4. **Met — audience skeletons replaced.** Three semantic audience items each show: “PM to confirm the question and approved answer for this audience.” No audience skeleton remains.
+    5. **Met — route-local presentation scaffolding.** Descriptions live only in `content-review-interface-descriptions.ts`, imported by the route-local outline. Review snapshots, annotated DTOs, public browser DTOs, and server projection types are unchanged.
+    6. **Met — public homepage isolated.** `src/routes/index.tsx` is unchanged and contains no `/content-review` entry point. Built SSR verification confirms `/` retains its existing title and shell and does not link to the review route.
+    7. **Met — static boundary.** Route-local inventory contains zero links, buttons, form controls, handlers, media, animation, analytics, product simulation, or new backend behavior. Two CTA placements remain inert `<span>` elements.
+    8. **Met — responsive behavior.** Document width equals scroll width at 320, 360, 768, and 1280px. Hero, story, and explorer layouts remain stacked through 768px and use the approved side-by-side layouts at 1280px.
+
+    PLAN FIDELITY
+
+    - The implementation follows the approved amendment without structural drift.
+    - Hero + five story + three explorer ghosts became nine briefs.
+    - Each brief names the proposed screen, opens with its teacher purpose, and lists three concrete elements.
+    - Story 2 now uses “Teacher note source labels” as its third concrete element; classification exclusions remain in explanatory copy.
+    - Existing reveal, proof, access/support, close, footer, appendix, and fail-closed error behavior remain intact.
+    - The accessibility, 72ch measure, semantic-list, and 768px hero corrections reinforce the approved contract without widening scope.
+
+    COMPONENT INVENTORY
+
+    - `ContentReviewPage`
+      - `ContentReviewOutline`
+        - `HeroSection` → `ProductFrame` → one `InterfaceDescription`
+        - `ConnectedStorySection` → five `InterfaceDescription` blocks
+        - unchanged reveal region
+        - semantic ordered capabilities list
+        - `ExplorerSection` → three `InterfaceDescription` blocks
+        - semantic audience list with three PM-confirmation items
+        - unchanged proof, access/support, and close regions
+      - inert wireframe footer
+      - PM review appendix
+      - fail-closed `ContentReviewError`
+    - Route-local interactive controls: zero.
+    - Inert CTA spans: two.
+    - Decorative browser chrome alone is `aria-hidden`; all briefs remain exposed to assistive technology.
+
+    BOUNDARY VERIFICATION
+
+    - No diff exists in `landing-v2-review.types.ts`, `landing-v2-review-state.server.ts`, `src/server/content-review.ts`, `src/routes/content-review.tsx`, or `src/routes/index.tsx`.
+    - DTO tests reject `interfaceDescription`, `interfaceBrief`, and brief copy literals from the serialized public DTO.
+    - The production public-output scanner found no review identifiers, snapshots, destinations, internal capability names, or `SwAN`.
+    - The built SSR scanner confirmed nine descriptions, zero ghosts, the positive-growth profile, `noindex, nofollow`, and homepage isolation.
+    - Descriptions remain browser-visible PM scaffolding without entering loader data or review snapshots.
+
+    QUALITY GRADES
+
+    - **Design quality: strong** — the hero clearly leads, briefs remain subordinate to the landing narrative, and section hierarchy is easy to scan.
+    - **Originality: strong** — the restrained storyboard treatment is distinctive enough for PM communication without introducing novelty or branded-product implications.
+    - **Craft: strong** — semantic structure, aligned edges, bounded copy, responsive stacking, and production-clean captures are deliberate and consistent.
+    - **Functionality: strong** — the intentionally static artifact communicates all screen intentions and pending decisions without implying working product behavior.
+
+    JUDGMENT CONTROL NOTES
+
+    - A11Y-6: pass — method: manual. No informative media exists; decorative browser chrome is hidden while brief content remains accessible.
+    - A11Y-7: pass — method: manual. One H1, logical H2–H4 nesting, ordered story/explorer/capability lists, an unordered audience list, and semantic three-item brief lists express the visible structure.
+    - CNT-2: pass — method: manual. Screen names are functional and plain; no internal codename or unexplained classification appears.
+    - CNT-3: pass — method: script. Content lint passed; brief instructions are active, concise, and below the sentence-length ceiling.
+    - CNT-4: pass — method: manual. “Proposed interface” framing and explicit synthetic-story language prevent invented product details from reading as live data.
+    - CNT-6: pass — method: script. Content lint found no empty opener or low-information filler.
+    - CNT-7: pass — method: manual. All nine briefs now lead with purpose, including “Help teachers…,” “Make the positive tag traceable…,” and “Let teachers…,” before mechanism.
+    - SLP-9: pass — method: manual. No buzzwords, chatbot artifacts, em-dash chains, forced rhetorical triads, or redundant label/helper pairs remain.
+    - SLP-11: pass — method: manual. Borders denote wireframe screen framing, sequence cells, or pending slots; they do not falsely signal clickable cards.
+    - LAY-2: pass — method: manual. Single-column reflow and reading order hold at 320/360/768; intended editorial grids return at 1280 with no horizontal overflow.
+    - LAY-4: pass — method: manual. Changed brief, capability, explorer-intro, and audience prose is explicitly capped at 72ch; no running prose exceeds 80ch.
+    - LAY-5: pass — method: manual. Density suits a detailed PM review artifact at all supplied widths.
+    - LAY-6: pass — method: manual. Story columns, brief frames, headings, audience divisions, and section insets share consistent edges.
+    - LAY-7: pass — method: manual. The hero promise remains the first focal region at every breakpoint; delaying the hero split until `lg` prevents competition at 768px.
+    - CMP-1: asserted, no manifest — manifest absent for Teacher Workspace.
+
+    VERIFICATION LEDGER
+
+    | Verification | Method | Result |
+    |---|---|---|
+    | Full Vitest suite | script | 24 files, 170/170 tests passed |
+    | TypeScript | script | `tsc --noEmit` passed |
+    | ESLint | script | Passed |
+    | TFX detector | script | Five available checks clean |
+    | Public-output scanner | script | Six files and one content-review chunk clean |
+    | Built SSR route scanner | script | `/content-review` and `/` isolation passed |
+    | Diff whitespace validation | script | `git diff --check` passed |
+    | Responsive widths | manual | Scroll width equals viewport at 320/360/768/1280 |
+    | Interface inventory | manual | Nine briefs, zero ghosts, three elements each, two inert actions, zero route-local controls |
+    | Visual review | manual | Greyscale hierarchy, alignment, density, and production-clean captures pass |
+    | Build runtime note | manual | Local checks used Node 25.9.0; repository CI is configured for Node 24 |
+
+    UNCOVERED
+
+    - No uncovered implementation defect.
+    - Evidence-only limitation: the 16,787px-tall 320 screenshot crosses the browser’s tall-raster limit and wraps a small strip at its tail. DOM measurements and the unaffected captures establish that this is not page overflow or duplicated content.
+
+    RATCHET CANDIDATES
+
+    - Type `keyElements` as an exact three-string tuple so the three-element contract is enforced at compile time as well as in tests.
+    - Extend the SSR verifier to assert all nine stable interface locations and all 27 element rows.
+    - Make the evidence capture script segment screenshots taller than the browser raster limit.
+
+### Amendment verification ledger
+
+| Control | Method | Evidence |
+| --- | --- | --- |
+| A11Y-6 | manual | Interface descriptions remain visible to assistive technology; only decorative browser chrome is hidden. |
+| A11Y-7 | manual | One H1; descriptive H2–H4 hierarchy; ordered story and explorer lists; three semantic list items per brief. |
+| CNT-2 | manual | Screen names use plain functional language; route output rejects internal capability names and the `SwAN` classification. |
+| CNT-3 | script | Content lint passed; brief instructions use active, concise sentences. |
+| CNT-4 | manual | Every screen brief states its synthetic intent; the featured profile comes from the general class list and carries a positive-growth tag. |
+| CNT-6 | script | Content lint found no empty opener or filler issue in the changed surface. |
+| CNT-7 | manual | Each brief opens with the screen purpose before listing its proposed elements. |
+| SLP-9 | script | Content lint passed; labels, descriptions, and element lists carry distinct information. |
+| SLP-11 | manual | Screen briefs use one outline as diagram framing; explorer details remain in the existing sequence instead of nested cards. |
+| LAY-2 | manual | Browser measurement confirms width equals scroll width at 320, 360, 768, and 1280 pixels. |
+| LAY-4 | manual | All explanatory copy remains in bounded screen or content columns. |
+| LAY-5 | manual | Briefs stack at 360 and 768 pixels and sit beside story copy at 1280 pixels. |
+| LAY-6 | manual | Brief, heading, and list edges align at all evidence widths. |
+| LAY-7 | manual | Hero promise remains the first focal region; descriptions stay subordinate to the landing-page story. |
+
+## Original verification — historical baseline
 
 - **Screenshots:**
   - `/private/tmp/tw-wireframe-evidence/content-review-360.png` — 360 × 900 viewport; full page; document scroll width 360.
