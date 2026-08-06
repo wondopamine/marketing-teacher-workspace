@@ -14,6 +14,29 @@ pnpm dev
 Then open <http://localhost:3000/content-review>. Save a file and the page
 reloads on its own.
 
+## Editing on the page with ⌘K
+
+You don't have to find the right file first. On the running dev server:
+
+1. Press **⌘K** (Ctrl+K on Windows) on <http://localhost:3000/content-review>.
+2. Every piece of editable copy gets a dashed outline. Click one and type.
+3. Press **Enter**, or click away, to save. The change is written straight into
+   the right `.mdx` file and the page reloads.
+4. Press **⌘K** again, or **Esc**, to leave edit mode.
+
+**Esc while typing** cancels that one edit and puts the original text back.
+
+Two things it will refuse, and tell you why:
+
+- **Empty copy.** Clear a block and it snaps back — delete the wording in the
+  file instead if a slot should be blank.
+- **Line breaks.** One block is one line of copy. To add a paragraph, edit the
+  `.mdx` file directly.
+
+Edit mode only exists on your own machine while `pnpm dev` is running. It is not
+part of the built site, so nothing you press can affect a shared or deployed
+page — and other people's review links stay exactly as they are.
+
 ## What is in each file
 
 Files in `landing/` are numbered in the order they appear down the page.

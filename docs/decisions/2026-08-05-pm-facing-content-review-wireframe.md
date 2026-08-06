@@ -426,6 +426,17 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
 - **Unchanged:** Rendered output, the public-safe DTO shape, the snapshot and approval model, the greyscale static presentation, and the isolation of the public `/` route.
 - **Tradeoff:** Wording and structure now live in two places. That is the point — a copy edit cannot silently rewire a product claim — but it means renaming a section still needs a developer.
 
+## Scoped amendment — ⌘K edit mode (dev server only)
+
+- **Approved on:** 2026-08-06 — "Add cmd+k to enter the edit mode."
+- **Intent:** Let a PM change wording by clicking it on the page, instead of locating the block in an `.mdx` file first.
+- **Tension named:** Done-criteria 4 and 5 forbid JavaScript interaction and route-local interactive controls, and the A11Y-2, A11Y-4, A11Y-5, and CMP-7 evidence all rests on that emptiness. An interactive editor on the shared artifact would void them.
+- **Resolution:** Edit mode is gated on `import.meta.env.MODE === "development"`. It exists only while `pnpm dev` runs on an author's own machine. The built artifact, every preview deploy, and the shared review URL keep zero route-local controls, so the contract and its evidence hold **unamended**. Verified: `__content/edit`, `__content/map`, `plaintext-only`, `data-edit-chrome`, and the edit chrome copy appear in zero files across `.output/`. `import.meta.env.DEV` was rejected as the gate because Vitest sets it true, which would have switched the editor on inside the tests that assert the route has no controls.
+- **Markup unchanged:** The overlay adds no elements to the reviewed DOM. It locates editable text by matching rendered strings against a source map served by the dev middleware, so the approved markup, heading order, and landmark structure are byte-identical to the reviewed artifact.
+- **Write path:** Edits are spliced by exact mdast source offset, never by search-and-replace, so a change to one block cannot disturb comments, blank lines, or identical wording elsewhere. Refused: a stale `was` value (the file changed underneath), a path outside `content/`, a non-`.mdx` target, empty copy, and any value containing a line break. Frontmatter values are re-serialised and quoted only when YAML would otherwise misread them.
+- **Unchanged:** Rendered output, the public-safe DTO, the snapshot and approval model, the greyscale static presentation, and the isolation of the public `/` route.
+- **Tradeoff:** The editor is invisible to anyone reviewing a deployed preview; it helps only the person running the app locally. That is the cost of leaving the shared artifact's static contract intact, and it is the right trade while the route remains unauthenticated.
+
 ## Ratchet
 
 - Extend `type-scan.py` to resolve named Tailwind text-size and line-height utilities; the first evaluator pass showed that a clean scan can miss compiled off-scale values.

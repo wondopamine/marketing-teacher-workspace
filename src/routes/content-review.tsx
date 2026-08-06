@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 import "@fontsource-variable/inter"
 
+import { ContentEditMode } from "@/components/content-review/content-edit-mode"
 import { ContentReviewPage } from "@/components/content-review/content-review-page"
 import { getContentReviewPageData } from "@/server/content-review"
 
@@ -21,5 +22,10 @@ export const Route = createFileRoute("/content-review")({
 })
 
 function ContentReviewRoute() {
-  return <ContentReviewPage data={Route.useLoaderData()} />
+  return (
+    <>
+      <ContentReviewPage data={Route.useLoaderData()} />
+      {import.meta.env.MODE === "development" ? <ContentEditMode /> : null}
+    </>
+  )
 }
