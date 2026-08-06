@@ -1,4 +1,5 @@
 import { ContentReviewAppendix } from "./content-review-appendix"
+import { contentReviewChrome } from "./content-review-chrome"
 import { ContentReviewError } from "./content-review-error"
 import { ContentReviewOutline } from "./content-review-outline"
 
@@ -53,7 +54,7 @@ export function ContentReviewPage({
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
               <p className="text-sm font-semibold">{data.artifactLabel}</p>
               <p className="text-xs tracking-[0.1em] text-background/70">
-                PM communication wireframe · Content and order only
+                {contentReviewChrome.statusNote}
               </p>
             </div>
             <p className="mt-2 max-w-4xl text-sm leading-[1.5] text-background/70">
@@ -67,7 +68,7 @@ export function ContentReviewPage({
           >
             <p className="text-lg font-semibold tracking-[-0.015em]">{brand}</p>
             <p className="border border-border px-3 py-1.5 text-xs font-medium tracking-[0.08em] text-muted-foreground">
-              Landing page wireframe
+              {contentReviewChrome.badge}
             </p>
           </header>
 

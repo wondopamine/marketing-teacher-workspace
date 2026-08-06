@@ -375,11 +375,14 @@ describe("Landing Page v2 content contract", () => {
 
   it("keeps OAuth and analytics runtimes outside the content module", () => {
     const source = readFileSync("src/content/landing-v2.ts", "utf8")
-    const imports = source.match(/^import .+$/gm)
+    const imported = Array.from(
+      source.matchAll(/^import\s[^;]*?from\s+"([^"]+)"/gm)
+    ).map(([, specifier]) => specifier)
 
-    expect(imports).toEqual([
-      'import type { HttpsUrl } from "@/config/site"',
-      'import { siteConfig } from "@/config/site"',
+    expect(imported).toEqual([
+      "./landing-copy",
+      "@/config/site",
+      "@/config/site",
     ])
     expect(source).not.toMatch(/OAuth|analytics SDK|createAuth|track\(/)
     expect(landingPageV2MeasurementPlan.marketingImplementationBoundary).toBe(

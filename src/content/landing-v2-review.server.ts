@@ -1,8 +1,10 @@
 import "@tanstack/react-start/server-only"
 
 import { contentReviewSectionKinds } from "./landing-v2-review.types"
+import { itemCopy, itemLabel, landingDocuments } from "./landing-copy"
 import {
   capabilityIds,
+  explorerStepIds,
   landingPageV2Content,
   landingPageV2Publication,
   productExplorerComprehensionFlow,
@@ -41,17 +43,12 @@ type RegistryMetadata = {
   readonly entry: ReviewDraftContentEntryInput<"copy">
 }
 
-type RegistryContentKind = Exclude<
-  ReviewContentKind,
-  "structure" | "omission"
->
+type RegistryContentKind = Exclude<ReviewContentKind, "structure" | "omission">
 
-type ReviewDraftContentEntryInput<TContentKind extends RegistryContentKind> = Omit<
-  ReviewDraftContentEntryDto,
-  "reviewReference" | "contentKind"
-> & {
-  readonly contentKind: TContentKind
-}
+type ReviewDraftContentEntryInput<TContentKind extends RegistryContentKind> =
+  Omit<ReviewDraftContentEntryDto, "reviewReference" | "contentKind"> & {
+    readonly contentKind: TContentKind
+  }
 
 type ReviewDraftDecisionEntryInput = Omit<
   ReviewDraftDecisionEntryDto,
@@ -207,33 +204,21 @@ function linkEntry(
   })
 }
 
+const launchLineLabel = landingDocuments.reveal.text("launchLinePendingLabel")
+
 function explorerEntries(): ReadonlyArray<RegistryEntry> {
-  return [
-    contentEntry("explorer.choose", "explorer", "claim", {
+  const document = landingDocuments.explorer
+  return explorerStepIds.map((stepId) => {
+    const copy = itemCopy(document, stepId)
+    return contentEntry(`explorer.${stepId}`, "explorer", "claim", {
       kind: "content",
       contentKind: "claim",
-      label: "Choose a scenario",
-      heading: "Start with one positive-growth moment.",
-      body: ["The example uses synthetic classroom information only."],
+      label: itemLabel(document, document.item(stepId)),
+      heading: copy.heading,
+      body: [copy.body],
       link: null,
-    }),
-    contentEntry("explorer.context", "explorer", "claim", {
-      kind: "content",
-      contentKind: "claim",
-      label: "Inspect the connected context",
-      heading: "See the relevant signals and next step together.",
-      body: ["The teacher reviews the context before deciding what fits."],
-      link: null,
-    }),
-    contentEntry("explorer.action", "explorer", "claim", {
-      kind: "content",
-      contentKind: "claim",
-      label: "Preview the resulting action",
-      heading: "Review the message or Posts action before anything is shared.",
-      body: ["The outline demonstrates comprehension, not a live workflow."],
-      link: null,
-    }),
-  ]
+    })
+  })
 }
 
 function publicCapabilityLabel(
@@ -314,13 +299,13 @@ export function createContentReviewRegistry(
           contentEntry("reveal.ga-launch-line", "reveal", "copy", {
             kind: "content",
             contentKind: "copy",
-            label: "GA launch line",
+            label: launchLineLabel,
             heading: null,
             body: [content.reveal.gaLaunchLine],
             link: null,
           }),
         ]
-      : [decisionEntry("reveal.ga-launch-line", "reveal", "GA launch line")]),
+      : [decisionEntry("reveal.ga-launch-line", "reveal", launchLineLabel)]),
     section("section.capabilities", "capabilities"),
     ...content.capabilities.map((capability) =>
       contentEntry(`capability.${capability.id}`, "capabilities", "claim", {
@@ -355,13 +340,13 @@ export function createContentReviewRegistry(
     decisionEntry(
       "proof.testimonials",
       "proof",
-      "Proof copy and testimonial permission"
+      landingDocuments.proof.text("pendingLabel")
     ),
     section("section.access-support", "access-support"),
     decisionEntry(
       "support.public-route",
       "access-support",
-      "Public support route"
+      landingDocuments.accessSupport.text("pendingLabel")
     ),
     section("section.close", "close"),
     contentEntry("close.copy", "close", "copy", {
@@ -614,6 +599,37 @@ export const contentReviewManifest = [
   }),
 ] as const satisfies ReadonlyArray<ContentReviewManifestEntry>
 
+/**
+ * The GA-launch line and the three audience answers are slots an author can
+ * resolve in `content/`. The moment one is filled in, the registry projects it
+ * as reviewable copy rather than an unanswered decision, so its review
+ * classification has to follow the content instead of being fixed above.
+ */
+export function createContentReviewManifest(
+  content: LandingPageV2Content = landingPageV2Content
+): ReadonlyArray<ContentReviewManifestEntry> {
+  const resolved = new Map<string, ReviewContentKind>([
+    [
+      "reveal.ga-launch-line",
+      content.reveal.gaLaunchLine ? "copy" : "omission",
+    ],
+    ...content.audiences.map(
+      (audience) =>
+        [
+          `audience.${audience.id}`,
+          audience.question && audience.answer ? "copy" : "omission",
+        ] as const
+    ),
+  ])
+
+  return contentReviewManifest.map((entry) => {
+    const contentKind = resolved.get(entry.contentId)
+    return contentKind === undefined || contentKind === entry.contentKind
+      ? entry
+      : { ...entry, contentKind }
+  })
+}
+
 export const contentReviewRegistry = createContentReviewRegistry()
 
 function issue(code: string, message: string): ContentReviewStructureIssue {
@@ -703,7 +719,7 @@ export function getContentReviewStructureIssues(
   const publication = options.publication ?? landingPageV2Publication
   const registry =
     options.registry ?? createContentReviewRegistry(content, publication)
-  const manifest = options.manifest ?? contentReviewManifest
+  const manifest = options.manifest ?? createContentReviewManifest(content)
   const issues: Array<ContentReviewStructureIssue> = []
 
   const registryIds = registry.map((item) => item.contentId)
@@ -772,7 +788,10 @@ export function getContentReviewStructureIssues(
     const manifestItem = manifest.find(
       (candidate) => candidate.contentId === item.contentId
     )
-    if (item.role !== "section" && item.contentKind !== item.entry.contentKind) {
+    if (
+      item.role !== "section" &&
+      item.contentKind !== item.entry.contentKind
+    ) {
       issues.push(
         issue(
           "entry-content-kind-mismatch",
@@ -874,9 +893,7 @@ export function getContentReviewStructureIssues(
         capabilityId === canonicalJourneyCapabilities[index]
     ) ||
     journeyCapabilityLabels[0] !== null ||
-    journeyCapabilityLabels
-      .slice(1)
-      .some((label) => !isNonBlank(label)) ||
+    journeyCapabilityLabels.slice(1).some((label) => !isNonBlank(label)) ||
     new Set(journeyCapabilityLabels.slice(1)).size !== capabilityIds.length
   ) {
     issues.push(
@@ -955,7 +972,7 @@ export function buildReviewDraftProjection(options: ReviewBuildOptions = {}):
   const publication = options.publication ?? landingPageV2Publication
   const registry =
     options.registry ?? createContentReviewRegistry(content, publication)
-  const manifest = options.manifest ?? contentReviewManifest
+  const manifest = options.manifest ?? createContentReviewManifest(content)
   const issues = getContentReviewStructureIssues({
     content,
     publication,

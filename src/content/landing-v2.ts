@@ -1,3 +1,10 @@
+import {
+  itemCopy,
+  itemLabel,
+  landingDocuments,
+  optionalItemCopy,
+} from "./landing-copy"
+
 import type { HttpsUrl } from "@/config/site"
 import { siteConfig } from "@/config/site"
 
@@ -41,6 +48,11 @@ export const productExplorerComprehensionFlow = [
 
 export type ProductExplorerComprehensionStep =
   (typeof productExplorerComprehensionFlow)[number]
+
+/** The `<Item>` blocks that carry each explorer step's copy. */
+export const explorerStepIds = ["choose", "context", "action"] as const
+
+export type ExplorerStepId = (typeof explorerStepIds)[number]
 
 type EditorialStatus = "proposed" | "verbatim"
 export type SupportStrategy =
@@ -322,15 +334,75 @@ export type LandingPageV2MeasurementPlan = {
   readonly marketingImplementationBoundary: "contract-only"
 }
 
+const heroDocument = landingDocuments.hero
+const storyDocument = landingDocuments.story
+const revealDocument = landingDocuments.reveal
+const capabilityDocument = landingDocuments.capabilities
+const audienceDocument = landingDocuments.audiences
+
+/**
+ * Maps each product capability to the block an author edits in
+ * `content/landing/05-capabilities.mdx`. Authors see the public name; the
+ * internal id stays here so renaming a capability in public copy never
+ * silently rewires the product contract.
+ */
+const capabilityCopyIds = {
+  "student-insights": "student-insights",
+  "contextual-intelligence": "next-step",
+  "hey-talia": "message-drafting",
+  posts: "posts",
+} as const satisfies Record<CapabilityId, string>
+
+function journeyAct(
+  id: JourneyActId,
+  order: JourneyAct["order"],
+  capabilityId: CapabilityId | null
+): JourneyAct {
+  const item = storyDocument.item(id)
+  const copy = itemCopy(storyDocument, id)
+  return {
+    id,
+    order,
+    moment: itemLabel(storyDocument, item),
+    headline: copy.heading,
+    body: copy.body,
+    capabilityId,
+    editorialStatus: "proposed",
+  }
+}
+
+function capabilityCard(id: CapabilityId): CapabilityCard {
+  const copyId = capabilityCopyIds[id]
+  const item = capabilityDocument.item(copyId)
+  const copy = itemCopy(capabilityDocument, copyId)
+  return {
+    id,
+    publicLabel: itemLabel(capabilityDocument, item),
+    job: copy.heading,
+    scenario: copy.body,
+    anchorId: id,
+    editorialStatus: "proposed",
+  }
+}
+
+function audienceBlock(id: AudienceId): AudienceBlock {
+  const copy = optionalItemCopy(audienceDocument, id)
+  return {
+    id,
+    label: itemLabel(audienceDocument, audienceDocument.item(id)),
+    question: copy?.heading ?? null,
+    answer: copy?.body ?? null,
+  }
+}
+
 /**
  * Content contract derived from issue #3. The ticket author explicitly
  * described the five-act narrative and information architecture as
  * suggestions, so every non-verbatim marketing line remains "proposed".
  *
- * This module is deliberately separate from the current v1 rendering data.
- * Designers can change layout without losing the journey/capability
- * relationships, while product and legal reviewers can see which material
- * is still awaiting approval.
+ * The words come from `content/`, so a PM can revise copy without touching
+ * TypeScript. This module owns the structure around them: which sections
+ * exist, in what order, and which capability each story act belongs to.
  */
 export const landingPageV2Content = {
   version: 2,
@@ -342,106 +414,33 @@ export const landingPageV2Content = {
     bursaryExampleComment: siteConfig.links.landingPageV2BursaryExampleComment,
   },
   seoDraft: {
-    title: "Teacher Workspace | Notice growth and build on it",
-    description:
-      "See a student's progress, consider a constructive next step, prepare a family message, and keep the celebration connected with Teacher Workspace.",
+    title: landingDocuments.meta.requireHeading(),
+    description: landingDocuments.meta.requireBody(),
   },
   hero: {
-    eyebrow: null,
-    headline: "See the progress worth building on.",
-    body: "Teacher Workspace brings recent observations, next steps, family communication, and the student record together so you can build on positive progress.",
+    eyebrow: heroDocument.optionalText("eyebrow"),
+    headline: heroDocument.requireHeading(),
+    body: heroDocument.requireBody(),
     ctaPlacements: ["hero", "close"],
   },
   journey: [
-    {
-      id: "promise",
-      order: 1,
-      moment: "A positive moment",
-      headline: "A student is beginning to contribute with growing confidence.",
-      body: "You want to understand the progress and help it continue.",
-      capabilityId: null,
-      editorialStatus: "proposed",
-    },
-    {
-      id: "notice",
-      order: 2,
-      moment: "You see the pattern",
-      headline: "The growth is visible in context.",
-      body: "Recent notes and classroom moments come together so the progress is easier to recognise.",
-      capabilityId: "student-insights",
-      editorialStatus: "proposed",
-    },
-    {
-      id: "next-steps",
-      order: 3,
-      moment: "You plan what comes next",
-      headline: "A constructive next step is ready to consider.",
-      body: "Teacher Workspace surfaces a practical way to reinforce the progress, with the teacher still deciding what fits.",
-      capabilityId: "contextual-intelligence",
-      editorialStatus: "proposed",
-    },
-    {
-      id: "words",
-      order: 4,
-      moment: "You prepare the message",
-      headline: "A warm family update starts with the progress.",
-      body: "Message drafting helps organise a positive note for the teacher to review, edit, and send.",
-      capabilityId: "hey-talia",
-      editorialStatus: "proposed",
-    },
-    {
-      id: "family-and-record",
-      order: 5,
-      moment: "You celebrate and keep the thread",
-      headline: "Shared with the family. Kept with the record.",
-      body: "Posts helps share or record the celebration so the communication stays connected to the student's journey.",
-      capabilityId: "posts",
-      editorialStatus: "proposed",
-    },
+    journeyAct("promise", 1, null),
+    journeyAct("notice", 2, "student-insights"),
+    journeyAct("next-steps", 3, "contextual-intelligence"),
+    journeyAct("words", 4, "hey-talia"),
+    journeyAct("family-and-record", 5, "posts"),
   ],
   reveal: {
-    headline: "This is Teacher Workspace.",
-    body: "You keep the care and judgment. Teacher Workspace brings the context, possible next step, and communication into one flow.",
-    gaLaunchLine: null,
+    headline: revealDocument.requireHeading(),
+    body: revealDocument.requireBody(),
+    gaLaunchLine: revealDocument.optionalText("launchLine"),
     editorialStatus: "proposed",
   },
   capabilities: [
-    {
-      id: "student-insights",
-      publicLabel: "Student Insights",
-      job: "See one student's recent notes and classroom moments together.",
-      scenario:
-        "See a positive change across recent notes and classroom moments.",
-      anchorId: "student-insights",
-      editorialStatus: "proposed",
-    },
-    {
-      id: "contextual-intelligence",
-      publicLabel: "Next-step guidance",
-      job: "See a relevant process and possible next step in context.",
-      scenario:
-        "Consider a practical way to reinforce the student's progress.",
-      anchorId: "contextual-intelligence",
-      editorialStatus: "proposed",
-    },
-    {
-      id: "hey-talia",
-      publicLabel: "Message drafting",
-      job: "Prepare a first draft from the student context, then review and edit it.",
-      scenario:
-        "Prepare a warm family update for the teacher to review and edit.",
-      anchorId: "hey-talia",
-      editorialStatus: "proposed",
-    },
-    {
-      id: "posts",
-      publicLabel: "Posts",
-      job: "Reach the family and keep the communication on record.",
-      scenario:
-        "Share or record the celebration while keeping the communication connected.",
-      anchorId: "posts",
-      editorialStatus: "proposed",
-    },
+    capabilityCard("student-insights"),
+    capabilityCard("contextual-intelligence"),
+    capabilityCard("hey-talia"),
+    capabilityCard("posts"),
   ],
   aiPlanning: {
     brandArchitecture: {
@@ -490,24 +489,9 @@ export const landingPageV2Content = {
     placement: null,
   },
   audiences: [
-    {
-      id: "teachers",
-      label: "Form Teachers",
-      question: null,
-      answer: null,
-    },
-    {
-      id: "key-personnel",
-      label: "Key Personnel",
-      question: null,
-      answer: null,
-    },
-    {
-      id: "school-leaders",
-      label: "School Leaders",
-      question: null,
-      answer: null,
-    },
+    audienceBlock("teachers"),
+    audienceBlock("key-personnel"),
+    audienceBlock("school-leaders"),
   ],
   testimonials: [
     {
@@ -605,14 +589,14 @@ export const landingPageV2Content = {
     },
   ],
   close: {
-    headline: "Notice growth. Help it continue.",
-    body: "Teacher Workspace keeps the context, possible next step, family message, and record together. You decide what to do next.",
+    headline: landingDocuments.close.requireHeading(),
+    body: landingDocuments.close.requireBody(),
     editorialStatus: "proposed",
   },
   footer: {
-    copyright: "© MOE 2026",
+    copyright: landingDocuments.footer.text("copyright"),
     brand: siteConfig.name,
-    feedbackLabel: "Send feedback",
+    feedbackLabel: landingDocuments.footer.text("feedbackLabel"),
     feedbackHref: siteConfig.links.feedback,
   },
 } as const satisfies LandingPageV2Content
@@ -624,12 +608,12 @@ export const landingPageV2Content = {
 export const landingPageV2Publication = {
   releasePositioning: "ga",
   primaryCta: {
-    label: "Sign in with Google",
+    label: heroDocument.text("action"),
     href: siteConfig.links.product,
     intent: "google-sign-in",
     identityProvider: "google",
     requiredAccountDomain: "edu.gov.sg",
-    accessNote: "Use your @edu.gov.sg account.",
+    accessNote: heroDocument.text("actionNote"),
   },
   canonicalUrl: null,
   socialImageUrl: null,

@@ -6,10 +6,12 @@ import {
   contentReviewManifest,
   contentReviewRegistry,
   contentReviewSectionOrder,
+  createContentReviewManifest,
   getContentReviewStructureIssues,
 } from "./landing-v2-review.server"
 import { landingPageV2Content } from "./landing-v2"
 import type { ContentReviewRegistryEntry } from "./landing-v2-review.server"
+import type { LandingPageV2Content } from "./landing-v2"
 
 describe("Landing Page v2 content-review projection", () => {
   it("covers the complete ordered IA with one manifest entry per registry item", () => {
@@ -278,5 +280,44 @@ describe("Landing Page v2 content-review projection", () => {
           entry.body.includes("© MOE 2026")
       )
     ).toBe(true)
+  })
+
+  it("promotes a resolved slot from an unanswered decision to reviewable copy", () => {
+    const answered: LandingPageV2Content = {
+      ...landingPageV2Content,
+      reveal: {
+        ...landingPageV2Content.reveal,
+        gaLaunchLine: "Available to all schools from Term 3.",
+      },
+      audiences: [
+        {
+          ...landingPageV2Content.audiences[0],
+          question: "What changes in my week?",
+          answer: "One student's full picture without opening four systems.",
+        },
+        landingPageV2Content.audiences[1],
+        landingPageV2Content.audiences[2],
+      ],
+    }
+    const manifest = createContentReviewManifest(answered)
+    const kindOf = (contentId: string) =>
+      manifest.find((entry) => entry.contentId === contentId)?.contentKind
+
+    expect(kindOf("reveal.ga-launch-line")).toBe("copy")
+    expect(kindOf("audience.teachers")).toBe("copy")
+    expect(kindOf("audience.key-personnel")).toBe("omission")
+
+    const result = buildReviewDraftProjection({ content: answered })
+    expect(result.ok).toBe(true)
+  })
+
+  it("keeps an unresolved slot classified as an omission", () => {
+    const manifest = createContentReviewManifest(landingPageV2Content)
+    const kindOf = (contentId: string) =>
+      manifest.find((entry) => entry.contentId === contentId)?.contentKind
+
+    expect(kindOf("reveal.ga-launch-line")).toBe("omission")
+    expect(kindOf("audience.teachers")).toBe("omission")
+    expect(manifest).toEqual(contentReviewManifest)
   })
 })

@@ -1,5 +1,12 @@
-import { contentReviewInterfaceDescriptions } from "./content-review-interface-descriptions"
-import type { ContentReviewInterfaceDescription } from "./content-review-interface-descriptions"
+import {
+  contentReviewChrome,
+  contentReviewScreens,
+} from "./content-review-chrome"
+
+import type {
+  ContentReviewScreen,
+  SectionChrome,
+} from "./content-review-chrome"
 import type {
   ContentReviewWireframeAppendixDto,
   ContentReviewWireframeEntryDto,
@@ -11,6 +18,13 @@ type DecisionEntry = Extract<
   ContentReviewWireframeEntryDto,
   { kind: "decision" }
 >
+
+type SectionProps = {
+  section: ContentReviewWireframeSectionDto
+}
+
+const chrome = contentReviewChrome
+const screens = contentReviewScreens
 
 function contentEntries(
   section: ContentReviewWireframeSectionDto
@@ -59,25 +73,54 @@ function InertAction({ entry }: { entry: ContentEntry | undefined }) {
 function PendingSlot({ label }: { label: string }) {
   return (
     <div className="border border-dashed border-foreground/40 bg-background p-5">
-      <WireframeLabel>Copy pending</WireframeLabel>
+      <WireframeLabel>{chrome.pendingLabel}</WireframeLabel>
       <p className="mt-3 font-medium text-foreground">{label}</p>
       <p className="mt-2 text-sm leading-[1.5] text-muted-foreground">
-        This space is intentionally reserved for PM and reviewer input.
+        {chrome.pendingNote}
       </p>
+    </div>
+  )
+}
+
+function SectionIntro({
+  chrome: sectionChrome,
+  headingId,
+}: {
+  chrome: SectionChrome
+  headingId: string
+}) {
+  return (
+    <div className="max-w-3xl">
+      {sectionChrome.label ? (
+        <WireframeLabel>{sectionChrome.label}</WireframeLabel>
+      ) : null}
+      <h2
+        id={headingId}
+        className="mt-4 font-heading text-[32px] font-semibold tracking-[-0.025em]"
+      >
+        {sectionChrome.title}
+      </h2>
+      {sectionChrome.intro ? (
+        <p className="mt-4 max-w-[72ch] leading-6 text-muted-foreground">
+          {sectionChrome.intro}
+        </p>
+      ) : null}
     </div>
   )
 }
 
 function InterfaceDescription({
   className = "border border-border bg-background p-5",
-  description,
   headingLevel,
+  label,
   location,
+  screen,
 }: {
   className?: string
-  description: ContentReviewInterfaceDescription
   headingLevel: 2 | 4
+  label: string
   location: string
+  screen: ContentReviewScreen
 }) {
   const Heading = headingLevel === 2 ? "h2" : "h4"
 
@@ -88,16 +131,16 @@ function InterfaceDescription({
       data-wireframe-interface={location}
     >
       <p className="text-xs font-medium tracking-[0.08em] text-muted-foreground">
-        Proposed interface
+        {label}
       </p>
       <Heading className="mt-3 font-heading text-lg leading-snug font-semibold">
-        {description.heading}
+        {screen.heading}
       </Heading>
       <p className="mt-3 max-w-[72ch] text-sm leading-[1.5] text-muted-foreground">
-        {description.body}
+        {screen.body}
       </p>
       <ul className="mt-4 max-w-[72ch] border-t border-border pt-2 text-sm text-foreground">
-        {description.keyElements.map((element) => (
+        {screen.keyElements.map((element) => (
           <li
             className="border-b border-border py-2 last:border-b-0"
             key={element}
@@ -110,11 +153,7 @@ function InterfaceDescription({
   )
 }
 
-function ProductFrame({
-  description,
-}: {
-  description: ContentReviewInterfaceDescription
-}) {
+function ProductFrame() {
   return (
     <div
       className="border-2 border-foreground/30 bg-background p-3"
@@ -135,19 +174,16 @@ function ProductFrame({
       </div>
       <InterfaceDescription
         className="pt-5"
-        description={description}
         headingLevel={2}
+        label={screens.label}
         location="hero-product-view"
+        screen={screens.hero}
       />
     </div>
   )
 }
 
-function HeroSection({
-  section,
-}: {
-  section: ContentReviewWireframeSectionDto
-}) {
+function HeroSection({ section }: SectionProps) {
   const entries = contentEntries(section)
   const copy = entries.find((entry) => entry.heading)
   const action = entries.find((entry) => entry.action?.purpose === "product")
@@ -179,16 +215,12 @@ function HeroSection({
         <InertAction entry={action} />
       </div>
 
-      <ProductFrame description={contentReviewInterfaceDescriptions.hero} />
+      <ProductFrame />
     </section>
   )
 }
 
-function ConnectedStorySection({
-  section,
-}: {
-  section: ContentReviewWireframeSectionDto
-}) {
+function ConnectedStorySection({ section }: SectionProps) {
   const entries = contentEntries(section)
 
   return (
@@ -197,19 +229,10 @@ function ConnectedStorySection({
       className="border-b border-border px-6 py-16 md:px-10 md:py-24 lg:px-16"
       data-wireframe-section={section.kind}
     >
-      <div className="max-w-3xl">
-        <WireframeLabel>Story flow</WireframeLabel>
-        <h2
-          id="wireframe-connected-story"
-          className="mt-4 font-heading text-[32px] font-semibold tracking-[-0.025em]"
-        >
-          A connected positive-growth story
-        </h2>
-        <p className="mt-4 max-w-2xl leading-6 text-muted-foreground">
-          The landing page follows one constructive moment from observation to
-          family communication and the student record.
-        </p>
-      </div>
+      <SectionIntro
+        chrome={chrome.story}
+        headingId="wireframe-connected-story"
+      />
 
       <ol className="mt-12 border-t border-border">
         {entries.map((entry, index) => (
@@ -246,11 +269,14 @@ function ConnectedStorySection({
                 </p>
               ) : null}
             </div>
-            <InterfaceDescription
-              description={contentReviewInterfaceDescriptions.story[index]}
-              headingLevel={4}
-              location={`story-step-${index + 1}`}
-            />
+            {screens.story[index] ? (
+              <InterfaceDescription
+                headingLevel={4}
+                label={screens.label}
+                location={`story-step-${index + 1}`}
+                screen={screens.story[index]}
+              />
+            ) : null}
           </li>
         ))}
       </ol>
@@ -258,11 +284,7 @@ function ConnectedStorySection({
   )
 }
 
-function RevealSection({
-  section,
-}: {
-  section: ContentReviewWireframeSectionDto
-}) {
+function RevealSection({ section }: SectionProps) {
   const copy = contentEntries(section).find((entry) => entry.heading)
   const decisions = decisionEntries(section)
 
@@ -277,7 +299,7 @@ function RevealSection({
       <div className="grid gap-10 md:grid-cols-[minmax(0,1.2fr)_minmax(16rem,0.8fr)] md:items-end">
         <div>
           <p className="text-xs font-medium tracking-[0.12em] text-background/60">
-            Product reveal
+            {chrome.revealLabel}
           </p>
           <h2
             id="wireframe-reveal"
@@ -300,7 +322,7 @@ function RevealSection({
             key={entry.reviewLabel}
           >
             <p className="text-xs font-medium tracking-[0.1em] text-background/60">
-              Copy pending
+              {chrome.pendingLabel}
             </p>
             <p className="mt-3 text-sm text-background/85">
               {entry.reviewLabel}
@@ -312,11 +334,7 @@ function RevealSection({
   )
 }
 
-function CapabilitiesSection({
-  section,
-}: {
-  section: ContentReviewWireframeSectionDto
-}) {
+function CapabilitiesSection({ section }: SectionProps) {
   const entries = contentEntries(section)
 
   return (
@@ -325,15 +343,10 @@ function CapabilitiesSection({
       className="border-b border-border px-6 py-16 md:px-10 md:py-24 lg:px-16"
       data-wireframe-section={section.kind}
     >
-      <div className="max-w-3xl">
-        <WireframeLabel>Product capabilities</WireframeLabel>
-        <h2
-          id="wireframe-capabilities"
-          className="mt-4 font-heading text-[32px] font-semibold tracking-[-0.025em]"
-        >
-          What Teacher Workspace brings together
-        </h2>
-      </div>
+      <SectionIntro
+        chrome={chrome.capabilities}
+        headingId="wireframe-capabilities"
+      />
 
       <ol className="mt-12 border-t border-foreground/30">
         {entries.map((entry, index) => (
@@ -367,11 +380,7 @@ function CapabilitiesSection({
   )
 }
 
-function ExplorerSection({
-  section,
-}: {
-  section: ContentReviewWireframeSectionDto
-}) {
+function ExplorerSection({ section }: SectionProps) {
   const entries = contentEntries(section)
 
   return (
@@ -382,19 +391,22 @@ function ExplorerSection({
     >
       <div className="max-w-3xl">
         <div className="flex flex-wrap items-center gap-3">
-          <WireframeLabel>Static walkthrough</WireframeLabel>
-          <WireframeLabel>Placement to confirm</WireframeLabel>
+          {chrome.explorer.label ? (
+            <WireframeLabel>{chrome.explorer.label}</WireframeLabel>
+          ) : null}
+          <WireframeLabel>{chrome.explorer.placementLabel}</WireframeLabel>
         </div>
         <h2
           id="wireframe-explorer"
           className="mt-4 font-heading text-[32px] font-semibold tracking-[-0.025em]"
         >
-          Explore the flow in three steps
+          {chrome.explorer.title}
         </h2>
-        <p className="mt-4 max-w-[72ch] leading-6 text-muted-foreground">
-          This wireframe shows the sequence only. It is not an interactive
-          product demo.
-        </p>
+        {chrome.explorer.intro ? (
+          <p className="mt-4 max-w-[72ch] leading-6 text-muted-foreground">
+            {chrome.explorer.intro}
+          </p>
+        ) : null}
       </div>
 
       <ol className="mt-12 border-2 border-foreground/30 bg-background lg:grid lg:grid-cols-3">
@@ -404,7 +416,7 @@ function ExplorerSection({
             key={entry.heading ?? entry.label ?? `explorer-${index}`}
           >
             <p className="text-sm font-medium text-muted-foreground">
-              Step {index + 1}
+              {`${chrome.explorer.stepLabel} ${index + 1}`}
             </p>
             {entry.label ? (
               <p className="mt-5 text-sm font-semibold tracking-[0.06em]">
@@ -424,12 +436,15 @@ function ExplorerSection({
                 {paragraph}
               </p>
             ))}
-            <InterfaceDescription
-              className="mt-8 border-t border-border pt-5"
-              description={contentReviewInterfaceDescriptions.explorer[index]}
-              headingLevel={4}
-              location={`explorer-step-${index + 1}`}
-            />
+            {screens.explorer[index] ? (
+              <InterfaceDescription
+                className="mt-8 border-t border-border pt-5"
+                headingLevel={4}
+                label={screens.label}
+                location={`explorer-step-${index + 1}`}
+                screen={screens.explorer[index]}
+              />
+            ) : null}
           </li>
         ))}
       </ol>
@@ -441,11 +456,7 @@ function audienceLabel(reviewLabel: string): string {
   return reviewLabel.replace(/:\s*question and answer$/i, "")
 }
 
-function AudiencesSection({
-  section,
-}: {
-  section: ContentReviewWireframeSectionDto
-}) {
+function AudiencesSection({ section }: SectionProps) {
   const content = contentEntries(section)
   const decisions = decisionEntries(section)
 
@@ -455,15 +466,7 @@ function AudiencesSection({
       className="border-b border-border px-6 py-16 md:px-10 md:py-24 lg:px-16"
       data-wireframe-section={section.kind}
     >
-      <div className="max-w-3xl">
-        <WireframeLabel>Audience</WireframeLabel>
-        <h2
-          id="wireframe-audiences"
-          className="mt-4 font-heading text-[32px] font-semibold tracking-[-0.025em]"
-        >
-          Intended audiences
-        </h2>
-      </div>
+      <SectionIntro chrome={chrome.audiences} headingId="wireframe-audiences" />
 
       <ul className="mt-12 border-y border-foreground/30 md:grid md:grid-cols-3">
         {content.map((entry) => (
@@ -494,7 +497,7 @@ function AudiencesSection({
               {audienceLabel(entry.reviewLabel)}
             </h3>
             <p className="mt-4 max-w-[72ch] text-sm leading-[1.5] text-muted-foreground">
-              PM to confirm the question and approved answer for this audience.
+              {chrome.audiences.pendingNote}
             </p>
           </li>
         ))}
@@ -503,11 +506,7 @@ function AudiencesSection({
   )
 }
 
-function ProofSection({
-  section,
-}: {
-  section: ContentReviewWireframeSectionDto
-}) {
+function ProofSection({ section }: SectionProps) {
   const content = contentEntries(section)
   const decisions = decisionEntries(section)
 
@@ -519,17 +518,20 @@ function ProofSection({
     >
       <div className="grid gap-10 md:grid-cols-[minmax(0,0.7fr)_minmax(20rem,1.3fr)]">
         <div>
-          <WireframeLabel>Publication-dependent</WireframeLabel>
+          {chrome.proof.label ? (
+            <WireframeLabel>{chrome.proof.label}</WireframeLabel>
+          ) : null}
           <h2
             id="wireframe-proof"
             className="mt-4 font-heading text-[32px] font-semibold tracking-[-0.025em]"
           >
-            Proof
+            {chrome.proof.title}
           </h2>
-          <p className="mt-4 leading-6 text-muted-foreground">
-            No testimonial or attribution is shown in this wireframe without
-            publication approval.
-          </p>
+          {chrome.proof.intro ? (
+            <p className="mt-4 leading-6 text-muted-foreground">
+              {chrome.proof.intro}
+            </p>
+          ) : null}
         </div>
         <div className="space-y-5">
           {content.map((entry) => (
@@ -558,11 +560,9 @@ function ProofSection({
 function AccessSupportSection({
   appendix,
   section,
-}: {
-  appendix: ContentReviewWireframeAppendixDto
-  section: ContentReviewWireframeSectionDto
-}) {
+}: SectionProps & { appendix: ContentReviewWireframeAppendixDto }) {
   const decisions = decisionEntries(section)
+  const accessSupport = chrome.accessSupport
 
   return (
     <section
@@ -570,22 +570,19 @@ function AccessSupportSection({
       className="border-b border-border bg-muted px-6 py-16 md:px-10 md:py-24 lg:px-16"
       data-wireframe-section={section.kind}
     >
-      <div className="max-w-3xl">
-        <WireframeLabel>Access</WireframeLabel>
-        <h2
-          id="wireframe-access-support"
-          className="mt-4 font-heading text-[32px] font-semibold tracking-[-0.025em]"
-        >
-          Access and support
-        </h2>
-      </div>
+      <SectionIntro
+        chrome={accessSupport}
+        headingId="wireframe-access-support"
+      />
 
       <div className="mt-12 grid gap-10 md:grid-cols-2 md:gap-16">
         <div>
-          <h3 className="font-heading text-xl font-semibold">Teacher access</h3>
+          <h3 className="font-heading text-xl font-semibold">
+            {accessSupport.accessHeading}
+          </h3>
           <dl className="mt-6 grid gap-2 border-y border-foreground/30 py-5 sm:grid-cols-[8rem_1fr]">
             <dt className="text-sm font-medium text-muted-foreground">
-              Access method
+              {accessSupport.accessMethodLabel}
             </dt>
             <dd className="font-semibold">{appendix.access.label}</dd>
           </dl>
@@ -597,7 +594,9 @@ function AccessSupportSection({
           </p>
         </div>
         <div>
-          <h3 className="font-heading text-xl font-semibold">Support</h3>
+          <h3 className="font-heading text-xl font-semibold">
+            {accessSupport.supportHeading}
+          </h3>
           <p className="mt-4 leading-6 text-muted-foreground">
             {appendix.support.summary}
           </p>
@@ -612,11 +611,7 @@ function AccessSupportSection({
   )
 }
 
-function CloseSection({
-  section,
-}: {
-  section: ContentReviewWireframeSectionDto
-}) {
+function CloseSection({ section }: SectionProps) {
   const entries = contentEntries(section)
   const copy = entries.find((entry) => entry.heading)
   const action = entries.find((entry) => entry.action?.purpose === "product")
@@ -650,30 +645,27 @@ function CloseSection({
 
 export function ContentReviewSection({
   appendix,
-  section,
-}: {
-  appendix: ContentReviewWireframeAppendixDto
-  section: ContentReviewWireframeSectionDto
-}) {
-  switch (section.kind) {
+  ...props
+}: SectionProps & { appendix: ContentReviewWireframeAppendixDto }) {
+  switch (props.section.kind) {
     case "promise":
-      return <HeroSection section={section} />
+      return <HeroSection {...props} />
     case "connected-story":
-      return <ConnectedStorySection section={section} />
+      return <ConnectedStorySection {...props} />
     case "reveal":
-      return <RevealSection section={section} />
+      return <RevealSection {...props} />
     case "capabilities":
-      return <CapabilitiesSection section={section} />
+      return <CapabilitiesSection {...props} />
     case "explorer":
-      return <ExplorerSection section={section} />
+      return <ExplorerSection {...props} />
     case "audiences":
-      return <AudiencesSection section={section} />
+      return <AudiencesSection {...props} />
     case "proof":
-      return <ProofSection section={section} />
+      return <ProofSection {...props} />
     case "access-support":
-      return <AccessSupportSection appendix={appendix} section={section} />
+      return <AccessSupportSection appendix={appendix} {...props} />
     case "close":
-      return <CloseSection section={section} />
+      return <CloseSection {...props} />
     case "footer-feedback":
       return null
   }

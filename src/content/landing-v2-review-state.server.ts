@@ -2,11 +2,12 @@ import "@tanstack/react-start/server-only"
 
 import { createHash } from "node:crypto"
 
+import { itemProse, landingDocuments } from "./landing-copy"
 import {
   buildReviewDraftProjection,
   contentReviewArtifactManifest,
   contentReviewArtifactReferences,
-  contentReviewManifest,
+  createContentReviewManifest,
   createContentReviewRegistry,
   isContentReviewReviewerRole,
 } from "./landing-v2-review.server"
@@ -160,7 +161,7 @@ function sectionSnapshotPayload(
 
 export function getReviewDraftSnapshots(
   projection: ReviewDraftProjectionDto,
-  manifest: ReadonlyArray<ContentReviewManifestEntry> = contentReviewManifest
+  manifest: ReadonlyArray<ContentReviewManifestEntry> = createContentReviewManifest()
 ): ReviewDraftSnapshots {
   const byReference = {} as Record<ReviewReference, string>
   byReference[projection.metadata.reviewReference] = createReviewSnapshot(
@@ -419,7 +420,7 @@ export function getLandingPageV2CombinedReadiness(
   const publication = options.publication ?? landingPageV2Publication
   const registry =
     options.registry ?? createContentReviewRegistry(content, publication)
-  const manifest = options.manifest ?? contentReviewManifest
+  const manifest = options.manifest ?? createContentReviewManifest(content)
   const artifacts = resolveArtifactManifest(options)
   const landing = getLandingPageV2Readiness(content, publication)
   const projectionResult = buildReviewDraftProjection({
@@ -670,13 +671,16 @@ function buildAppendix(
       label: publication.primaryCta.label ?? "Sign-in decision",
       accountNote:
         publication.primaryCta.accessNote ?? "Account access note required.",
-      implementationBoundary:
-        "Authentication and completed product access remain on the product/auth surface.",
+      implementationBoundary: itemProse(
+        landingDocuments.accessSupport,
+        "implementation-boundary"
+      ),
     },
     support: {
-      summary: publication.support.strategy
-        ? "A support strategy is selected but remains subject to its access and destination review."
-        : "A public support strategy, destination, owner, and access explanation are still required.",
+      summary: itemProse(
+        landingDocuments.accessSupport,
+        publication.support.strategy ? "support-selected" : "support-required"
+      ),
     },
     measurement: {
       providerStrategy: "Provider-neutral",
@@ -718,7 +722,7 @@ export function buildContentReviewAnnotatedPageDto(
 ): ContentReviewAnnotatedPageDto {
   const content = options.content ?? landingPageV2Content
   const publication = options.publication ?? landingPageV2Publication
-  const manifest = options.manifest ?? contentReviewManifest
+  const manifest = options.manifest ?? createContentReviewManifest(content)
   const readiness = getLandingPageV2CombinedReadiness(options)
   const landingStructureErrors = readiness.landing.issues.filter(
     (item) => item.severity === "error"
@@ -775,8 +779,7 @@ export function buildContentReviewAnnotatedPageDto(
   const dto: ContentReviewAnnotatedReadyPageDto = {
     kind: "ready",
     artifactLabel: "Internal content review — not approved for publication",
-    warning:
-      "This unauthenticated review artifact contains draft public-safe copy. It is not an access control or publication approval.",
+    warning: itemProse(landingDocuments.wireframe, "warning"),
     itemSnapshot: snapshots.itemSnapshot,
     iaOrderSnapshot: snapshots.iaOrderSnapshot,
     storySnapshot: snapshots.storySnapshot,
@@ -842,7 +845,7 @@ export function buildContentReviewPageDto(
 
   return {
     kind: "ready",
-    artifactLabel: "Landing-page wireframe — not approved for publication",
+    artifactLabel: landingDocuments.wireframe.text("artifactLabel"),
     warning: review.warning,
     metadata: {
       heading: review.metadata.heading ?? "Teacher Workspace",

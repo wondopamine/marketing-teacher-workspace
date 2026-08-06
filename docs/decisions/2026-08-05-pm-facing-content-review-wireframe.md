@@ -415,6 +415,17 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
     - Add automated visual evidence for the error branch at mobile width.
     - Consider a reusable check that rejects navigation-like fields such as `href`, review metadata, and snapshots from browser-bound DTO schemas.
 
+## Scoped amendment — MDX authoring surface
+
+- **Approved on:** 2026-08-06 — "make it editable for my PM to change the contents. Use MDX."
+- **Intent:** Let a PM revise any word on the wireframe without opening TypeScript, so the artifact can be edited in the same conversation where it is reviewed.
+- **Scope:** Move every author-facing string into `content/*.mdx`. `src/content/landing-v2.ts` keeps the structure — sections, order, journey-to-capability mapping, governance — and reads only its wording from `content/`. `content/README.md` is the PM-facing guide.
+- **Boundary preserved:** The proposed-interface briefs stay route-local in `src/components/content-review/content-review-chrome.ts`, out of the content registry, review snapshots, annotated DTO, and browser DTO, exactly as the earlier amendment requires. Only the source of their words moved, from a typed map to `content/screens.mdx`.
+- **No runtime parser:** `src/content/mdx-plugin.ts` compiles each `.mdx` file to plain data at build time. Neither the browser bundle nor the server runtime contains a markdown parser, and a malformed file fails the dev server or the build with a message naming the file and the block.
+- **Pending slots:** The GA launch line and the three audience answers are now resolvable in `content/`. Filling one in previously produced the fail-closed error page, because the review manifest fixed those items as omissions; `createContentReviewManifest` now derives that classification from the content, so a resolved slot becomes reviewable copy under its existing `TW-` reference.
+- **Unchanged:** Rendered output, the public-safe DTO shape, the snapshot and approval model, the greyscale static presentation, and the isolation of the public `/` route.
+- **Tradeoff:** Wording and structure now live in two places. That is the point — a copy edit cannot silently rewire a product claim — but it means renaming a section still needs a developer.
+
 ## Ratchet
 
 - Extend `type-scan.py` to resolve named Tailwind text-size and line-height utilities; the first evaluator pass showed that a clean scan can miss compiled off-scale values.
