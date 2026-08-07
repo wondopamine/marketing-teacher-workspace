@@ -20,11 +20,10 @@ describe("Landing Page v2 content-review projection", () => {
       "connected-story",
       "reveal",
       "capabilities",
-      "explorer",
       "audiences",
       "proof",
-      "access-support",
       "close",
+      "access-support",
       "footer-feedback",
     ])
 
@@ -47,7 +46,7 @@ describe("Landing Page v2 content-review projection", () => {
     expect(getContentReviewStructureIssues()).toEqual([])
   })
 
-  it("projects the positive story without raw review or superseded source data", () => {
+  it("projects the care story without raw review or internal source data", () => {
     const result = buildReviewDraftProjection()
 
     expect(result.ok).toBe(true)
@@ -56,11 +55,13 @@ describe("Landing Page v2 content-review projection", () => {
     const serialised = JSON.stringify(result.projection)
     const lowercase = serialised.toLowerCase()
 
-    expect(lowercase).toContain("progress")
+    // The canonical story is the bursary care journey again; the student and
+    // the vehicle are reviewable copy, while internal names, the FAS
+    // abbreviation, raw source URLs, and review fields stay out.
+    expect(lowercase).toContain("xiao ming")
+    expect(lowercase).toContain("bursary")
+    expect(lowercase).not.toMatch(/(^|[^a-z])fas([^a-z]|$)/)
     for (const prohibitedValue of [
-      "xiao ming",
-      "fas",
-      "bursary",
       "contextual-intelligence",
       "hey-talia",
       "approvedby",
@@ -93,7 +94,7 @@ describe("Landing Page v2 content-review projection", () => {
     ).toEqual([
       null,
       "Student Insights",
-      "Next-step guidance",
+      "AI next-step guidance",
       "Message drafting",
       "Posts",
     ])
@@ -145,8 +146,9 @@ describe("Landing Page v2 content-review projection", () => {
       section.entries.filter((entry) => entry.kind === "decision")
     )
 
+    // The GA launch line resolved into reviewable copy on 2026-08-07, so it
+    // no longer appears among the unanswered decisions.
     expect(decisions.map((entry) => entry.reviewReference)).toEqual([
-      "TW-REVEAL-GA-LINE",
       "TW-AUDIENCE-FORM-TEACHERS",
       "TW-AUDIENCE-KEY-PERSONNEL",
       "TW-AUDIENCE-SCHOOL-LEADERS",
@@ -163,7 +165,7 @@ describe("Landing Page v2 content-review projection", () => {
     ).toBe(true)
   })
 
-  it("fails closed for missing mappings, duplicate references, or an unaccepted explorer", () => {
+  it("fails closed for missing mappings or duplicate references", () => {
     const missingManifestEntry = contentReviewManifest.slice(1)
     const duplicateReferenceManifest = contentReviewManifest.map(
       (item, index) =>
@@ -174,10 +176,6 @@ describe("Landing Page v2 content-review projection", () => {
             }
           : item
     )
-    const unacceptedExplorer = {
-      ...landingPageV2Content,
-      productExplorer: { status: "not-pursued" as const },
-    }
 
     expect(
       buildReviewDraftProjection({ manifest: missingManifestEntry }).ok
@@ -187,8 +185,18 @@ describe("Landing Page v2 content-review projection", () => {
         manifest: duplicateReferenceManifest,
       }).map((issue) => issue.code)
     ).toContain("duplicate-review-reference")
+  })
+
+  it("projects the page whether or not the future explorer is pursued", () => {
+    // The accepted explorer is future work with no slot on the GA page, so
+    // its product status no longer gates the content review projection.
+    const unacceptedExplorer = {
+      ...landingPageV2Content,
+      productExplorer: { status: "not-pursued" as const },
+    }
+
     expect(buildReviewDraftProjection({ content: unacceptedExplorer }).ok).toBe(
-      false
+      true
     )
   })
 
@@ -311,13 +319,23 @@ describe("Landing Page v2 content-review projection", () => {
     expect(result.ok).toBe(true)
   })
 
-  it("keeps an unresolved slot classified as an omission", () => {
+  it("classifies slots from the content: resolved GA line, unresolved audiences", () => {
     const manifest = createContentReviewManifest(landingPageV2Content)
     const kindOf = (contentId: string) =>
       manifest.find((entry) => entry.contentId === contentId)?.contentKind
 
-    expect(kindOf("reveal.ga-launch-line")).toBe("omission")
+    expect(kindOf("reveal.ga-launch-line")).toBe("copy")
     expect(kindOf("audience.teachers")).toBe("omission")
-    expect(manifest).toEqual(contentReviewManifest)
+
+    const blankLine = {
+      ...landingPageV2Content,
+      reveal: { ...landingPageV2Content.reveal, gaLaunchLine: null },
+    }
+    const unresolved = createContentReviewManifest(blankLine)
+    expect(
+      unresolved.find((entry) => entry.contentId === "reveal.ga-launch-line")
+        ?.contentKind
+    ).toBe("omission")
+    expect(unresolved).toEqual(contentReviewManifest)
   })
 })

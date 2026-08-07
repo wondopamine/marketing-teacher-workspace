@@ -38,7 +38,6 @@ export const landingDocuments = {
   story: load("content/landing/03-story.mdx"),
   reveal: load("content/landing/04-reveal.mdx"),
   capabilities: load("content/landing/05-capabilities.mdx"),
-  explorer: load("content/landing/06-explorer.mdx"),
   audiences: load("content/landing/07-audiences.mdx"),
   proof: load("content/landing/08-proof.mdx"),
   accessSupport: load("content/landing/09-access-support.mdx"),

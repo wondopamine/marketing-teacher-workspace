@@ -30,7 +30,7 @@ describe("ContentReviewPage", () => {
     expect(screen.getAllByRole("main")).toHaveLength(1)
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
-      "See the progress worth building on."
+      "Every student. No support left unclaimed."
     )
     expect(within(main).queryByRole("contentinfo")).toBeNull()
     expect(within(main).queryByRole("complementary")).toBeNull()
@@ -39,7 +39,7 @@ describe("ContentReviewPage", () => {
     const interfaceDescriptions = Array.from(
       container.querySelectorAll("[data-interface-description]")
     )
-    expect(interfaceDescriptions).toHaveLength(9)
+    expect(interfaceDescriptions).toHaveLength(6)
     expect(
       interfaceDescriptions.every(
         (description) =>
@@ -75,33 +75,26 @@ describe("ContentReviewPage", () => {
     expect(sectionKinds).toEqual(data.sections.map((section) => section.kind))
     expect(
       screen.getByRole("heading", {
-        name: "A student is beginning to contribute with growing confidence.",
+        name: "Xiao Ming's family may qualify for support. Nobody has applied.",
       })
     ).not.toBeNull()
     expect(
       screen.getByRole("heading", {
-        name: "Shared with the family. Kept with the record.",
+        name: "Sent. Seen. On file.",
       })
     ).not.toBeNull()
 
-    const explorerHeading = screen.getByRole("heading", {
-      name: "Explore the flow in three steps",
-    })
-    const explorer = explorerHeading.closest("section")
-    expect(explorer).not.toBeNull()
-    expect(explorer?.querySelectorAll("ol > li")).toHaveLength(3)
+    // The three-step explorer has no slot on the GA page.
     expect(
-      within(explorer as HTMLElement).queryAllByRole("button")
-    ).toHaveLength(0)
-    expect(within(explorer as HTMLElement).queryAllByRole("tab")).toHaveLength(
-      0
-    )
+      screen.queryByRole("heading", { name: "Explore the flow in three steps" })
+    ).toBeNull()
+    expect(screen.queryByText("Placement to confirm")).toBeNull()
     expect(screen.queryAllByRole("combobox")).toHaveLength(0)
     expect(screen.queryAllByRole("dialog")).toHaveLength(0)
 
     const capabilities = screen
       .getByRole("heading", {
-        name: "What Teacher Workspace brings together",
+        name: "The apps, up close",
       })
       .closest("section")
     expect(capabilities?.querySelectorAll("ol > li")).toHaveLength(4)
@@ -127,10 +120,9 @@ describe("ContentReviewPage", () => {
       screen.getByText("Proof copy and testimonial permission")
     ).not.toBeNull()
     expect(screen.getByText("Public support route")).not.toBeNull()
-    expect(screen.getByText("Placement to confirm")).not.toBeNull()
   })
 
-  it("describes every proposed interface with a synthetic positive-growth story", () => {
+  it("describes every proposed interface with the synthetic care-journey guardrails", () => {
     const data = buildReadyReviewPage()
 
     const { container } = render(<ContentReviewPage data={data} />)
@@ -138,7 +130,7 @@ describe("ContentReviewPage", () => {
       container.querySelectorAll("[data-interface-description]")
     )
 
-    expect(descriptions).toHaveLength(9)
+    expect(descriptions).toHaveLength(6)
     expect(
       descriptions.every(
         (description) =>
@@ -147,14 +139,14 @@ describe("ContentReviewPage", () => {
       )
     ).toBe(true)
     expect(
-      screen.getByRole("heading", { name: "Positive student profile" })
+      screen.getByRole("heading", {
+        name: "Class view with one synthetic student",
+      })
     ).not.toBeNull()
-    expect(
-      screen.getAllByText("Positive growth · Growing confidence tag")
-    ).toHaveLength(2)
+    expect(screen.getByText("No conduct or attention markers")).not.toBeNull()
     expect(
       screen.getByText(
-        "Help teachers recognise a student’s progress at a glance. Use a synthetic student from the general class list, highlight the positive-growth tag, and show no additional-needs or attention tag."
+        "Ground the story in an ordinary class. Show Xiao Ming as one row among many, with no conduct, offence, or attention marker anywhere in the frame."
       )
     ).not.toBeNull()
     expect(JSON.stringify(data).toLowerCase()).not.toContain("swan")
@@ -222,8 +214,6 @@ describe("ContentReviewPage", () => {
       "contextual-intelligence",
       "hey-talia",
       "xingyu",
-      "xiao ming",
-      "bursary",
       "reviewedsnapshot",
       "evidencereference",
       "contentid",
@@ -250,7 +240,7 @@ describe("ContentReviewPage", () => {
     expect(screen.queryAllByRole("button")).toHaveLength(0)
     expect(container.querySelectorAll("[href]")).toHaveLength(0)
     expect(container.textContent).not.toContain(
-      "See the progress worth building on"
+      "Every student. No support left unclaimed"
     )
     expect(container.innerHTML).not.toContain("manifest-coverage")
     expect(container.innerHTML).not.toContain("CONTENT_REVIEW_INVALID")

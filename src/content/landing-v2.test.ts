@@ -151,7 +151,7 @@ describe("Landing Page v2 content contract", () => {
     expect(getLandingPageV2StructureIssues()).toEqual([])
   })
 
-  it("uses a proposed positive-growth story instead of the bursary example", () => {
+  it("tells the ticket's bursary care journey with one student carried through", () => {
     const narrative = [
       landingPageV2Content.seoDraft.description,
       landingPageV2Content.hero.headline,
@@ -168,20 +168,20 @@ describe("Landing Page v2 content contract", () => {
       landingPageV2Content.close.headline,
       landingPageV2Content.close.body,
     ].join("\n")
+    const lowered = narrative.toLowerCase()
 
-    expect(narrative.toLowerCase()).toContain("progress")
+    // The canonical story is issue #3's near-miss care journey again; see
+    // docs/adr/0001-bursary-care-story-is-canonical.md.
+    expect(lowered).toContain("xiao ming")
+    expect(lowered).toContain("bursary")
+    expect(lowered).toContain("eligibility")
 
-    for (const supersededTerm of [
-      "Xiao Ming",
-      "FAS",
-      "bursary",
-      "eligibility",
-      "application window",
-      "matching scheme",
-    ]) {
-      expect(narrative.toLowerCase()).not.toContain(
-        supersededTerm.toLowerCase()
-      )
+    // The abbreviation stays out of public copy; it is spelled out instead,
+    // and the eligibility signal never comes from the student's own conduct.
+    expect(lowered).not.toMatch(/(^|\s)fas(\s|\.|,|$)/)
+    expect(lowered).toContain("financial assistance")
+    for (const conductTerm of ["offence", "counselling", "conduct grade"]) {
+      expect(lowered).not.toContain(conductTerm)
     }
 
     expect(landingPageV2Content.journey.map((act) => act.capabilityId)).toEqual(
@@ -205,7 +205,7 @@ describe("Landing Page v2 content contract", () => {
       )
     ).toEqual([
       "Student Insights",
-      "Next-step guidance",
+      "AI next-step guidance",
       "Message drafting",
       "Posts",
     ])
@@ -306,8 +306,10 @@ describe("Landing Page v2 content contract", () => {
     const codes = issueCodes(getLandingPageV2LaunchDecisions())
     expect(codes).not.toContain("testimonial-school-names")
     expect(codes).toContain("testimonial-approval")
-    expect(codes).toContain("testimonial-coverage-student-insights")
-    expect(codes).toContain("testimonial-coverage-hey-talia")
+    // Required coverage is Posts only, which the verbatims already satisfy.
+    expect(codes.some((code) => code.startsWith("testimonial-coverage-"))).toBe(
+      false
+    )
   })
 
   it("defines provider-neutral engagement, proxy, and true-conversion semantics", () => {
@@ -563,16 +565,15 @@ describe("Landing Page v2 content contract", () => {
   it("keeps every genuinely unresolved publication decision visible", () => {
     const codes = issueCodes(getLandingPageV2LaunchDecisions())
 
+    // release-copy cleared on 2026-08-07: GA positioning confirmed and the
+    // launch line filled as proposed copy.
     expect(codes).toEqual([
-      "release-copy",
       "content-approval",
       "canonical-url",
       "social-image",
       "audience-confirmation",
       "product-claims",
       "synthetic-demo-approval",
-      "testimonial-coverage-student-insights",
-      "testimonial-coverage-hey-talia",
       "testimonial-approval",
       "audience-copy",
       "support-strategy",
@@ -706,16 +707,32 @@ describe("Landing Page v2 content contract", () => {
   })
 
   it("uses public capability labels in testimonial coverage decisions", () => {
+    // The verbatims all cover Posts, so required coverage is satisfied and no
+    // coverage decision fires; see docs/adr/0003-publish-the-proof-we-have.md.
     const coverageDecisions = getLandingPageV2LaunchDecisions().filter(
       (decision) => decision.code.startsWith("testimonial-coverage-")
     )
 
-    expect(coverageDecisions.map((decision) => decision.message)).toEqual([
-      "Provide an approved testimonial covering Student Insights.",
-      "Provide an approved testimonial covering Message drafting.",
+    expect(coverageDecisions).toEqual([])
+
+    // A candidate without Posts coverage still names the public label.
+    const withoutPosts: LandingPageV2Candidate = {
+      ...landingPageV2Content,
+      testimonials: landingPageV2Content.testimonials.map((testimonial) => ({
+        ...testimonial,
+        capabilityIds: ["student-insights"],
+      })),
+    }
+    const missingCoverage = getLandingPageV2LaunchDecisions(
+      withoutPosts,
+      landingPageV2Publication
+    ).filter((decision) => decision.code.startsWith("testimonial-coverage-"))
+
+    expect(missingCoverage.map((decision) => decision.message)).toEqual([
+      "Provide an approved testimonial covering Posts.",
     ])
     expect(
-      coverageDecisions.map((decision) => decision.message).join(" ")
+      missingCoverage.map((decision) => decision.message).join(" ")
     ).not.toContain("hey-talia")
   })
 
@@ -893,7 +910,7 @@ describe("Landing Page v2 content contract", () => {
     ).toEqualTypeOf<readonly ["Designer", "Xingyu (PM)"]>()
     expectTypeOf(
       landingPageV2Publication.testimonialCoverageRequired
-    ).toEqualTypeOf<readonly ["student-insights", "hey-talia", "posts"]>()
+    ).toEqualTypeOf<readonly ["posts"]>()
     expectTypeOf(proposedAiLayerMemberCapabilityIds).toEqualTypeOf<
       readonly ["contextual-intelligence", "hey-talia"]
     >()

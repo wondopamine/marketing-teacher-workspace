@@ -64,7 +64,7 @@ assert(
   countMatches(reviewHtml, /<main\b/g) === 1 &&
     countMatches(reviewHtml, /<h1\b/g) === 1 &&
     reviewHtml.includes('<main id="main"') &&
-    reviewHtml.includes("See the progress worth building on."),
+    reviewHtml.includes("Every student. No support left unclaimed."),
   "The content-review route does not render one main landmark and one H1."
 )
 assert(
@@ -80,10 +80,10 @@ assert(
   "The content-review route published canonical, social-image, or preload metadata."
 )
 assert(
-  countMatches(reviewHtml, /data-interface-description/g) === 9 &&
+  countMatches(reviewHtml, /data-interface-description/g) === 6 &&
     countMatches(reviewHtml, /data-wireframe-placeholder/g) === 0 &&
-    reviewHtml.includes("Positive student profile") &&
-    reviewHtml.includes("Positive growth · Growing confidence tag"),
+    reviewHtml.includes("Class view with one synthetic student") &&
+    reviewHtml.includes("No conduct or attention markers"),
   "The content-review route lost its complete set of descriptive interface briefs."
 )
 
@@ -110,7 +110,6 @@ const prohibitedReviewOutput = [
   "contextual-intelligence",
   "hey-talia",
   "xingyu",
-  "bursary",
   "swan",
 ]
 for (const value of prohibitedReviewOutput) {

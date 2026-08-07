@@ -285,7 +285,11 @@ function ConnectedStorySection({ section }: SectionProps) {
 }
 
 function RevealSection({ section }: SectionProps) {
-  const copy = contentEntries(section).find((entry) => entry.heading)
+  const entries = contentEntries(section)
+  const copy = entries.find((entry) => entry.heading)
+  // A resolved slot (the GA launch line) projects as copy without a heading;
+  // it takes the place of its former pending box beside the thesis.
+  const asides = entries.filter((entry) => entry !== copy)
   const decisions = decisionEntries(section)
 
   if (!copy?.heading) return null
@@ -316,6 +320,23 @@ function RevealSection({ section }: SectionProps) {
             </p>
           ))}
         </div>
+        {asides.map((entry, index) => (
+          <div
+            className="border border-background/30 p-5"
+            key={entry.label ?? `reveal-aside-${index}`}
+          >
+            {entry.label ? (
+              <p className="text-xs font-medium tracking-[0.1em] text-background/60">
+                {entry.label}
+              </p>
+            ) : null}
+            {entry.body.map((paragraph) => (
+              <p className="mt-3 text-sm text-background/85" key={paragraph}>
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        ))}
         {decisions.map((entry) => (
           <div
             className="border border-dashed border-background/30 p-5"
@@ -373,78 +394,6 @@ function CapabilitiesSection({ section }: SectionProps) {
                 </p>
               ))}
             </div>
-          </li>
-        ))}
-      </ol>
-    </section>
-  )
-}
-
-function ExplorerSection({ section }: SectionProps) {
-  const entries = contentEntries(section)
-
-  return (
-    <section
-      aria-labelledby="wireframe-explorer"
-      className="border-b border-border bg-muted px-6 py-16 md:px-10 md:py-24 lg:px-16"
-      data-wireframe-section={section.kind}
-    >
-      <div className="max-w-3xl">
-        <div className="flex flex-wrap items-center gap-3">
-          {chrome.explorer.label ? (
-            <WireframeLabel>{chrome.explorer.label}</WireframeLabel>
-          ) : null}
-          <WireframeLabel>{chrome.explorer.placementLabel}</WireframeLabel>
-        </div>
-        <h2
-          id="wireframe-explorer"
-          className="mt-4 font-heading text-[32px] font-semibold tracking-[-0.025em]"
-        >
-          {chrome.explorer.title}
-        </h2>
-        {chrome.explorer.intro ? (
-          <p className="mt-4 max-w-[72ch] leading-6 text-muted-foreground">
-            {chrome.explorer.intro}
-          </p>
-        ) : null}
-      </div>
-
-      <ol className="mt-12 border-2 border-foreground/30 bg-background lg:grid lg:grid-cols-3">
-        {entries.map((entry, index) => (
-          <li
-            className="border-b border-border p-6 last:border-b-0 lg:border-r lg:border-b-0 lg:p-8 lg:last:border-r-0"
-            key={entry.heading ?? entry.label ?? `explorer-${index}`}
-          >
-            <p className="text-sm font-medium text-muted-foreground">
-              {`${chrome.explorer.stepLabel} ${index + 1}`}
-            </p>
-            {entry.label ? (
-              <p className="mt-5 text-sm font-semibold tracking-[0.06em]">
-                {entry.label}
-              </p>
-            ) : null}
-            {entry.heading ? (
-              <h3 className="mt-3 font-heading text-xl leading-snug font-semibold">
-                {entry.heading}
-              </h3>
-            ) : null}
-            {entry.body.map((paragraph) => (
-              <p
-                className="mt-4 leading-6 text-muted-foreground"
-                key={paragraph}
-              >
-                {paragraph}
-              </p>
-            ))}
-            {screens.explorer[index] ? (
-              <InterfaceDescription
-                className="mt-8 border-t border-border pt-5"
-                headingLevel={4}
-                label={screens.label}
-                location={`explorer-step-${index + 1}`}
-                screen={screens.explorer[index]}
-              />
-            ) : null}
           </li>
         ))}
       </ol>
@@ -656,16 +605,14 @@ export function ContentReviewSection({
       return <RevealSection {...props} />
     case "capabilities":
       return <CapabilitiesSection {...props} />
-    case "explorer":
-      return <ExplorerSection {...props} />
     case "audiences":
       return <AudiencesSection {...props} />
     case "proof":
       return <ProofSection {...props} />
-    case "access-support":
-      return <AccessSupportSection appendix={appendix} {...props} />
     case "close":
       return <CloseSection {...props} />
+    case "access-support":
+      return <AccessSupportSection appendix={appendix} {...props} />
     case "footer-feedback":
       return null
   }

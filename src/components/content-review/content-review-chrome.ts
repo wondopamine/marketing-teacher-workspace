@@ -1,7 +1,6 @@
 import accessSupportSource from "/content/landing/09-access-support.mdx"
 import audiencesSource from "/content/landing/07-audiences.mdx"
 import capabilitiesSource from "/content/landing/05-capabilities.mdx"
-import explorerSource from "/content/landing/06-explorer.mdx"
 import proofSource from "/content/landing/08-proof.mdx"
 import revealSource from "/content/landing/04-reveal.mdx"
 import screensSource from "/content/screens.mdx"
@@ -25,7 +24,6 @@ const screens = new MdxDocument(screensSource)
 const story = new MdxDocument(storySource)
 const reveal = new MdxDocument(revealSource)
 const capabilities = new MdxDocument(capabilitiesSource)
-const explorer = new MdxDocument(explorerSource)
 const audiences = new MdxDocument(audiencesSource)
 const proof = new MdxDocument(proofSource)
 const accessSupport = new MdxDocument(accessSupportSource)
@@ -72,11 +70,6 @@ export const contentReviewChrome = {
   story: sectionChrome(story),
   revealLabel: reveal.text("label"),
   capabilities: sectionChrome(capabilities),
-  explorer: {
-    ...sectionChrome(explorer),
-    placementLabel: explorer.text("placementLabel"),
-    stepLabel: explorer.text("stepLabel"),
-  },
   audiences: {
     ...sectionChrome(audiences),
     pendingNote: audiences.text("pendingNote"),
@@ -105,17 +98,10 @@ const storyScreenIds = [
   "story-family-and-record",
 ] as const
 
-const explorerScreenIds = [
-  "explorer-choose",
-  "explorer-context",
-  "explorer-action",
-] as const
-
-screens.requireItems(["hero", ...storyScreenIds, ...explorerScreenIds])
+screens.requireItems(["hero", ...storyScreenIds])
 
 export const contentReviewScreens = {
   label: screens.text("label"),
   hero: screen("hero"),
   story: storyScreenIds.map(screen),
-  explorer: explorerScreenIds.map(screen),
 } as const

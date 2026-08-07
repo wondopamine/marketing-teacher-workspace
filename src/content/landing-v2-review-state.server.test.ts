@@ -13,6 +13,7 @@ import {
   contentReviewArtifactManifest,
   contentReviewManifest,
   contentReviewRegistry,
+  createContentReviewManifest,
   createContentReviewRegistry,
 } from "./landing-v2-review.server"
 import { getLandingPageV2Readiness } from "./landing-v2-readiness"
@@ -433,8 +434,10 @@ describe("Landing Page v2 revision-aware review state", () => {
     expect(projection.ok).toBe(true)
     if (!projection.ok) return
     const snapshots = getReviewDraftSnapshots(projection.projection)
+    // Derive from the content-aware manifest: the static one still classifies
+    // the resolved GA launch line as an omission, which fails closed.
     const withRecord = (reviewedSnapshot: string) =>
-      contentReviewManifest.map((item) =>
+      createContentReviewManifest().map((item) =>
         item.reviewReference === "TW-CAP-POSTS"
           ? {
               ...item,
@@ -474,16 +477,12 @@ describe("Landing Page v2 revision-aware review state", () => {
     expect(dto.kind).toBe("ready")
     if (dto.kind !== "ready") return
 
-    expect(dto.sections).toHaveLength(10)
+    expect(dto.sections).toHaveLength(9)
     expect(dto.artifactReview.iaOrder.reviewReference).toBe("TW-IA-ORDER")
     expect(dto.artifactReview.composedStory.reviewReference).toBe(
       "TW-STORY-COMPOSED"
     )
-    expect(dto.appendix.proof.missingCapabilityLabels).toEqual([
-      "Student Insights",
-      "Message drafting",
-      "Posts",
-    ])
+    expect(dto.appendix.proof.missingCapabilityLabels).toEqual(["Posts"])
 
     const serialised = JSON.stringify(dto).toLowerCase()
     for (const prohibitedValue of [
@@ -507,13 +506,9 @@ describe("Landing Page v2 revision-aware review state", () => {
     expect(dto.kind).toBe("ready")
     if (dto.kind !== "ready") return
 
-    expect(dto.sections).toHaveLength(10)
+    expect(dto.sections).toHaveLength(9)
     expect(dto.metadata.status).toBe("decision-required")
-    expect(dto.appendix.proof.missingCapabilityLabels).toEqual([
-      "Student Insights",
-      "Message drafting",
-      "Posts",
-    ])
+    expect(dto.appendix.proof.missingCapabilityLabels).toEqual(["Posts"])
 
     const keys = collectObjectKeys(dto)
     for (const prohibitedKey of [

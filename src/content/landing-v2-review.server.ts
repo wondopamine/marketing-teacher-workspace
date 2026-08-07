@@ -1,13 +1,11 @@
 import "@tanstack/react-start/server-only"
 
 import { contentReviewSectionKinds } from "./landing-v2-review.types"
-import { itemCopy, itemLabel, landingDocuments } from "./landing-copy"
+import { landingDocuments } from "./landing-copy"
 import {
   capabilityIds,
-  explorerStepIds,
   landingPageV2Content,
   landingPageV2Publication,
-  productExplorerComprehensionFlow,
 } from "./landing-v2"
 
 import type {
@@ -206,21 +204,6 @@ function linkEntry(
 
 const launchLineLabel = landingDocuments.reveal.text("launchLinePendingLabel")
 
-function explorerEntries(): ReadonlyArray<RegistryEntry> {
-  const document = landingDocuments.explorer
-  return explorerStepIds.map((stepId) => {
-    const copy = itemCopy(document, stepId)
-    return contentEntry(`explorer.${stepId}`, "explorer", "claim", {
-      kind: "content",
-      contentKind: "claim",
-      label: itemLabel(document, document.item(stepId)),
-      heading: copy.heading,
-      body: [copy.body],
-      link: null,
-    })
-  })
-}
-
 function publicCapabilityLabel(
   content: LandingPageV2Content,
   capabilityId: CapabilityId | null
@@ -317,8 +300,6 @@ export function createContentReviewRegistry(
         link: null,
       })
     ),
-    section("section.explorer", "explorer"),
-    ...explorerEntries(),
     section("section.audiences", "audiences"),
     ...content.audiences.map((audience) =>
       audience.question && audience.answer
@@ -342,12 +323,6 @@ export function createContentReviewRegistry(
       "proof",
       landingDocuments.proof.text("pendingLabel")
     ),
-    section("section.access-support", "access-support"),
-    decisionEntry(
-      "support.public-route",
-      "access-support",
-      landingDocuments.accessSupport.text("pendingLabel")
-    ),
     section("section.close", "close"),
     contentEntry("close.copy", "close", "copy", {
       kind: "content",
@@ -364,6 +339,12 @@ export function createContentReviewRegistry(
       ctaHref,
       ctaNote,
       "product"
+    ),
+    section("section.access-support", "access-support"),
+    decisionEntry(
+      "support.public-route",
+      "access-support",
+      landingDocuments.accessSupport.text("pendingLabel")
     ),
     section("section.footer-feedback", "footer-feedback"),
     contentEntry("footer.copy", "footer-feedback", "copy", {
@@ -530,25 +511,6 @@ export const contentReviewManifest = [
     requiredReviewers: productReviewer,
     concerns: ["Content", "Product claim"],
   }),
-  manifestEntry("section.explorer", "TW-SECTION-EXPLORER", "structure", {
-    owner: "Designer and Xingyu (PM)",
-    requiredReviewers: syntheticReviewers,
-  }),
-  manifestEntry("explorer.choose", "TW-EXPLORER-CHOOSE", "claim", {
-    owner: "Designer and Xingyu (PM)",
-    requiredReviewers: syntheticReviewers,
-    concerns: ["Synthetic data", "Interaction boundary"],
-  }),
-  manifestEntry("explorer.context", "TW-EXPLORER-CONTEXT", "claim", {
-    owner: "Designer and Xingyu (PM)",
-    requiredReviewers: syntheticReviewers,
-    concerns: ["Synthetic data", "Product claim"],
-  }),
-  manifestEntry("explorer.action", "TW-EXPLORER-ACTION", "claim", {
-    owner: "Designer and Xingyu (PM)",
-    requiredReviewers: syntheticReviewers,
-    concerns: ["Synthetic data", "Teacher control"],
-  }),
   manifestEntry("section.audiences", "TW-SECTION-AUDIENCES", "structure", {
     owner: "Xingyu (PM)",
     requiredReviewers: productReviewer,
@@ -573,6 +535,12 @@ export const contentReviewManifest = [
   manifestEntry("proof.testimonials", "TW-PROOF", "omission", {
     concerns: ["Publication", "Testimonial permission", "Capability coverage"],
   }),
+  manifestEntry("section.close", "TW-SECTION-CLOSE", "structure"),
+  manifestEntry("close.copy", "TW-CLOSE", "copy"),
+  manifestEntry("destination.cta.close", "TW-CTA-CLOSE", "destination", {
+    concerns: ["Access", "Publication"],
+    linkDisplay: "public-destination",
+  }),
   manifestEntry(
     "section.access-support",
     "TW-SECTION-ACCESS-SUPPORT",
@@ -580,12 +548,6 @@ export const contentReviewManifest = [
   ),
   manifestEntry("support.public-route", "TW-SUPPORT", "omission", {
     concerns: ["Access", "Publication"],
-  }),
-  manifestEntry("section.close", "TW-SECTION-CLOSE", "structure"),
-  manifestEntry("close.copy", "TW-CLOSE", "copy"),
-  manifestEntry("destination.cta.close", "TW-CTA-CLOSE", "destination", {
-    concerns: ["Access", "Publication"],
-    linkDisplay: "public-destination",
   }),
   manifestEntry(
     "section.footer-feedback",
@@ -865,22 +827,6 @@ export function getContentReviewStructureIssues(
     }
   }
 
-  if (
-    content.productExplorer.status !== "accepted" ||
-    content.productExplorer.comprehensionFlow.length !==
-      productExplorerComprehensionFlow.length ||
-    !content.productExplorer.comprehensionFlow.every(
-      (step, index) => step === productExplorerComprehensionFlow[index]
-    )
-  ) {
-    issues.push(
-      issue(
-        "explorer-contract",
-        "The content review requires the accepted three-step synthetic explorer."
-      )
-    )
-  }
-
   const canonicalJourneyCapabilities = [null, ...capabilityIds] as const
   const journeyCapabilityIds = content.journey.map((act) => act.capabilityId)
   const journeyCapabilityLabels = content.journey.map((act) =>
@@ -938,10 +884,13 @@ export function getContentReviewStructureIssues(
     }
   }
 
+  // The canonical story is the ticket's bursary care journey again (see
+  // docs/adr/0001-bursary-care-story-is-canonical.md), so "Xiao Ming" and
+  // "bursary" are reviewable copy now. Internal capability names, the raw
+  // source URL of the unpublishable ticket screenshot, and the FAS
+  // abbreviation (public copy spells out "financial assistance") stay banned.
   const serialisedProjection = normaliseSafetyText(JSON.stringify(projection))
   const prohibitedValues = [
-    "xiao ming",
-    "bursary",
     "contextual intelligence",
     "heytalia",
     "hey talia",
@@ -954,7 +903,7 @@ export function getContentReviewStructureIssues(
     issues.push(
       issue(
         "public-copy-safety",
-        "The review draft cannot contain the superseded story or internal capability names."
+        "The review draft cannot contain internal capability names, the FAS abbreviation, or raw source references."
       )
     )
   }

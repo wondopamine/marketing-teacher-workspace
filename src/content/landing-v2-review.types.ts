@@ -5,11 +5,10 @@ export const contentReviewSectionKinds = [
   "connected-story",
   "reveal",
   "capabilities",
-  "explorer",
   "audiences",
   "proof",
-  "access-support",
   "close",
+  "access-support",
   "footer-feedback",
 ] as const
 

@@ -6,11 +6,14 @@ Source: [GitHub issue #3](https://github.com/String-dxd/marketing-teacher-worksp
 
 ## What is locked
 
-- Tell one connected student-care story across Student Insights, Next-step
+- Tell one connected student-care story across Student Insights, AI next-step
   guidance, Message drafting, and Posts.
-- Use the proposed positive-growth narrative as the canonical review story.
-  The financial-assistance/bursary example is non-canonical and may return only
-  as a separately approved, fully synthetic example.
+- Use the ticket's bursary near-miss narrative as the canonical review story,
+  with the synthetic student "Xiao Ming" carried through every act under the
+  guardrails in
+  [ADR-0001](adr/0001-bursary-care-story-is-canonical.md). This supersedes the
+  earlier positive-growth substitution; the ticket's bursary screenshot remains
+  unpublishable.
 - Lead with the student's journey and the teacher's job.
 - Use Teacher Workspace as the only public brand.
 - Use one primary CTA: `Sign in with Google`.
@@ -19,9 +22,10 @@ Source: [GitHub issue #3](https://github.com/String-dxd/marketing-teacher-worksp
 - Tell teachers: `Use your @edu.gov.sg account.`
 - Plan GA for Form Teachers, Key Personnel, and School Leaders.
 - Keep audience confirmation pending until Xingyu (PM) records it.
-- Keep the accepted three-step explorer sequence with synthetic data and no
-  backend. Represent it statically in the PM-facing wireframe; interaction is
-  future work.
+- Keep the accepted three-step explorer as a product decision with synthetic
+  data and no backend, but give it no section on the GA page — the journey and
+  the capability cards carry comprehension. See
+  [ADR-0002](adr/0002-cut-the-product-explorer-from-the-ga-page.md).
 - Allow anonymous role-and-school-level testimonials for initial GA proof.
 - Keep owner assignment separate from recorded approval.
 - Keep internal capability names out of public labels and public copy.
@@ -182,7 +186,7 @@ stable internal IDs:
 | Internal ID               | Public label       |
 | ------------------------- | ------------------ |
 | `student-insights`        | Student Insights   |
-| `contextual-intelligence` | Next-step guidance |
+| `contextual-intelligence` | AI next-step guidance |
 | `hey-talia`               | Message drafting   |
 | `posts`                   | Posts              |
 
@@ -209,13 +213,13 @@ product. The accepted explorer follows this order:
 2. Inspect the connected context.
 3. Preview the resulting action.
 
-Every capability stays reachable within these three steps. Placement within the
-page remains undecided.
+Every capability stays reachable within these three steps.
 
 The future explorer uses public-safe synthetic data and local interactions. It
 needs no authentication, persistence, AI inference, submission endpoint, or
-backend. The PM-facing `/content-review` wireframe shows the same three steps as
-a static sequence and implements no product interaction.
+backend. It has no section on the GA page or the `/content-review` wireframe —
+it is future work with no page slot; see
+[ADR-0002](adr/0002-cut-the-product-explorer-from-the-ga-page.md).
 
 ## Initial GA proof
 
@@ -223,8 +227,9 @@ Anonymous role-and-school-level attribution is valid for initial GA
 testimonials. A school name is not required.
 
 Each selected quote still needs publication approval and an HTTPS source.
-Current proof covers Posts. Approved coverage for Student Insights and Message
-drafting is still missing.
+Required coverage is Posts only — the proof section says what the verbatims
+actually evidence, and coverage for other capabilities is future fieldwork,
+not a launch gate. See [ADR-0003](adr/0003-publish-the-proof-we-have.md).
 
 Do not invent a school name or infer one from the testimonial source.
 
@@ -240,15 +245,14 @@ The following decisions are resolved:
 
 Publishing remains blocked by:
 
-- the GA launch line and general content approval;
+- general content approval (GA positioning was confirmed by the PM on
+  2026-08-07 and the launch line is filled as proposed copy);
 - canonical URL, preview indexing policy, and social image;
 - Xingyu's recorded confirmation of the intended GA audience;
 - audience questions and answers;
 - Xingyu's recorded approval of product claims;
 - recorded synthetic/demo approval from both the Designer and Xingyu;
 - publication approval for every selected testimonial;
-- missing approved testimonial coverage for Student Insights and Message
-  drafting;
 - a launch-ready support strategy, destination, owner, access explanation, and
   approver.
 

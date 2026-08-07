@@ -40,6 +40,13 @@ export const audienceIds = [
 
 export type AudienceId = (typeof audienceIds)[number]
 
+/**
+ * The accepted three-step explorer remains a product decision, but it has no
+ * slot on the GA page: the five-act journey and the capability cards already
+ * carry comprehension, and a third layer diluted both. `placement: null` now
+ * means "off the page until a future milestone", not "position undecided".
+ * See docs/adr/0002-cut-the-product-explorer-from-the-ga-page.md.
+ */
 export const productExplorerComprehensionFlow = [
   "choose-scenario",
   "inspect-connected-context",
@@ -48,11 +55,6 @@ export const productExplorerComprehensionFlow = [
 
 export type ProductExplorerComprehensionStep =
   (typeof productExplorerComprehensionFlow)[number]
-
-/** The `<Item>` blocks that carry each explorer step's copy. */
-export const explorerStepIds = ["choose", "context", "action"] as const
-
-export type ExplorerStepId = (typeof explorerStepIds)[number]
 
 type EditorialStatus = "proposed" | "verbatim"
 export type SupportStrategy =
@@ -259,11 +261,12 @@ export type LandingPageV2Publication = {
   readonly productClaimsApproval: ApprovalGovernance
   readonly syntheticDemoApproval: MultiPartyApprovalGovernance
   readonly testimonialAttributionPolicy: "anonymous-role-and-school-level"
-  readonly testimonialCoverageRequired: readonly [
-    "student-insights",
-    "hey-talia",
-    "posts",
-  ]
+  /**
+   * Launch proof is limited to what the verbatims actually evidence. All six
+   * quotes cover Posts; coverage for the other capabilities is a future FGD,
+   * not a launch gate. See docs/adr/0003-publish-the-proof-we-have.md.
+   */
+  readonly testimonialCoverageRequired: readonly ["posts"]
   readonly support: {
     readonly strategy: SupportStrategy | null
     readonly destinationUrl: HttpsUrl | null
@@ -635,7 +638,7 @@ export const landingPageV2Publication = {
     approvedBy: [],
   },
   testimonialAttributionPolicy: "anonymous-role-and-school-level",
-  testimonialCoverageRequired: ["student-insights", "hey-talia", "posts"],
+  testimonialCoverageRequired: ["posts"],
   support: {
     strategy: null,
     destinationUrl: null,

@@ -23,8 +23,6 @@ const globallyProhibitedValues = [
 ]
 const routeProhibitedValues = [
   ["internal person name", "xingyu"],
-  ["superseded student name", "xiao ming"],
-  ["superseded bursary story", "bursary"],
   ["student-support classification", "swan"],
   ["internal capability id", "contextual-intelligence"],
   ["internal agent id", "hey-talia"],

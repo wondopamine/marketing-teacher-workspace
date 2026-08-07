@@ -45,10 +45,9 @@ Files in `landing/` are numbered in the order they appear down the page.
 | ----------------------------- | ------------------------------------------------------ |
 | `landing/01-meta.mdx`         | Browser-tab title and search-result description        |
 | `landing/02-hero.mdx`         | Opening headline, opening copy, and the button         |
-| `landing/03-story.mdx`        | The five-step positive-growth story                    |
+| `landing/03-story.mdx`        | The five-act student care journey                      |
 | `landing/04-reveal.mdx`       | The "This is Teacher Workspace" moment                 |
 | `landing/05-capabilities.mdx` | The four product capabilities                          |
-| `landing/06-explorer.mdx`     | The three-step walkthrough                             |
 | `landing/07-audiences.mdx`    | Who the page is written for                            |
 | `landing/08-proof.mdx`        | The testimonial section framing                        |
 | `landing/09-access-support.mdx` | How teachers get in, and where support comes from    |

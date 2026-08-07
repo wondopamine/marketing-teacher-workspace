@@ -437,6 +437,71 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
 - **Unchanged:** Rendered output, the public-safe DTO, the snapshot and approval model, the greyscale static presentation, and the isolation of the public `/` route.
 - **Tradeoff:** The editor is invisible to anyone reviewing a deployed preview; it helps only the person running the app locally. That is the cost of leaving the shared artifact's static contract intact, and it is the right trade while the route remains unauthenticated.
 
+## Scoped amendment — bursary care journey, seven-section IA
+
+- **Approved on:** 2026-08-07 — grill session on issue #3's intent; decisions
+  delegated to the agent ("I lean on your judgement… If you are confident.
+  Just go ahead.")
+- **Intent:** Make the wireframe carry the ticket's actual value-position
+  angle — a near-miss averted — instead of the substituted positive-growth
+  celebration, and land the IA back on the ticket's seven sections.
+- **Story:** The five acts now tell the bursary care journey with the
+  synthetic student "Xiao Ming" carried through every act. Canonical-story
+  reversal and its reasoning:
+  [ADR-0001](../adr/0001-bursary-care-story-is-canonical.md).
+- **Care-journey guardrail (replaces the positive-story guardrail):** the
+  student is purpose-built synthetic, never from demo fixtures; no attention,
+  conduct, offence, or counselling marker appears anywhere in the story or
+  briefs; eligibility signals come from household context and a sibling's
+  record, never the student's own behaviour; public copy spells out
+  "financial assistance" — the FAS abbreviation stays denylisted.
+- **IA:** The explorer section is removed
+  ([ADR-0002](../adr/0002-cut-the-product-explorer-from-the-ga-page.md)) and
+  access-and-support moves after the close as a footer-adjacent block. Section
+  order: promise, connected-story, reveal, capabilities, audiences, proof,
+  close, access-support, footer-feedback. Interface briefs drop from nine to
+  six (hero + five story); each still names its screen, purpose, and exactly
+  three elements.
+- **Proof:** Required testimonial coverage narrows to Posts
+  ([ADR-0003](../adr/0003-publish-the-proof-we-have.md)); the proof section is
+  titled "Real schools" and states the role-and-school-level attribution
+  policy. Per-quote publication approval is unchanged.
+- **Denylist change, named:** "xiao ming" and "bursary" are removed from the
+  review-projection and build-output denylists — they are the reviewable story
+  now. Bans on "contextual intelligence", "heytalia", "swan", "xingyu", the
+  FAS word pattern, and the ticket screenshot's comment URL all remain.
+- **Pending decisions preserved:** launch positioning line (pilot or GA),
+  three audience answers, testimonial publication approval, support route.
+  Two new product-claim confirmations are with the PM on issue #3: the exact
+  Act 2 eligibility signals, and Act 3's guidance scope (deadline surfacing is
+  omitted from copy until confirmed).
+- **Unchanged:** greyscale static presentation, zero route-local controls,
+  public `/` isolation, the DTO boundary, the snapshot and approval model,
+  and the CTA contract (Sign in with Google · @edu.gov.sg).
+- **Verification:** 189/189 Vitest tests, TypeScript, ESLint, production
+  build, public-output scanner (6 files + 1 chunk clean), and built-SSR route
+  scanner (six briefs, care-journey copy, `/` isolation) all pass. Evidence:
+  this amendment's implementing session; scanners re-run on the built output.
+
+### PM confirmations — 2026-08-07
+
+Relayed by the Designer in session; formal approval records in the governance
+model remain separate.
+
+- **Launch positioning: GA.** The reveal's launch line is filled as proposed
+  copy ("Now generally available to schools across Singapore. Shaped, as
+  always, by the teachers who use it."), clearing the `release-copy` decision.
+  The wireframe's reveal section now renders a resolved launch line beside the
+  thesis instead of a pending box.
+- **Act 2 signals confirmed as written:** sibling on financial assistance,
+  household circumstances update, no bursary on file — all surfaced on one
+  profile.
+- **Act 3 scope confirmed including deadlines:** "and when it closes" restored
+  to the story act, the capability scenario, and the interface brief.
+- **Naming:** `contextual-intelligence` renders publicly as **"AI next-step
+  guidance"** (PM asked for AI in the name). **"Posts" is retained** — its
+  card's job line carries the what-it-does description.
+
 ## Ratchet
 
 - Extend `type-scan.py` to resolve named Tailwind text-size and line-height utilities; the first evaluator pass showed that a clean scan can miss compiled off-scale values.
