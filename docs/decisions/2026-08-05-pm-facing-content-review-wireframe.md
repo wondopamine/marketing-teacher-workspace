@@ -502,6 +502,44 @@ model remain separate.
   guidance"** (PM asked for AI in the name). **"Posts" is retained** — its
   card's job line carries the what-it-does description.
 
+## Preview record — 2026-08-08
+
+Authorised by the workspace owner ("deploy"). Deployed as a **preview**, never
+promoted to production, per the preview-lifecycle rule in
+`docs/landing-page-v2-foundations.md`.
+
+| Field | Value |
+| --- | --- |
+| Preview URL | `https://marketing-teacher-workspace-ig1d8hxuy-wondopamines-projects.vercel.app/content-review` |
+| Project / alias | `wondopamines-projects/marketing-teacher-workspace`, non-production preview alias; no custom domain |
+| Environment | Preview (confirmed via `vercel ls`); production aliases untouched |
+| Owner | Designer / workspace owner (`wondopamine`) |
+| Commit | `b48438e` |
+| Item snapshot | `v2-sha256-7b91c0139da55aaf` |
+| IA-order snapshot | `v2-sha256-69d167437b39a2b7` |
+| Composed-story snapshot | `v2-sha256-edaac56c6c9cdcdd` |
+| Created | 2026-08-08 |
+| Expiry | 2026-09-08 — retire or re-record after one month, or immediately when superseded |
+| Retirement | Pending. Retire before sharing a replacement preview. |
+
+**Remote verification.** Vercel's own build ran the postbuild gates: the
+public-output scanner reported "Checked 6 public build files and 1
+content-review chunks; no known denylisted values found", and the built-SSR
+route scanner reported "Verified /content-review through the built Start
+handler and confirmed / remains isolated."
+
+**Access finding — not yet shareable.** Every deployment on this project sits
+behind Vercel Deployment Protection: `/content-review` answers HTTP 302 to
+`vercel.com/sso-api`. Reviewers without access to the `wondopamines-projects`
+team cannot open it. This is stricter than the artifact's design (which assumes
+an unauthenticated but public-safe route), so it is a sharing gap, not a safety
+gap. Resolving it — a Vercel share link, or relaxing preview protection — is a
+project-settings change and remains the owner's decision.
+
+**Superseded preview.** `marketing-teacher-workspace-f2lnd28t1-…` (2026-08-06)
+serves the pre-pivot positive-growth story and must be retired before this
+preview is shared, per the retire-then-replace rule.
+
 ## Ratchet
 
 - Extend `type-scan.py` to resolve named Tailwind text-size and line-height utilities; the first evaluator pass showed that a clean scan can miss compiled off-scale values.
