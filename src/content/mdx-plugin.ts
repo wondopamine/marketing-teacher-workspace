@@ -71,8 +71,11 @@ export function mdxContent(): Plugin {
     },
 
     transform(source, id) {
-      const path = id.split("?")[0]
+      const [path, query] = id.split("?")
       if (!path.endsWith(".mdx")) return null
+      // `?raw` imports carry the original source to the review-feedback
+      // server function, which needs text to splice — not compiled data.
+      if (query && /(^|&)raw(&|$)/.test(query)) return null
 
       const document = parseMdx(relative(root, path), source)
       return {

@@ -502,6 +502,77 @@ model remain separate.
   guidance"** (PM asked for AI in the name). **"Posts" is retained** — its
   card's job line carries the what-it-does description.
 
+## Scoped amendment — public review layer (supersedes the ⌘K dev-only gate)
+
+- **Approved on:** 2026-08-09 — "for anyone doesn't require any login, just
+  edit and the comments and edits the person makes are applied or comes to me
+  to edit", with the repo-write path chosen over export-only or Blob storage.
+- **Intent:** Reviewers with the link — no Vercel account, no GitHub account,
+  no login of any kind — can change wording and leave notes, and that feedback
+  reaches the Designer as a reviewable diff.
+- **What replaces what:** `content-edit-mode.tsx` (dev-server only, wrote to
+  the local filesystem) is deleted. `public-review-mode.tsx` replaces it and
+  ships to every environment. The ⌘K shortcut is retained and is now
+  accompanied by a visible, keyboard-reachable **Edit** button, because a
+  shortcut alone is not a discoverable control.
+- **Write path:** `POST` server function → validate → read each file's current
+  contents from GitHub → splice by source offset → commit to
+  `review/page-feedback` → open or reuse a pull request → post the round as a
+  PR comment. The credential is read from `process.env` in a server function
+  and never enters the browser. Setup: `docs/review-feedback-setup.md`.
+
+### How the static contract survives
+
+Done-criteria 4 and 5 forbid JavaScript interaction and route-local controls,
+and the A11Y-2, A11Y-4, A11Y-5, and CMP-7 evidence rests on that emptiness.
+Rather than amend those criteria, the layer is **mounted after hydration**: it
+returns `null` until `useEffect` runs, so the server-rendered artifact is
+byte-identical to the one the contract was verified against.
+
+- The built-SSR scanner still passes unchanged — six briefs, care-journey copy,
+  `/` isolation, and no controls in the SSR response.
+- `content-review-page.test.tsx` still asserts zero links and zero buttons; the
+  review layer is a route sibling, not part of the reviewed page component.
+- The layer rewrites no page markup. Editable text is located by matching
+  rendered strings against the source map, so heading order, landmarks, and the
+  approved DOM are untouched; `contenteditable` and its ARIA attributes are
+  added on activation and fully removed on exit.
+
+**Therefore:** done-criteria 4 and 5 hold **for the artifact as served**, and
+their evidence stands. What is new is a post-hydration client enhancement,
+recorded here rather than silently widening the contract.
+
+### Accessibility (explicit requirement of this amendment)
+
+- Every control is a real `<button>` or labelled form field — no click-only
+  affordances, no `div` handlers.
+- Editable text takes `role="textbox"`, `tabIndex=0`, and an `aria-label`
+  naming the block, so it is reachable and identifiable from the keyboard.
+- Enter commits, Escape reverts — no pointer required for any operation.
+- Hit targets are `min-h-11` (44px); focus is a visible 2px ring with offset.
+- Status is announced through an `aria-live="polite"` region.
+- The panel's only transition is `motion-safe:`, honouring
+  `prefers-reduced-motion`.
+
+### Safety
+
+Server-side validation is the trust boundary, not the client: paths restricted
+to `content/**/*.mdx`, traversal refused, empty and multi-line copy refused,
+length and count caps, and every edit re-applied against the file's current
+GitHub contents so a stale reviewer is refused rather than clobbering. Token
+scope is one repository, contents and pull requests only. Sending is absent
+until the environment variables exist; the page degrades to
+edit-and-tell-the-designer rather than failing at the Send button.
+
+**Residual risk, named:** anyone with the link can open a noisy pull request on
+a branch the Designer controls. No merge, no production path, no other repo
+access. Accepted for a time-boxed review; revoke the token to end it.
+
+- **Verification:** 208 tests (28 files) including 19 new covering submission
+  validation, path traversal, multi-edit offset stability, stale-source
+  refusal, config defaults, and the bundled raw sources. TypeScript, ESLint,
+  production build, and both public-safety scanners pass.
+
 ## Preview record — 2026-08-08
 
 Authorised by the workspace owner ("deploy"). Deployed as a **preview**, never

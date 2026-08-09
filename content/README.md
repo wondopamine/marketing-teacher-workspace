@@ -16,9 +16,10 @@ reloads on its own.
 
 ## Editing on the page with ⌘K
 
-You don't have to find the right file first. On the running dev server:
+You don't have to find the right file first. This works on the dev server *and*
+on the shared review link — reviewers need no account of any kind:
 
-1. Press **⌘K** (Ctrl+K on Windows) on <http://localhost:3000/content-review>.
+1. Press **⌘K** (Ctrl+K on Windows), or click **Edit** in the review panel.
 2. Every piece of editable copy gets a dashed outline. Click one and type.
 3. Press **Enter**, or click away, to save. The change is written straight into
    the right `.mdx` file and the page reloads.
@@ -33,9 +34,10 @@ Two things it will refuse, and tell you why:
 - **Line breaks.** One block is one line of copy. To add a paragraph, edit the
   `.mdx` file directly.
 
-Edit mode only exists on your own machine while `pnpm dev` is running. It is not
-part of the built site, so nothing you press can affect a shared or deployed
-page — and other people's review links stay exactly as they are.
+On the dev server your edits are written straight into the `.mdx` file. On a
+deployed review link they are collected instead, and **Send** commits the round
+to a branch and adds it to a pull request for the designer to read as a diff.
+See `docs/review-feedback-setup.md` for switching sending on.
 
 ## What is in each file
 
