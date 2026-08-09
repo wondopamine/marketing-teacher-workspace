@@ -508,7 +508,9 @@ describe("Landing Page v2 revision-aware review state", () => {
 
     expect(dto.sections).toHaveLength(9)
     expect(dto.metadata.status).toBe("decision-required")
-    expect(dto.appendix.proof.missingCapabilityLabels).toEqual(["Posts"])
+    // The browser receives only the two appendix groups the access-and-support
+    // block renders; claims, proof, measurement, and synthetic data stay server-side.
+    expect(Object.keys(dto.appendix).sort()).toEqual(["access", "support"])
 
     const keys = collectObjectKeys(dto)
     for (const prohibitedKey of [
@@ -595,7 +597,6 @@ describe("Landing Page v2 revision-aware review state", () => {
     expect(dto.kind).toBe("ready")
     if (dto.kind !== "ready") return
 
-    expect(dto.appendix.proof.missingCapabilityLabels).toEqual([])
     expect(dto.appendix.access.label).toBe("Continue with Google")
     expect(dto.appendix.support.summary).toContain("selected")
   })

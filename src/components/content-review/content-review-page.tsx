@@ -1,4 +1,3 @@
-import { ContentReviewAppendix } from "./content-review-appendix"
 import { contentReviewChrome } from "./content-review-chrome"
 import { ContentReviewError } from "./content-review-error"
 import { ContentReviewOutline } from "./content-review-outline"
@@ -100,18 +99,6 @@ export function ContentReviewPage({
           ) : null}
         </div>
       </footer>
-
-      <aside
-        aria-label="PM review notes"
-        className="bg-muted px-3 pb-8 font-body text-foreground sm:px-6"
-      >
-        <div className="mx-auto max-w-[90rem] border-x border-border bg-background">
-          <ContentReviewAppendix
-            appendix={data.appendix}
-            metadata={data.metadata}
-          />
-        </div>
-      </aside>
     </>
   )
 }

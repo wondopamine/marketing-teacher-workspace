@@ -22,10 +22,6 @@ describe("ContentReviewPage", () => {
     const footer = screen.getByRole("contentinfo", {
       name: "Teacher Workspace wireframe",
     })
-    const reviewNotes = screen.getByRole("complementary", {
-      name: "PM review notes",
-    })
-
     expect(main.id).toBe("main")
     expect(screen.getAllByRole("main")).toHaveLength(1)
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
@@ -50,7 +46,9 @@ describe("ContentReviewPage", () => {
     expect(
       container.querySelectorAll("[data-wireframe-placeholder]")
     ).toHaveLength(0)
-    expect(container.querySelector("[data-wireframe-appendix]")).not.toBeNull()
+    // The PM-notes region is gone; the page ends at the footer.
+    expect(container.querySelector("[data-wireframe-appendix]")).toBeNull()
+    expect(screen.queryAllByRole("complementary")).toHaveLength(0)
 
     const levels = Array.from(container.querySelectorAll("h1, h2, h3, h4")).map(
       (heading) => Number(heading.tagName.slice(1))
@@ -61,7 +59,7 @@ describe("ContentReviewPage", () => {
     }
 
     expect(footer.previousElementSibling).toBe(main)
-    expect(reviewNotes.previousElementSibling).toBe(footer)
+    expect(footer.nextElementSibling).toBeNull()
   })
 
   it("renders the accepted IA, actual story content, and explicit pending slots", () => {
@@ -194,16 +192,15 @@ describe("ContentReviewPage", () => {
     expect(container.querySelectorAll("[href]")).toHaveLength(0)
   })
 
-  it("renders the governance appendix without leaking raw server material", () => {
+  it("renders no PM-notes region and leaks no raw server material", () => {
     const data = buildReadyReviewPage()
 
     const { container } = render(<ContentReviewPage data={data} />)
-    expect(
-      screen.getByRole("heading", { name: "PM review notes" })
-    ).not.toBeNull()
-    expect(screen.getByText("Provider-neutral")).not.toBeNull()
-    expect(screen.getAllByText("Student Insights").length).toBeGreaterThan(0)
-    expect(screen.getAllByText("Message drafting").length).toBeGreaterThan(0)
+    // Governance detail is server-side only now — none of it reaches the page.
+    expect(screen.queryByRole("heading", { name: "PM review notes" })).toBeNull()
+    expect(screen.queryByText("Provider-neutral")).toBeNull()
+    expect(screen.queryByText("Page metadata draft")).toBeNull()
+    expect(screen.queryByText("Measurement boundary")).toBeNull()
     expect(screen.queryByText("Capability mapping:")).toBeNull()
     expect(container.querySelector("[data-review-reference]")).toBeNull()
 

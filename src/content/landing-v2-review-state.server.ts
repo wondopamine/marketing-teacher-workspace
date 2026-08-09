@@ -857,10 +857,8 @@ export function buildContentReviewPageDto(
       entries: section.entries.map(buildWireframeEntry),
     })),
     appendix: {
-      ...review.appendix,
-      syntheticData: {
-        rule: review.appendix.syntheticData.rule,
-      },
+      access: review.appendix.access,
+      support: review.appendix.support,
     },
   }
 }

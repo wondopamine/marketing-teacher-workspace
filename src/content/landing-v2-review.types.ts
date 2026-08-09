@@ -182,14 +182,16 @@ export type ContentReviewWireframeSectionDto = {
   readonly entries: ReadonlyArray<ContentReviewWireframeEntryDto>
 }
 
-export type ContentReviewWireframeAppendixDto = Omit<
+/**
+ * The wireframe renders no PM-notes region, so the browser only receives the
+ * two appendix groups the access-and-support block actually shows. Claims,
+ * proof, measurement, and synthetic-data detail stay server-side, where the
+ * readiness model uses them.
+ */
+export type ContentReviewWireframeAppendixDto = Pick<
   ContentReviewAppendixDto,
-  "syntheticData"
-> & {
-  readonly syntheticData: {
-    readonly rule: string
-  }
-}
+  "access" | "support"
+>
 
 export type ContentReviewWireframeReadyPageDto = {
   readonly kind: "ready"
