@@ -148,6 +148,7 @@ export function PublicReviewMode() {
   const [active, setActive] = useState(false)
   const [status, setStatus] = useState<Status>({ kind: "idle" })
   const [canSubmit, setCanSubmit] = useState(true)
+  const [collapsed, setCollapsed] = useState(false)
   const [edits, setEdits] = useState<ReadonlyArray<PendingEdit>>([])
   const [comments, setComments] = useState<ReadonlyArray<PendingComment>>([])
   const [target, setTarget] = useState<{ id: string; label: string } | null>(
@@ -403,19 +404,40 @@ export function PublicReviewMode() {
     >
       <div className="flex max-h-[80vh] max-w-[22rem] flex-col overflow-hidden rounded-lg border border-foreground/25 bg-background shadow-lg">
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-          <p className="font-semibold">Review this page</p>
-          <button
-            type="button"
-            ref={toggleRef}
-            onClick={() => (active ? deactivate() : void activate())}
-            aria-pressed={active}
-            className="min-h-11 min-w-11 rounded-md border border-foreground/30 px-3 py-2 font-medium focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
-          >
-            {active ? "Done" : "Edit"}
-          </button>
+          <p className="font-semibold">
+            Review this page
+            {collapsed && pending > 0 ? ` (${pending})` : ""}
+          </p>
+          <div className="flex items-center gap-2">
+            {/* The panel sits over the right-hand column, where the interface
+                briefs and their questions for the PM live. Collapsing is the
+                only way to read that column, so it stays one click away. */}
+            <button
+              type="button"
+              onClick={() => setCollapsed((previous) => !previous)}
+              aria-expanded={!collapsed}
+              aria-controls="review-panel-body"
+              className="min-h-11 min-w-11 rounded-md border border-foreground/30 px-3 py-2 font-medium focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
+            >
+              {collapsed ? "Show" : "Hide"}
+            </button>
+            <button
+              type="button"
+              ref={toggleRef}
+              onClick={() => (active ? deactivate() : void activate())}
+              aria-pressed={active}
+              className="min-h-11 min-w-11 rounded-md border border-foreground/30 px-3 py-2 font-medium focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
+            >
+              {active ? "Done" : "Edit"}
+            </button>
+          </div>
         </div>
 
-        <div className="space-y-3 overflow-y-auto px-4 py-3">
+        <div
+          id="review-panel-body"
+          hidden={collapsed}
+          className="space-y-3 overflow-y-auto px-4 py-3"
+        >
           <p className="text-muted-foreground">
             {active
               ? "Click any text to change it. Press Enter to keep, Esc to undo."
