@@ -4,22 +4,22 @@ The `/content-review` page lets anyone holding the link change wording and leave
 notes without an account. Pressing **Send** commits that round to a branch and
 adds it to a pull request you can read as a diff.
 
-Sending stays switched off until two environment variables exist. Without them
-the page still works — reviewers can edit and comment — but the panel tells them
-to pass their notes to you by hand instead of pretending it sent.
+Sending stays switched off until two environment variables exist. Without
+them, reviewers can still edit and comment. The panel asks them to pass their
+notes to you by hand.
 
 ## 1. Create a token
 
 A [fine-grained personal access token](https://github.com/settings/tokens?type=beta)
-scoped to **one repository** — the fork you own, not the org repo:
+scoped to **one repository**: the fork you own, not the org repo.
 
 - Repository access: **Only select repositories** → `wondopamine/marketing-teacher-workspace`
 - Repository permissions:
-  - **Contents: Read and write** — to commit the edited `.mdx`
-  - **Pull requests: Read and write** — to open the PR and post each round
+  - **Contents: Read and write**, to commit the edited `.mdx`
+  - **Pull requests: Read and write**, to open the PR and post each round
 
-Nothing else. The token never reaches the browser; it is read from
-`process.env` inside a server function.
+Do not grant any other permissions. The token never reaches the browser. A
+server function reads it from `process.env`.
 
 ## 2. Add it to Vercel
 
@@ -28,7 +28,7 @@ vercel env add REVIEW_GITHUB_TOKEN preview
 vercel env add REVIEW_GITHUB_REPO preview   # wondopamine/marketing-teacher-workspace
 ```
 
-Optional, with sensible defaults:
+These variables are optional and have defaults:
 
 | Variable | Default | What it does |
 | --- | --- | --- |
@@ -38,8 +38,8 @@ Optional, with sensible defaults:
 Add them to `preview` only. Production deployments of this route are forbidden
 by the decision record, so a production token would have nothing to serve.
 
-Redeploy after adding them — environment variables are read at request time,
-but the deployment needs to exist under the new configuration.
+Redeploy after adding them. The server reads environment variables at request
+time, but the existing deployment does not have the new configuration.
 
 ## 3. Check it
 
@@ -49,18 +49,20 @@ press **Send**. A pull request appears on the fork within a few seconds.
 
 ## What reviewers can and cannot do
 
-Every submission is re-checked on the server before anything is written:
+The server checks every submission before it writes anything:
 
-- paths must match `content/**/*.mdx`; traversal and any other path is refused;
-- copy cannot be empty, cannot contain a line break, and is length-capped;
-- one round carries at most 100 edits and 50 comments;
-- each edit is re-applied against the file's **current** contents on GitHub, so
-  a reviewer working from a stale build is refused rather than silently
-  overwriting someone else's change.
+- The server accepts only paths that match `content/**/*.mdx`. It rejects path
+  traversal and every other path.
+- Copy must contain text, fit on one line, and stay within the length limit.
+- One round can carry at most 100 edits and 50 comments.
+- The server applies each edit to the file's **current** contents on GitHub. It
+  rejects an edit from a stale build instead of overwriting someone else's
+  change.
 
 The token's blast radius is one repository, contents and pull requests only. The
 worst a bad actor with the link can do is open a noisy pull request on a branch
-you control — no merge, no production, no access to anything else.
+you control. They cannot merge it, deploy to production, or access anything
+else.
 
 ## Turning it off
 

@@ -1,38 +1,37 @@
-# Landing Page v2 foundations
+# Landing page v2 foundations
 
-Status: PM-facing content-review wireframe implemented; launch decisions outstanding
+Status: The PM-facing content-review wireframe exists. Launch decisions remain open.
 
 Source: [GitHub issue #3](https://github.com/String-dxd/marketing-teacher-workspace/issues/3)
 
 ## What is locked
 
-- Tell one connected student-care story across Student Insights, AI next-step
-  guidance, Message drafting, and Posts.
-- Use the ticket's bursary near-miss narrative as the canonical review story,
-  with the synthetic student "Xiao Ming" carried through every act under the
-  guardrails in
-  [ADR-0001](adr/0001-bursary-care-story-is-canonical.md). This supersedes the
-  earlier positive-growth substitution; the ticket's bursary screenshot remains
-  unpublishable.
-- Lead with the student's journey and the teacher's job.
-- Use Teacher Workspace as the only public brand.
-- Use one primary CTA: `Sign in with Google`.
-- Send the CTA to the existing Teacher Workspace product link in
+- The page tells one connected student-care story across Student Insights, AI
+  next-step guidance, Message drafting, and Posts.
+- The canonical review story is the ticket's bursary near-miss. The synthetic
+  student "Xiao Ming" appears in every act under the guardrails in
+  [ADR-0001](adr/0001-bursary-care-story-is-canonical.md). The ticket's bursary
+  screenshot cannot be published.
+- The student's journey and the teacher's job lead the page.
+- Teacher Workspace is the only public brand.
+- The page has one primary CTA: `Sign in with Google`.
+- The CTA uses the existing Teacher Workspace product link in
   `src/config/site.ts`.
-- Tell teachers: `Use your @edu.gov.sg account.`
-- Plan GA for Form Teachers, Key Personnel, and School Leaders.
-- Keep audience confirmation pending until Xingyu (PM) records it.
-- Keep the accepted three-step explorer as a product decision with synthetic
-  data and no backend, but give it no section on the GA page — the journey and
-  the capability cards carry comprehension. See
+- The access note says: `Use your @edu.gov.sg account.`
+- The planned GA audiences are Form Teachers, Key Personnel, and School
+  Leaders. Audience confirmation remains pending until Xingyu (PM) records it.
+- The accepted three-step explorer uses synthetic data and has no backend. It
+  has no section on the GA page because the journey and capability cards
+  already explain the product. See
   [ADR-0002](adr/0002-cut-the-product-explorer-from-the-ga-page.md).
-- Allow anonymous role-and-school-level testimonials for initial GA proof.
-- Keep owner assignment separate from recorded approval.
-- Keep internal capability names out of public labels and public copy.
-- Preserve accessibility, the footer, and the feedback link.
+- Initial GA proof may use anonymous role-and-school-level testimonials.
+- Owner assignment and recorded approval are separate facts.
+- Public labels and copy do not use internal capability names.
+- The page keeps its accessibility, footer, and feedback link.
 
-The ticket's five-act narrative and seven-section information architecture
-remain editable draft content. They are not approved acceptance criteria.
+The ticket proposes a five-act narrative and seven-section information
+architecture. Reviewers can edit both, and neither is an approved acceptance
+criterion.
 
 ## Foundation contract
 
@@ -50,8 +49,8 @@ remain editable draft content. They are not approved acceptance criteria.
 - `src/content/landing.ts` keeps the current v1 copy isolated from this
   foundation.
 
-Future UI should consume the v2 contract instead of duplicating copy inside
-components. Layout and motion may change while these relationships remain:
+The v2 contract is the source for UI copy and the following relationships.
+Layout and motion may change without changing them:
 
 1. Five journey acts stay ordered from promise to record.
 2. Acts two through five map once to the four capability IDs.
@@ -69,31 +68,30 @@ components. Layout and motion may change while these relationships remain:
 Open `/content-review` directly on the implementation branch or an explicitly
 authorised non-production preview. The route is not linked from `/`, inherits
 the existing skip link and SGDS masthead, and declares `noindex, nofollow`.
-The public homepage, its metadata, and its current choreography remain
-unchanged.
+The route does not change the public homepage, its metadata, or its current
+choreography.
 
-The route is an unauthenticated, PM-facing landing-page wireframe. It uses the
-actual canonical draft copy and proposed page order so reviewers can assess the
-content as a coherent landing page rather than as a code-like information
-architecture. Its greyscale treatment is deliberately neutral and disposable:
-there is no imagery, themed component system, motion, live CTA, product
-interaction, analytics, form submission, or review backend. Unresolved content
-renders as an explicit pending slot instead of plausible copy.
+The route is an unauthenticated, PM-facing landing-page wireframe. It shows the
+canonical draft copy in the proposed page order, so reviewers can judge a
+landing flow instead of a code-like information architecture. The greyscale
+styling is neutral and temporary. The route omits imagery, themed components,
+motion, live CTAs, product interaction, analytics, form submission, and a
+review backend. Pending decisions appear as empty labelled slots.
 
-The wireframe is share-safe by design so PM, policy, security, and content
-review can proceed in parallel with website implementation. `noindex` and an
-unshared URL are not security controls, so every rendered value and
-server-function response must remain safe for public retrieval.
+The route has no authentication, so every rendered value and server-function
+response must be safe for public retrieval. `noindex` and an unshared URL do
+not provide access control. PM, policy, security, and content reviewers can use
+the same route while the website is being built.
 
-Review annotations are informational aids and remain secondary to the
-landing-page flow. They do not record authenticated approval, grant publication
-authority, or replace the external decision record.
+Review annotations help people locate copy. They do not record authenticated
+approval, grant publication authority, or replace the external decision
+record.
 
 ## Review workflow
 
 In the wireframe, give feedback by naming the visible section heading or
 pending label and quoting a short copy excerpt. Do not refer only to visual
-position such as “the third card”; order can change. In the approved external
+position such as "the third card"; order can change. In the approved external
 record, the Designer or product manager maps that feedback to the server-owned
 stable review reference and current snapshot. Raw references, snapshots,
 restricted evidence, and free-form reviewer discussion never render on the
@@ -113,9 +111,9 @@ visible DOM.
 | `partially-reviewed`      | Some, but not all, confirmed reviewer roles have reviewed the current snapshot. | Ask the remaining roles to review it.                                    |
 | `reviewed-current`        | Every required role has a record for the current snapshot.                      | Treat it as current review evidence only, never as publication approval. |
 
-Three snapshot levels prevent stale decisions from silently surviving edits:
+Three snapshot levels stop an edit from leaving an old decision marked current:
 
-- each item snapshot changes when that item’s reviewable copy, destination, or
+- each item snapshot changes when that item's reviewable copy, destination, or
   public capability mapping changes;
 - the IA-order snapshot changes when any section or within-section item moves;
 - the composed-story snapshot changes when order or connected context changes.
@@ -137,9 +135,9 @@ track those aggregate reviews without mixing them into item registry coverage.
   synthetic-data, proof, access, and measurement questions in an approved
   external channel.
 
-The canonical external channel and its steward are still unresolved. Until
-they are named, repository state and role ownership are display aids only. A
-person being listed as an owner is never evidence that they approved the copy.
+No canonical external channel or steward is recorded yet. Until there is one,
+repository state and role ownership are display aids only. Listing a person as
+an owner does not show that they approved the copy.
 
 ## Preview lifecycle
 
@@ -159,18 +157,19 @@ channel instead.
 
 ## Visual handoff
 
-The PM-facing wireframe, server-owned stable references, and accepted section
-order are inputs to visual design, not publication authority. It communicates
-hierarchy, page rhythm, and actual copy placement while intentionally making no
-branded visual or interaction proposal. The neutral classes and review
-annotations can be replaced without rewriting the public-copy outline. The
-later visual phase must preserve semantic order, accessibility, public naming,
-CTA/access rules, and unresolved publication gates.
+Use the PM-facing wireframe, server-owned stable references, and accepted
+section order as inputs to visual design. Publication still needs separate
+approval. The wireframe communicates hierarchy, page rhythm, and copy
+placement without proposing branded visuals or interactions. Designers can
+replace the neutral classes and review annotations without rewriting the
+public-copy outline. The visual phase must preserve semantic order,
+accessibility, public naming, CTA and access rules, and unresolved publication
+gates.
 
 Media, themed components, responsive art direction, the interactive explorer,
 analytics, a publication-only projection, and production routing are follow-up
-work. Content and clearance review can run in parallel with that implementation
-because the wireframe stays share-safe and marks pending material explicitly.
+work. Content and clearance review can run alongside that work because the
+wireframe contains only public-safe data and labels pending material.
 Before treating the content as locked, run a short review pilot with the
 Designer, the product manager, and an available policy or security reviewer.
 The pilot succeeds only if participants can identify sections and pending
@@ -217,8 +216,8 @@ Every capability stays reachable within these three steps.
 
 The future explorer uses public-safe synthetic data and local interactions. It
 needs no authentication, persistence, AI inference, submission endpoint, or
-backend. It has no section on the GA page or the `/content-review` wireframe —
-it is future work with no page slot; see
+backend. It has no section on the GA page or the `/content-review` wireframe.
+It is future work with no page slot; see
 [ADR-0002](adr/0002-cut-the-product-explorer-from-the-ga-page.md).
 
 ## Initial GA proof
@@ -227,9 +226,10 @@ Anonymous role-and-school-level attribution is valid for initial GA
 testimonials. A school name is not required.
 
 Each selected quote still needs publication approval and an HTTPS source.
-Required coverage is Posts only — the proof section says what the verbatims
-actually evidence, and coverage for other capabilities is future fieldwork,
-not a launch gate. See [ADR-0003](adr/0003-publish-the-proof-we-have.md).
+Required coverage is Posts only. The proof section says what the verbatims
+actually evidence. Coverage for other capabilities requires future fieldwork
+and is not a launch gate. See
+[ADR-0003](adr/0003-publish-the-proof-we-have.md).
 
 Do not invent a school name or infer one from the testimonial source.
 
@@ -305,8 +305,8 @@ The product/auth system owns OAuth and completed-access emission. Approved
 platform services own cross-domain identity, analytics-provider initialisation,
 persistence, and backend processing.
 
-This marketing change adds no auth flow, analytics runtime, endpoint,
-environment variable, persistence, or backend.
+The marketing repository has no auth flow, analytics runtime, endpoint,
+environment variable, persistence, or backend for this contract.
 
 ## Synthetic-data warning
 

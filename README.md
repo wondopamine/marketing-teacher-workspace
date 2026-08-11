@@ -16,19 +16,18 @@ The local site runs at `http://127.0.0.1:3000/`.
 
 ## Editing the copy
 
-All landing-page and wireframe wording lives in `content/` as MDX. That folder
-is the authoring surface for PMs and reviewers — see [`content/README.md`](content/README.md).
-Structure (which sections exist, their order, and each story step's product
-capability) stays in `src/content/landing-v2.ts`, so wording changes cannot
-silently rewire the product contract.
+PMs and reviewers edit all landing-page and wireframe wording in `content/` as
+MDX. See [`content/README.md`](content/README.md) for the editing guide.
+`src/content/landing-v2.ts` defines the sections, their order, and the product
+capability behind each story step. This keeps wording edits from changing the
+product contract.
 
-The current public landing page remains at `/`. A PM-facing Landing V2
-wireframe is available directly at `/content-review`; it is intentionally
-unlinked, greyscale, static, unauthenticated, and marked `noindex, nofollow`.
-It presents the actual canonical public-safe draft copy in a landing-page flow,
-keeps unresolved content explicit, and contains no live CTAs, product
-interaction, or media. It is a communication artifact, not publication
-approval, a final visual direction, or access control.
+The public landing page is at `/`. The PM-facing Landing V2 wireframe is at
+`/content-review`. It is unlinked, greyscale, static, unauthenticated, and marked
+`noindex, nofollow`. It shows the canonical public-safe draft copy in landing
+page order and marks unresolved content. The wireframe has no live CTA, product
+interaction, or media. It helps reviewers discuss the page but does not grant
+publication approval, set the final visual direction, or control access.
 
 ## Verification
 
@@ -67,11 +66,11 @@ isolation. The same core checks run in `.github/workflows/ci.yml`.
   IA-order, and composed-story snapshots, composes server-side review
   readiness, then projects a minimal wireframe DTO with references, snapshots,
   and unused destinations removed.
-- `src/components/content-review/` renders the share-safe, greyscale, static
-  landing-page wireframe for PM review; its presentation is disposable and is
-  not a final visual direction. `content-review-chrome.ts` keeps the route's own
-  labels and the proposed-screen briefs route-local, outside the review
-  registry, snapshots, and server DTO.
+- `src/components/content-review/` renders the public-safe, greyscale, static
+  landing-page wireframe for PM review. Its temporary styling does not set the
+  final visual direction. `content-review-chrome.ts` keeps the route's labels
+  and proposed-screen briefs out of the review registry, snapshots, and server
+  DTO.
 - `src/server/content-review.ts` is the only route-facing RPC boundary and
   returns only the minimal wireframe DTO.
 - `src/config/site.ts` centralises product, feedback, support, and source links.
