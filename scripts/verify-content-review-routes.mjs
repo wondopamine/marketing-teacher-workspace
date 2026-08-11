@@ -64,7 +64,7 @@ assert(
   countMatches(reviewHtml, /<main\b/g) === 1 &&
     countMatches(reviewHtml, /<h1\b/g) === 1 &&
     reviewHtml.includes('<main id="main"') &&
-    reviewHtml.includes("Every student. No support left unclaimed."),
+    reviewHtml.includes("Every student gets the support they qualify for"),
   "The content-review route does not render one main landmark and one H1."
 )
 assert(
@@ -82,8 +82,10 @@ assert(
 assert(
   countMatches(reviewHtml, /data-interface-description/g) === 6 &&
     countMatches(reviewHtml, /data-wireframe-placeholder/g) === 0 &&
-    reviewHtml.includes("Class view with one synthetic student") &&
-    reviewHtml.includes("No conduct or attention markers"),
+    reviewHtml.includes("Profiles student table") &&
+    reviewHtml.includes("No conduct or attention markers") &&
+    countMatches(reviewHtml, /data-pending-interface/g) === 2 &&
+    countMatches(reviewHtml, /Question for the PM:/g) === 2,
   "The content-review route lost its complete set of descriptive interface briefs."
 )
 

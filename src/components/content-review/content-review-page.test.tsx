@@ -26,7 +26,7 @@ describe("ContentReviewPage", () => {
     expect(screen.getAllByRole("main")).toHaveLength(1)
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
-      "Every student. No support left unclaimed."
+      "Every student gets the support they qualify for"
     )
     expect(within(main).queryByRole("contentinfo")).toBeNull()
     expect(within(main).queryByRole("complementary")).toBeNull()
@@ -78,7 +78,7 @@ describe("ContentReviewPage", () => {
     ).not.toBeNull()
     expect(
       screen.getByRole("heading", {
-        name: "Sent. Seen. On file.",
+        name: "The family hears from you, and the record shows it.",
       })
     ).not.toBeNull()
 
@@ -138,16 +138,30 @@ describe("ContentReviewPage", () => {
     ).toBe(true)
     expect(
       screen.getByRole("heading", {
-        name: "Class view with one synthetic student",
+        name: "Profiles student table",
       })
     ).not.toBeNull()
     expect(screen.getByText("No conduct or attention markers")).not.toBeNull()
     expect(
       screen.getByText(
-        "Ground the story in an ordinary class. Show Xiao Ming as one row among many, with no conduct, offence, or attention marker anywhere in the frame."
+        "Ground the story in an ordinary class. The Profiles screen lists Xiao Ming's form class in the student table, and he is one row among the rest, with no conduct, offence, or attention marker anywhere in the frame."
       )
     ).not.toBeNull()
     expect(JSON.stringify(data).toLowerCase()).not.toContain("swan")
+
+    // Story claims without a built product surface carry a yellow tag with a
+    // direct question for the PM: scheme matching (act 3) and the student
+    // communication record with application updates (act 5). The page is
+    // public, so the question addresses "the PM", never a name.
+    const pendingInterfaces = descriptions.flatMap((description) =>
+      Array.from(description.querySelectorAll("[data-pending-interface]"))
+    )
+    expect(pendingInterfaces).toHaveLength(2)
+    for (const pending of pendingInterfaces) {
+      expect(pending.textContent).toContain("Interface not built yet")
+      expect(pending.textContent).toContain("Question for the PM:")
+      expect(pending.textContent).toContain("GA build?")
+    }
   })
 
   it("shows two inert product actions and feedback without redundant UI captions", () => {
@@ -237,7 +251,7 @@ describe("ContentReviewPage", () => {
     expect(screen.queryAllByRole("button")).toHaveLength(0)
     expect(container.querySelectorAll("[href]")).toHaveLength(0)
     expect(container.textContent).not.toContain(
-      "Every student. No support left unclaimed"
+      "Every student gets the support they qualify for"
     )
     expect(container.innerHTML).not.toContain("manifest-coverage")
     expect(container.innerHTML).not.toContain("CONTENT_REVIEW_INVALID")

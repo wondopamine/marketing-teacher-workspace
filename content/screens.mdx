@@ -3,81 +3,94 @@
 # Each block: a `##` heading, one paragraph of intent, then exactly three
 # bullets naming what has to be visible on that screen.
 #
+# Every screen below is a real surface in the product prototype
+# (String-dxd/design-teacher-workspace): the Profiles student table, the
+# student profile and its Family section, the recommended-action banner and
+# the guidance page it opens, and the Posts composer and read tracking.
+# Do not introduce a screen that does not exist there.
+#
 # Guardrail for every brief: the featured student is synthetic ("Xiao Ming"),
 # carries no attention, conduct, offence, or counselling marker anywhere in
 # frame, and the eligibility signal comes from household context and a
 # sibling's record — never from the student's own behaviour.
 label: Proposed interface
+
+# Where the story claims an interface the product does not have yet, the
+# brief carries a yellow tag with a question for the PM. Add one by writing
+# "pendingInterface-<item id>:" with the question as its value.
+pendingInterfaceLabel: Interface not built yet
+pendingInterface-story-next-steps: "Question for the PM: the profile's recommended-action banner and its guidance page exist today, but matching a bursary scheme with the documents, the submission point, and the closing date does not. Is this planned for the GA build?"
+pendingInterface-story-family-and-record: "Question for the PM: Posts tracks reads per post today. A communication record on the student's profile, and updates when the application goes in and is approved, do not exist yet. Are these planned for the GA build?"
 ---
 
 <Item id="hero">
 
-## Connected care view
+## Student profile
 
-Help teachers see one student's full picture and act on it. Keep the eligibility signal, the right next step, and the family message together in one place.
+The one product screen the story keeps returning to: a student profile in Student Insights. The Family section signal, the recommended action, and the drafted family message all live on or open from this screen.
 
-- Synthetic student profile
-- Support eligibility prompt
-- Next step and drafted message
+- Synthetic student profile with its section cards
+- Recommended-action banner naming the support prompt
+- Family section showing the eligibility signals
 
 </Item>
 
 <Item id="story-promise">
 
-## Class view with one synthetic student
+## Profiles student table
 
-Ground the story in an ordinary class. Show Xiao Ming as one row among many, with no conduct, offence, or attention marker anywhere in the frame.
+Ground the story in an ordinary class. The Profiles screen lists Xiao Ming's form class in the student table, and he is one row among the rest, with no conduct, offence, or attention marker anywhere in the frame.
 
-- Synthetic class list
-- Xiao Ming's profile entry
+- Student table filtered to his form class
+- Xiao Ming's row among his classmates
 - No conduct or attention markers
 
 </Item>
 
 <Item id="story-notice">
 
-## Eligibility signals in one profile
+## Family section of the profile
 
-Make the "may qualify" claim traceable. Show the three signals side by side so the teacher's noticing is believable, with nothing about the student's own behaviour.
+Make the "may qualify" claim traceable. All three signals sit in the Family section of his profile, and none of them is about the student's own behaviour.
 
-- Sibling's financial-assistance record
-- Household circumstances update
-- No active bursary on file
+- Siblings in MOE schools entry, with the sibling's financial-assistance record
+- Household circumstances updated last term
+- Financial-assistance status showing none active
 
 </Item>
 
 <Item id="story-next-steps">
 
-## Scheme guidance on the profile
+## Guidance opened from the profile banner
 
-Show the process arriving where the teacher already is. The matched scheme and its steps sit beside the student context that triggered them.
+Show the process arriving where the teacher already is. The recommended-action banner on the profile opens the support-guidance page, with the matched scheme beside the student context that triggered it.
 
-- Matched support scheme
-- Documents the family needs
+- Recommended-action banner on the profile
+- Matched support scheme and the documents the family needs
 - Where to submit and when it closes
 
 </Item>
 
 <Item id="story-words">
 
-## Editable family message
+## Post composer with the draft
 
-Keep the teacher in control of a delicate note. Show the draft built from the student's context, visibly editable and unsent.
+Keep the teacher in control of a delicate note. The Posts composer holds the draft built from the student's context, in the rich-text editor, visibly editable and not yet sent.
 
-- Draft family message
-- Steps and documents laid out
-- Review and edit state
+- Draft family message in the composer
+- Steps and documents laid out in the draft body
+- Editable, unsent state before the send confirmation
 
 </Item>
 
 <Item id="story-family-and-record">
 
-## Delivery and record view
+## Post delivery and read tracking
 
-Close the loop in one view. Show the sent message, the family's response, and the same exchange on the student's record.
+Close the loop on the Posts screens. The sent post carries its posted status, and the recipient read table shows the family has seen it.
 
-- Sent and seen status
-- Family response tracking
-- Student communication timeline
+- Posted status on the sent message
+- Recipient read table with the family marked as read
+- The exchange kept on the student's record
 
 </Item>

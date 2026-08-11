@@ -149,6 +149,19 @@ function InterfaceDescription({
           </li>
         ))}
       </ul>
+      {screen.pendingInterface ? (
+        <div
+          className="mt-4 max-w-[72ch] border border-amber-600/40 bg-amber-50 p-4"
+          data-pending-interface
+        >
+          <span className="inline-flex border border-amber-700/40 bg-amber-100 px-2.5 py-1 text-xs font-medium tracking-[0.08em] text-amber-900">
+            {screen.pendingInterface.label}
+          </span>
+          <p className="mt-3 text-sm leading-[1.5] text-amber-950">
+            {screen.pendingInterface.question}
+          </p>
+        </div>
+      ) : null}
     </div>
   )
 }

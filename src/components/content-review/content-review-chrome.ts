@@ -38,6 +38,14 @@ export type ContentReviewScreen = {
   readonly heading: string
   readonly body: string
   readonly keyElements: ReadonlyArray<string>
+  /**
+   * Set when the story claims an interface the product does not have yet.
+   * Carries the shared tag text and the specific question for the PM.
+   */
+  readonly pendingInterface: {
+    readonly label: string
+    readonly question: string
+  } | null
 }
 
 function sectionChrome(document: MdxDocument): SectionChrome {
@@ -55,10 +63,14 @@ function screen(id: string): ContentReviewScreen {
       `<Item id="${id}"> needs exactly three bullets; it has ${item.bullets.length}.`
     )
   }
+  const question = screens.optionalText(`pendingInterface-${id}`)
   return {
     heading: itemHeading(screens, item),
     body: itemBody(screens, item),
     keyElements: item.bullets,
+    pendingInterface: question
+      ? { label: screens.text("pendingInterfaceLabel"), question }
+      : null,
   }
 }
 
