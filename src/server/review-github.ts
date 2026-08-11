@@ -292,6 +292,32 @@ export async function submitToGitHub(
     }
   }
 
+  // Comments are committed to the branch as well as posted to the pull
+  // request. Posting needs a pull-requests-write token; committing does not, so
+  // a reviewer's notes survive even when the PR cannot be opened.
+  if (submission.comments.length > 0) {
+    const notesPath = "review-notes.md"
+    const existing = await gh(
+      config,
+      `${repo}/contents/${notesPath}?ref=${encodeURIComponent(config.branch)}`
+    )
+    const previous =
+      existing.status === 200 && typeof existing.body?.content === "string"
+        ? Buffer.from(existing.body.content, "base64").toString("utf8")
+        : "# Review notes\n\nComments left on the review page, newest last.\n"
+    const appended = `${previous.trimEnd()}\n\n${commentBlock(submission)}\n`
+
+    await gh(config, `${repo}/contents/${notesPath}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        message: `content: notes from ${submission.reviewer}`,
+        content: Buffer.from(appended, "utf8").toString("base64"),
+        ...(existing.status === 200 ? { sha: existing.body.sha } : {}),
+        branch: config.branch,
+      }),
+    })
+  }
+
   const open = await gh(
     config,
     `${repo}/pulls?state=open&head=${config.owner}:${config.branch}`
@@ -303,14 +329,17 @@ export async function submitToGitHub(
       ? open.body[0].html_url
       : `https://github.com/${config.owner}/${config.repo}/tree/${config.branch}`
 
-  if (pullNumber === null && submission.edits.length > 0) {
+  // Opening the pull request is a convenience, not the delivery mechanism: the
+  // branch already holds the edits and the notes. A token without
+  // pull-requests-write simply leaves the reviewer pointed at the branch.
+  if (pullNumber === null) {
     const created = await gh(config, `${repo}/pulls`, {
       method: "POST",
       body: JSON.stringify({
         title: "Landing page review feedback",
         head: config.branch,
         base: config.base,
-        body: "Copy edits and comments submitted from the review page. Each round is added as a comment below.",
+        body: "Copy edits and comments submitted from the review page. Each round is added as a comment below, and `review-notes.md` on this branch holds the same notes.",
       }),
     })
     if (created.status < 300) {

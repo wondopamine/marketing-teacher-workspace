@@ -37,6 +37,32 @@ type PendingEdit = {
   readonly text: string
 }
 
+type PendingComment = {
+  /** The span the note is pinned to, or null for a whole-page note. */
+  readonly spanId: string | null
+  readonly where: string
+  readonly note: string
+}
+
+/**
+ * Pins are drawn with a stylesheet and a data attribute rather than by
+ * appending child nodes, so the text of a commented block stays exactly one
+ * string — which is what the edit-matching relies on.
+ */
+const pinStyles = `
+[data-review-comments]{position:relative}
+[data-review-comments]::after{
+  content:attr(data-review-comments);
+  position:absolute;top:-.6em;right:-1.6em;
+  min-width:1.35em;height:1.35em;
+  display:inline-flex;align-items:center;justify-content:center;
+  border-radius:999px;background:currentColor;color:Canvas;
+  font-size:.7rem;font-weight:700;font-family:ui-sans-serif,system-ui,sans-serif;
+  line-height:1;padding:0 .3em;
+}
+[data-review-focus]{outline:3px solid currentColor!important;outline-offset:6px!important}
+`
+
 type Status =
   | { kind: "idle" }
   | { kind: "sending" }
@@ -86,7 +112,7 @@ function matchElements(spans: ReadonlyArray<Span>): Map<HTMLElement, Span> {
 function summarise(
   reviewer: string,
   edits: ReadonlyArray<PendingEdit>,
-  comments: ReadonlyArray<{ where: string; note: string }>
+  comments: ReadonlyArray<PendingComment>
 ): string {
   const lines = [
     `Landing page review${reviewer.trim() ? ` from ${reviewer.trim()}` : ""}`,
@@ -123,15 +149,18 @@ export function PublicReviewMode() {
   const [status, setStatus] = useState<Status>({ kind: "idle" })
   const [canSubmit, setCanSubmit] = useState(true)
   const [edits, setEdits] = useState<ReadonlyArray<PendingEdit>>([])
-  const [comments, setComments] = useState<
-    ReadonlyArray<{ where: string; note: string }>
-  >([])
+  const [comments, setComments] = useState<ReadonlyArray<PendingComment>>([])
+  const [target, setTarget] = useState<{ id: string; label: string } | null>(
+    null
+  )
   const [reviewer, setReviewer] = useState("")
   const [note, setNote] = useState("")
   const [fallbackText, setFallbackText] = useState<string | null>(null)
   const spansRef = useRef<ReadonlyArray<Span>>([])
+  const elementsRef = useRef(new Map<string, HTMLElement>())
   const cleanupRef = useRef<() => void>(() => {})
   const toggleRef = useRef<HTMLButtonElement | null>(null)
+  const noteRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => setMounted(true), [])
 
@@ -165,7 +194,16 @@ export function PublicReviewMode() {
     const matched = matchElements(spansRef.current)
     const teardown: Array<() => void> = []
 
+    const style = document.createElement("style")
+    style.dataset.reviewChromeStyle = ""
+    style.textContent = pinStyles
+    document.head.append(style)
+    teardown.push(() => style.remove())
+
+    elementsRef.current = new Map()
+
     for (const [element, span] of matched) {
+      elementsRef.current.set(span.id, element)
       const original = element.textContent
       element.contentEditable = "plaintext-only"
       element.spellcheck = true
@@ -200,11 +238,21 @@ export function PublicReviewMode() {
         }
       }
 
+      // Focusing a block also aims the note field at it, so a comment is
+      // always attached to something the reviewer pointed at.
+      const aim = () => {
+        setTarget({ id: span.id, label: `${span.label} — ${locationOf(element)}` })
+      }
+
+      element.addEventListener("focus", aim)
       element.addEventListener("blur", commit)
       element.addEventListener("keydown", onKeyDown)
       teardown.push(() => {
+        element.removeEventListener("focus", aim)
         element.removeEventListener("blur", commit)
         element.removeEventListener("keydown", onKeyDown)
+        element.removeAttribute("data-review-comments")
+        element.removeAttribute("data-review-focus")
         element.removeAttribute("contenteditable")
         element.removeAttribute("role")
         element.removeAttribute("aria-label")
@@ -246,14 +294,50 @@ export function PublicReviewMode() {
   const addComment = useCallback(() => {
     const trimmed = note.trim()
     if (trimmed.length === 0) return
-    const focused = document.activeElement
-    const where =
-      focused instanceof HTMLElement && focused.dataset.reviewBlock
-        ? locationOf(focused)
-        : "Page"
-    setComments((current) => [...current, { where, note: trimmed }])
+
+    const pinned: PendingComment = {
+      spanId: target?.id ?? null,
+      where: target?.label ?? "Whole page",
+      note: trimmed,
+    }
+    setComments((current) => {
+      const next = [...current, pinned]
+      // Redraw the pin count on whichever block this note belongs to.
+      if (pinned.spanId) {
+        const element = elementsRef.current.get(pinned.spanId)
+        const count = next.filter((c) => c.spanId === pinned.spanId).length
+        if (element) element.dataset.reviewComments = String(count)
+      }
+      return next
+    })
     setNote("")
-  }, [note])
+  }, [note, target])
+
+  /** Scroll to a pinned note's block and flash it, so notes are findable. */
+  const revealComment = useCallback((comment: PendingComment) => {
+    if (!comment.spanId) return
+    const element = elementsRef.current.get(comment.spanId)
+    if (!element) return
+    element.scrollIntoView({ behavior: "smooth", block: "center" })
+    element.dataset.reviewFocus = ""
+    window.setTimeout(() => element.removeAttribute("data-review-focus"), 1600)
+  }, [])
+
+  const removeComment = useCallback((index: number) => {
+    setComments((current) => {
+      const removed = current[index]
+      const next = current.filter((_, i) => i !== index)
+      if (removed.spanId) {
+        const element = elementsRef.current.get(removed.spanId)
+        const count = next.filter((c) => c.spanId === removed.spanId).length
+        if (element) {
+          if (count === 0) element.removeAttribute("data-review-comments")
+          else element.dataset.reviewComments = String(count)
+        }
+      }
+      return next
+    })
+  }, [])
 
   const copyForDesigner = useCallback(async () => {
     const text = summarise(reviewer, edits, comments)
@@ -317,7 +401,7 @@ export function PublicReviewMode() {
       data-review-chrome
       className="fixed right-4 bottom-4 z-50 font-body text-sm motion-safe:transition-all"
     >
-      <div className="max-w-[22rem] rounded-lg border border-foreground/25 bg-background shadow-lg">
+      <div className="flex max-h-[80vh] max-w-[22rem] flex-col overflow-hidden rounded-lg border border-foreground/25 bg-background shadow-lg">
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
           <p className="font-semibold">Review this page</p>
           <button
@@ -331,7 +415,7 @@ export function PublicReviewMode() {
           </button>
         </div>
 
-        <div className="space-y-3 px-4 py-3">
+        <div className="space-y-3 overflow-y-auto px-4 py-3">
           <p className="text-muted-foreground">
             {active
               ? "Click any text to change it. Press Enter to keep, Esc to undo."
@@ -350,9 +434,38 @@ export function PublicReviewMode() {
             />
           </label>
 
+          <div className="rounded-md border border-foreground/20 bg-muted px-3 py-2">
+            <p className="text-xs font-medium tracking-[0.06em] text-muted-foreground">
+              Note goes on
+            </p>
+            <p className="mt-1 font-medium break-words">
+              {target ? target.label : "Whole page"}
+            </p>
+            {active ? (
+              target ? (
+                <button
+                  type="button"
+                  onClick={() => setTarget(null)}
+                  className="mt-2 min-h-11 rounded-md border border-foreground/30 px-3 py-2 text-xs font-medium focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
+                >
+                  Use whole page instead
+                </button>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Click any text on the page to pin your note to it.
+                </p>
+              )
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Press Edit first if you want to pin a note to specific words.
+              </p>
+            )}
+          </div>
+
           <label className="block">
             <span className="font-medium">Add a note</span>
             <textarea
+              ref={noteRef}
               value={note}
               onChange={(event) => setNote(event.target.value)}
               rows={2}
@@ -369,6 +482,45 @@ export function PublicReviewMode() {
           >
             Add note
           </button>
+
+          {comments.length > 0 ? (
+            <div>
+              <p className="font-medium">
+                Your notes ({comments.length})
+              </p>
+              <ul className="mt-2 space-y-2">
+                {comments.map((comment, index) => (
+                  <li
+                    key={`${comment.spanId ?? "page"}-${index}`}
+                    className="rounded-md border border-foreground/20 px-3 py-2"
+                  >
+                    <p className="text-xs text-muted-foreground break-words">
+                      {comment.where}
+                    </p>
+                    <p className="mt-1 break-words">{comment.note}</p>
+                    <div className="mt-2 flex gap-2">
+                      {comment.spanId ? (
+                        <button
+                          type="button"
+                          onClick={() => revealComment(comment)}
+                          className="min-h-11 rounded-md border border-foreground/30 px-3 py-2 text-xs font-medium focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
+                        >
+                          Show me
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => removeComment(index)}
+                        className="min-h-11 rounded-md border border-foreground/30 px-3 py-2 text-xs font-medium focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           <button
             type="button"
