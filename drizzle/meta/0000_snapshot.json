@@ -1,0 +1,1181 @@
+{
+  "id": "52984585-99d0-42f8-925d-1841189a31de",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.cms_comments": {
+      "name": "cms_comments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "page_id": {
+          "name": "page_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_id": {
+          "name": "target_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_version_id": {
+          "name": "target_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject": {
+          "name": "subject",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'open'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_cms_comments_target_created": {
+          "name": "idx_cms_comments_target_created",
+          "columns": [
+            {
+              "expression": "page_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "target_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_cms_comments_page_status": {
+          "name": "idx_cms_comments_page_status",
+          "columns": [
+            {
+              "expression": "page_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "cms_comments_target_fk": {
+          "name": "cms_comments_target_fk",
+          "tableFrom": "cms_comments",
+          "tableTo": "cms_review_targets",
+          "columnsFrom": [
+            "page_id",
+            "target_id"
+          ],
+          "columnsTo": [
+            "page_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "cms_comments_target_version_fk": {
+          "name": "cms_comments_target_version_fk",
+          "tableFrom": "cms_comments",
+          "tableTo": "cms_page_versions",
+          "columnsFrom": [
+            "page_id",
+            "target_version_id"
+          ],
+          "columnsTo": [
+            "page_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "cms_comments_subject_check": {
+          "name": "cms_comments_subject_check",
+          "value": "\"cms_comments\".\"subject\" in ('page-content', 'design-intent')"
+        },
+        "cms_comments_status_check": {
+          "name": "cms_comments_status_check",
+          "value": "\"cms_comments\".\"status\" in ('open', 'resolved', 'withdrawn')"
+        },
+        "cms_comments_body_check": {
+          "name": "cms_comments_body_check",
+          "value": "length(btrim(\"cms_comments\".\"body\")) between 1 and 4000"
+        },
+        "cms_comments_display_name_check": {
+          "name": "cms_comments_display_name_check",
+          "value": "length(btrim(\"cms_comments\".\"display_name\")) between 1 and 80"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.cms_page_lifecycle_events": {
+      "name": "cms_page_lifecycle_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "page_id": {
+          "name": "page_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_kind": {
+          "name": "event_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from_lifecycle_version": {
+          "name": "from_lifecycle_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "to_lifecycle_version": {
+          "name": "to_lifecycle_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attribution_kind": {
+          "name": "attribution_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "editor_display_name": {
+          "name": "editor_display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "attempt_id": {
+          "name": "attempt_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_fingerprint": {
+          "name": "request_fingerprint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_cms_page_lifecycle_events_page_created": {
+          "name": "idx_cms_page_lifecycle_events_page_created",
+          "columns": [
+            {
+              "expression": "page_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "cms_page_lifecycle_events_page_id_cms_pages_id_fk": {
+          "name": "cms_page_lifecycle_events_page_id_cms_pages_id_fk",
+          "tableFrom": "cms_page_lifecycle_events",
+          "tableTo": "cms_pages",
+          "columnsFrom": [
+            "page_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "cms_page_lifecycle_events_page_attempt_uq": {
+          "name": "cms_page_lifecycle_events_page_attempt_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "page_id",
+            "attempt_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "cms_page_lifecycle_events_kind_check": {
+          "name": "cms_page_lifecycle_events_kind_check",
+          "value": "\"cms_page_lifecycle_events\".\"event_kind\" in ('created', 'archived', 'restored')"
+        },
+        "cms_page_lifecycle_events_version_check": {
+          "name": "cms_page_lifecycle_events_version_check",
+          "value": "\"cms_page_lifecycle_events\".\"to_lifecycle_version\" > 0\n          and (\"cms_page_lifecycle_events\".\"from_lifecycle_version\" is null\n            or \"cms_page_lifecycle_events\".\"from_lifecycle_version\" > 0)"
+        },
+        "cms_page_lifecycle_events_fingerprint_check": {
+          "name": "cms_page_lifecycle_events_fingerprint_check",
+          "value": "\"cms_page_lifecycle_events\".\"request_fingerprint\" ~ '^[0-9a-f]{64}$'"
+        },
+        "cms_page_lifecycle_events_attribution_check": {
+          "name": "cms_page_lifecycle_events_attribution_check",
+          "value": "(\"cms_page_lifecycle_events\".\"attribution_kind\" = 'system-import'\n            and \"cms_page_lifecycle_events\".\"editor_display_name\" is null)\n          or (\"cms_page_lifecycle_events\".\"attribution_kind\" = 'self-declared'\n            and length(btrim(\"cms_page_lifecycle_events\".\"editor_display_name\")) between 1 and 80)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.cms_page_versions": {
+      "name": "cms_page_versions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "page_id": {
+          "name": "page_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_number": {
+          "name": "version_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parent_version_id": {
+          "name": "parent_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "restored_from_version_id": {
+          "name": "restored_from_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "page_schema_version": {
+          "name": "page_schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "review_schema_version": {
+          "name": "review_schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "section_library_version": {
+          "name": "section_library_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "page_document": {
+          "name": "page_document",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "review_document": {
+          "name": "review_document",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "canonical_digest": {
+          "name": "canonical_digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attribution_kind": {
+          "name": "attribution_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "editor_display_name": {
+          "name": "editor_display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "attempt_id": {
+          "name": "attempt_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_fingerprint": {
+          "name": "request_fingerprint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_cms_page_versions_page_version": {
+          "name": "idx_cms_page_versions_page_version",
+          "columns": [
+            {
+              "expression": "page_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version_number",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "cms_page_versions_page_id_cms_pages_id_fk": {
+          "name": "cms_page_versions_page_id_cms_pages_id_fk",
+          "tableFrom": "cms_page_versions",
+          "tableTo": "cms_pages",
+          "columnsFrom": [
+            "page_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "cms_page_versions_parent_fk": {
+          "name": "cms_page_versions_parent_fk",
+          "tableFrom": "cms_page_versions",
+          "tableTo": "cms_page_versions",
+          "columnsFrom": [
+            "page_id",
+            "parent_version_id"
+          ],
+          "columnsTo": [
+            "page_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "cms_page_versions_restore_source_fk": {
+          "name": "cms_page_versions_restore_source_fk",
+          "tableFrom": "cms_page_versions",
+          "tableTo": "cms_page_versions",
+          "columnsFrom": [
+            "page_id",
+            "restored_from_version_id"
+          ],
+          "columnsTo": [
+            "page_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "cms_page_versions_page_version_uq": {
+          "name": "cms_page_versions_page_version_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "page_id",
+            "version_number"
+          ]
+        },
+        "cms_page_versions_page_attempt_uq": {
+          "name": "cms_page_versions_page_attempt_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "page_id",
+            "attempt_id"
+          ]
+        },
+        "cms_page_versions_page_id_id_uq": {
+          "name": "cms_page_versions_page_id_id_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "page_id",
+            "id"
+          ]
+        },
+        "cms_page_versions_head_pointer_uq": {
+          "name": "cms_page_versions_head_pointer_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "page_id",
+            "id",
+            "version_number",
+            "canonical_digest"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "cms_page_versions_version_number_check": {
+          "name": "cms_page_versions_version_number_check",
+          "value": "\"cms_page_versions\".\"version_number\" > 0"
+        },
+        "cms_page_versions_schema_versions_check": {
+          "name": "cms_page_versions_schema_versions_check",
+          "value": "\"cms_page_versions\".\"page_schema_version\" > 0\n          and \"cms_page_versions\".\"review_schema_version\" > 0\n          and \"cms_page_versions\".\"section_library_version\" > 0"
+        },
+        "cms_page_versions_page_document_check": {
+          "name": "cms_page_versions_page_document_check",
+          "value": "jsonb_typeof(\"cms_page_versions\".\"page_document\") = 'object'"
+        },
+        "cms_page_versions_review_document_check": {
+          "name": "cms_page_versions_review_document_check",
+          "value": "jsonb_typeof(\"cms_page_versions\".\"review_document\") = 'object'"
+        },
+        "cms_page_versions_digest_check": {
+          "name": "cms_page_versions_digest_check",
+          "value": "\"cms_page_versions\".\"canonical_digest\" ~ '^[0-9a-f]{64}$'"
+        },
+        "cms_page_versions_fingerprint_check": {
+          "name": "cms_page_versions_fingerprint_check",
+          "value": "\"cms_page_versions\".\"request_fingerprint\" ~ '^[0-9a-f]{64}$'"
+        },
+        "cms_page_versions_attribution_check": {
+          "name": "cms_page_versions_attribution_check",
+          "value": "(\"cms_page_versions\".\"attribution_kind\" = 'system-import'\n            and \"cms_page_versions\".\"editor_display_name\" is null)\n          or (\"cms_page_versions\".\"attribution_kind\" = 'self-declared'\n            and length(btrim(\"cms_page_versions\".\"editor_display_name\")) between 1 and 80)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.cms_pages": {
+      "name": "cms_pages",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lifecycle": {
+          "name": "lifecycle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "lifecycle_version": {
+          "name": "lifecycle_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "draft_version_id": {
+          "name": "draft_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "draft_version_number": {
+          "name": "draft_version_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "draft_digest": {
+          "name": "draft_digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "published_version_id": {
+          "name": "published_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "published_version_number": {
+          "name": "published_version_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "published_digest": {
+          "name": "published_digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_cms_pages_lifecycle_updated": {
+          "name": "idx_cms_pages_lifecycle_updated",
+          "columns": [
+            {
+              "expression": "lifecycle",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "cms_pages_lifecycle_check": {
+          "name": "cms_pages_lifecycle_check",
+          "value": "\"cms_pages\".\"lifecycle\" in ('active', 'archived')"
+        },
+        "cms_pages_lifecycle_version_check": {
+          "name": "cms_pages_lifecycle_version_check",
+          "value": "\"cms_pages\".\"lifecycle_version\" > 0"
+        },
+        "cms_pages_lifecycle_time_check": {
+          "name": "cms_pages_lifecycle_time_check",
+          "value": "(\"cms_pages\".\"lifecycle\" = 'active' and \"cms_pages\".\"archived_at\" is null)\n          or (\"cms_pages\".\"lifecycle\" = 'archived' and \"cms_pages\".\"archived_at\" is not null)"
+        },
+        "cms_pages_draft_version_check": {
+          "name": "cms_pages_draft_version_check",
+          "value": "\"cms_pages\".\"draft_version_number\" > 0"
+        },
+        "cms_pages_draft_digest_check": {
+          "name": "cms_pages_draft_digest_check",
+          "value": "\"cms_pages\".\"draft_digest\" ~ '^[0-9a-f]{64}$'"
+        },
+        "cms_pages_published_head_check": {
+          "name": "cms_pages_published_head_check",
+          "value": "(\"cms_pages\".\"published_version_id\" is null\n            and \"cms_pages\".\"published_version_number\" is null\n            and \"cms_pages\".\"published_digest\" is null)\n          or (\"cms_pages\".\"published_version_id\" is not null\n            and \"cms_pages\".\"published_version_number\" > 0\n            and \"cms_pages\".\"published_digest\" ~ '^[0-9a-f]{64}$')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.cms_publication_events": {
+      "name": "cms_publication_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "page_id": {
+          "name": "page_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_kind": {
+          "name": "event_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from_published_version_id": {
+          "name": "from_published_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "to_published_version_id": {
+          "name": "to_published_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "published_path": {
+          "name": "published_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attribution_kind": {
+          "name": "attribution_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "editor_display_name": {
+          "name": "editor_display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "attempt_id": {
+          "name": "attempt_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_fingerprint": {
+          "name": "request_fingerprint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_cms_publication_events_page_created": {
+          "name": "idx_cms_publication_events_page_created",
+          "columns": [
+            {
+              "expression": "page_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "cms_publication_events_page_id_cms_pages_id_fk": {
+          "name": "cms_publication_events_page_id_cms_pages_id_fk",
+          "tableFrom": "cms_publication_events",
+          "tableTo": "cms_pages",
+          "columnsFrom": [
+            "page_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "cms_publication_events_from_version_fk": {
+          "name": "cms_publication_events_from_version_fk",
+          "tableFrom": "cms_publication_events",
+          "tableTo": "cms_page_versions",
+          "columnsFrom": [
+            "page_id",
+            "from_published_version_id"
+          ],
+          "columnsTo": [
+            "page_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "cms_publication_events_to_version_fk": {
+          "name": "cms_publication_events_to_version_fk",
+          "tableFrom": "cms_publication_events",
+          "tableTo": "cms_page_versions",
+          "columnsFrom": [
+            "page_id",
+            "to_published_version_id"
+          ],
+          "columnsTo": [
+            "page_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "cms_publication_events_page_attempt_uq": {
+          "name": "cms_publication_events_page_attempt_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "page_id",
+            "attempt_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "cms_publication_events_kind_check": {
+          "name": "cms_publication_events_kind_check",
+          "value": "\"cms_publication_events\".\"event_kind\" in ('initial-import', 'publish', 'unpublish')"
+        },
+        "cms_publication_events_path_check": {
+          "name": "cms_publication_events_path_check",
+          "value": "\"cms_publication_events\".\"published_path\" is null\n          or \"cms_publication_events\".\"published_path\" ~ '^/(?:[a-z0-9]+(?:-[a-z0-9]+)*)?$'"
+        },
+        "cms_publication_events_fingerprint_check": {
+          "name": "cms_publication_events_fingerprint_check",
+          "value": "\"cms_publication_events\".\"request_fingerprint\" ~ '^[0-9a-f]{64}$'"
+        },
+        "cms_publication_events_attribution_check": {
+          "name": "cms_publication_events_attribution_check",
+          "value": "(\"cms_publication_events\".\"attribution_kind\" = 'system-import'\n            and \"cms_publication_events\".\"editor_display_name\" is null)\n          or (\"cms_publication_events\".\"attribution_kind\" = 'self-declared'\n            and length(btrim(\"cms_publication_events\".\"editor_display_name\")) between 1 and 80)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.cms_review_targets": {
+      "name": "cms_review_targets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "page_id": {
+          "name": "page_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "section_id": {
+          "name": "section_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "field_key": {
+          "name": "field_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "repeated_item_id": {
+          "name": "repeated_item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parent_target_id": {
+          "name": "parent_target_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_cms_review_targets_page_state": {
+          "name": "idx_cms_review_targets_page_state",
+          "columns": [
+            {
+              "expression": "page_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_cms_review_targets_section": {
+          "name": "idx_cms_review_targets_section",
+          "columns": [
+            {
+              "expression": "page_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "section_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "cms_review_targets_page_id_cms_pages_id_fk": {
+          "name": "cms_review_targets_page_id_cms_pages_id_fk",
+          "tableFrom": "cms_review_targets",
+          "tableTo": "cms_pages",
+          "columnsFrom": [
+            "page_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "cms_review_targets_parent_fk": {
+          "name": "cms_review_targets_parent_fk",
+          "tableFrom": "cms_review_targets",
+          "tableTo": "cms_review_targets",
+          "columnsFrom": [
+            "page_id",
+            "parent_target_id"
+          ],
+          "columnsTo": [
+            "page_id",
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "cms_review_targets_page_id_id_pk": {
+          "name": "cms_review_targets_page_id_id_pk",
+          "columns": [
+            "page_id",
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "cms_review_targets_kind_check": {
+          "name": "cms_review_targets_kind_check",
+          "value": "\"cms_review_targets\".\"kind\" in ('page', 'section', 'field', 'repeated-item', 'screen')"
+        },
+        "cms_review_targets_state_check": {
+          "name": "cms_review_targets_state_check",
+          "value": "\"cms_review_targets\".\"state\" in ('active', 'archived')"
+        },
+        "cms_review_targets_archive_time_check": {
+          "name": "cms_review_targets_archive_time_check",
+          "value": "(\"cms_review_targets\".\"state\" = 'active' and \"cms_review_targets\".\"archived_at\" is null)\n          or (\"cms_review_targets\".\"state\" = 'archived' and \"cms_review_targets\".\"archived_at\" is not null)"
+        },
+        "cms_review_targets_location_check": {
+          "name": "cms_review_targets_location_check",
+          "value": "(\"cms_review_targets\".\"kind\" = 'page'\n            and \"cms_review_targets\".\"section_id\" is null\n            and \"cms_review_targets\".\"field_key\" is null\n            and \"cms_review_targets\".\"repeated_item_id\" is null)\n          or (\"cms_review_targets\".\"kind\" = 'section'\n            and \"cms_review_targets\".\"section_id\" is not null\n            and \"cms_review_targets\".\"field_key\" is null\n            and \"cms_review_targets\".\"repeated_item_id\" is null)\n          or (\"cms_review_targets\".\"kind\" = 'field'\n            and \"cms_review_targets\".\"field_key\" is not null)\n          or (\"cms_review_targets\".\"kind\" = 'repeated-item'\n            and \"cms_review_targets\".\"section_id\" is not null\n            and \"cms_review_targets\".\"field_key\" is null\n            and \"cms_review_targets\".\"repeated_item_id\" is not null)\n          or (\"cms_review_targets\".\"kind\" = 'screen'\n            and \"cms_review_targets\".\"section_id\" is not null\n            and \"cms_review_targets\".\"field_key\" is null\n            and \"cms_review_targets\".\"repeated_item_id\" is not null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.cms_routes": {
+      "name": "cms_routes",
+      "schema": "",
+      "columns": {
+        "normalized_path": {
+          "name": "normalized_path",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "page_id": {
+          "name": "page_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_draft_path": {
+          "name": "is_draft_path",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_published_path": {
+          "name": "is_published_path",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_cms_routes_page": {
+          "name": "idx_cms_routes_page",
+          "columns": [
+            {
+              "expression": "page_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cms_routes_page_draft_uq": {
+          "name": "cms_routes_page_draft_uq",
+          "columns": [
+            {
+              "expression": "page_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"cms_routes\".\"is_draft_path\" = true",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cms_routes_page_published_uq": {
+          "name": "cms_routes_page_published_uq",
+          "columns": [
+            {
+              "expression": "page_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"cms_routes\".\"is_published_path\" = true",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "cms_routes_page_id_cms_pages_id_fk": {
+          "name": "cms_routes_page_id_cms_pages_id_fk",
+          "tableFrom": "cms_routes",
+          "tableTo": "cms_pages",
+          "columnsFrom": [
+            "page_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "cms_routes_path_check": {
+          "name": "cms_routes_path_check",
+          "value": "\"cms_routes\".\"normalized_path\" ~ '^/(?:[a-z0-9]+(?:-[a-z0-9]+)*)?$'"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
