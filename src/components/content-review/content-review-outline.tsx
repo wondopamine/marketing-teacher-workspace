@@ -1,28 +1,16 @@
-import { contentReviewChrome } from "./content-review-chrome"
-import { ReviewPin, productScreenReferences } from "./review-annotations"
+import { ReviewPin, reviewAnnotationBindings } from "./review-annotations"
 
-import type { SectionChrome } from "./content-review-chrome"
-import type { ProductScreenReference } from "./review-annotations"
 import type {
-  ContentReviewWireframeAppendixDto,
-  ContentReviewWireframeEntryDto,
-  ContentReviewWireframeSectionDto,
-} from "@/content/landing-v2-review.types"
-
-type ContentEntry = Extract<ContentReviewWireframeEntryDto, { kind: "content" }>
-type SectionProps = {
-  section: ContentReviewWireframeSectionDto
-}
-
-const chrome = contentReviewChrome
-
-function contentEntries(
-  section: ContentReviewWireframeSectionDto
-): ReadonlyArray<ContentEntry> {
-  return section.entries.filter(
-    (entry): entry is ContentEntry => entry.kind === "content"
-  )
-}
+  TeacherPreviewAccessSupportSectionDto,
+  TeacherPreviewActionDto,
+  TeacherPreviewCapabilitiesSectionDto,
+  TeacherPreviewCloseSectionDto,
+  TeacherPreviewConnectedStorySectionDto,
+  TeacherPreviewPromiseSectionDto,
+  TeacherPreviewRevealSectionDto,
+  TeacherPreviewScreenDto,
+  TeacherPreviewSectionDto,
+} from "@/content/teacher-preview-document"
 
 function WireframeLabel({ children }: { children: string }) {
   return (
@@ -32,8 +20,8 @@ function WireframeLabel({ children }: { children: string }) {
   )
 }
 
-function InertAction({ entry }: { entry: ContentEntry | undefined }) {
-  if (!entry?.action) return null
+function InertAction({ action }: { action: TeacherPreviewActionDto | null }) {
+  if (!action) return null
 
   return (
     <div className="mt-7">
@@ -41,11 +29,11 @@ function InertAction({ entry }: { entry: ContentEntry | undefined }) {
         className="inline-flex min-h-12 items-center justify-center border-2 border-foreground bg-foreground px-6 py-3 font-semibold text-background select-none"
         data-wireframe-action
       >
-        {entry.action.label}
+        {action.label}
       </span>
-      {entry.action.note ? (
+      {action.note ? (
         <p className="mt-3 text-sm leading-[1.5] text-muted-foreground">
-          {entry.action.note}
+          {action.note}
         </p>
       ) : null}
     </div>
@@ -54,12 +42,12 @@ function InertAction({ entry }: { entry: ContentEntry | undefined }) {
 
 function SectionIntro({
   annotationId,
-  chrome: sectionChrome,
   headingId,
+  title,
 }: {
   annotationId?: string
-  chrome: SectionChrome
   headingId: string
+  title: string
 }) {
   return (
     <div className="max-w-3xl">
@@ -68,7 +56,7 @@ function SectionIntro({
           id={headingId}
           className="font-heading text-[32px] font-semibold tracking-[-0.025em]"
         >
-          {sectionChrome.title}
+          {title}
         </h2>
         {annotationId ? <ReviewPin id={annotationId} /> : null}
       </div>
@@ -77,11 +65,13 @@ function SectionIntro({
 }
 
 function ProductScreenFigure({
+  annotationId,
   location,
-  reference,
+  screen,
 }: {
+  annotationId: string
   location: string
-  reference: ProductScreenReference
+  screen: TeacherPreviewScreenDto
 }) {
   return (
     <figure
@@ -92,12 +82,12 @@ function ProductScreenFigure({
       <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-2">
         <nav aria-label="Product location" className="min-w-0">
           <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-            {reference.breadcrumb.map((item, index) => (
+            {screen.breadcrumb.map((item, index) => (
               <li className="flex items-center gap-2" key={item}>
                 {index > 0 ? <span aria-hidden>/</span> : null}
                 <span
                   className={
-                    index === reference.breadcrumb.length - 1
+                    index === screen.breadcrumb.length - 1
                       ? "font-semibold text-foreground"
                       : undefined
                   }
@@ -108,27 +98,27 @@ function ProductScreenFigure({
             ))}
           </ol>
         </nav>
-        <ReviewPin id={reference.annotationId} />
+        <ReviewPin id={annotationId} />
       </div>
       <div className="overflow-hidden bg-white">
         <img
-          alt={reference.alt}
+          alt={screen.alt}
           className="block h-auto w-full"
           decoding="async"
           height="1000"
           loading="lazy"
-          src={reference.image}
+          src={screen.src}
           width="1600"
         />
       </div>
       <figcaption className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border px-3 py-2 text-xs text-muted-foreground">
         <span>Illustrative Teacher Workspace prototype</span>
         <a
-          href={reference.image}
+          href={screen.src}
           target="_blank"
           rel="noreferrer"
           className="inline-flex min-h-11 items-center font-semibold text-foreground underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
-          aria-label={`Open ${reference.breadcrumb.at(-1) ?? "product"} screen at full size`}
+          aria-label={`Open ${screen.breadcrumb.at(-1) ?? "product"} screen at full size`}
         >
           Open full size
         </a>
@@ -137,24 +127,11 @@ function ProductScreenFigure({
   )
 }
 
-function ProductFrame() {
-  return (
-    <div data-wireframe-interface-frame="product-view">
-      <ProductScreenFigure
-        location="hero-product-view"
-        reference={productScreenReferences.hero}
-      />
-    </div>
-  )
-}
-
-function HeroSection({ section }: SectionProps) {
-  const entries = contentEntries(section)
-  const copy = entries.find((entry) => entry.heading)
-  const action = entries.find((entry) => entry.action?.purpose === "product")
-
-  if (!copy?.heading) return null
-
+function HeroSection({
+  section,
+}: {
+  section: TeacherPreviewPromiseSectionDto
+}) {
   return (
     <section
       aria-labelledby="wireframe-hero-heading"
@@ -162,14 +139,16 @@ function HeroSection({ section }: SectionProps) {
       data-wireframe-section={section.kind}
     >
       <div>
-        {copy.label ? <WireframeLabel>{copy.label}</WireframeLabel> : null}
+        {section.eyebrow ? (
+          <WireframeLabel>{section.eyebrow}</WireframeLabel>
+        ) : null}
         <h1
           id="wireframe-hero-heading"
           className="max-w-[13ch] font-heading text-[32px] leading-tight font-semibold tracking-[-0.035em] sm:text-5xl lg:text-[72px]"
         >
-          {copy.heading}
+          {section.heading}
         </h1>
-        {copy.body.map((paragraph) => (
+        {section.body.map((paragraph) => (
           <p
             className="mt-6 max-w-[42rem] text-lg leading-7 text-muted-foreground"
             key={paragraph}
@@ -177,17 +156,25 @@ function HeroSection({ section }: SectionProps) {
             {paragraph}
           </p>
         ))}
-        <InertAction entry={action} />
+        <InertAction action={section.action} />
       </div>
 
-      <ProductFrame />
+      <div data-wireframe-interface-frame="product-view">
+        <ProductScreenFigure
+          annotationId={reviewAnnotationBindings.heroScreen}
+          location="hero-product-view"
+          screen={section.screen}
+        />
+      </div>
     </section>
   )
 }
 
-function ConnectedStorySection({ section }: SectionProps) {
-  const entries = contentEntries(section)
-
+function ConnectedStorySection({
+  section,
+}: {
+  section: TeacherPreviewConnectedStorySectionDto
+}) {
   return (
     <section
       aria-labelledby="wireframe-connected-story"
@@ -195,30 +182,30 @@ function ConnectedStorySection({ section }: SectionProps) {
       data-wireframe-section={section.kind}
     >
       <SectionIntro
-        annotationId="story-overview"
-        chrome={chrome.story}
+        annotationId={reviewAnnotationBindings.story}
         headingId="wireframe-connected-story"
+        title={section.heading}
       />
 
       <ol className="mt-12 border-t border-border">
-        {entries.map((entry, index) => (
+        {section.steps.map((step, index) => (
           <li
             className="grid gap-8 border-b border-border py-10 2xl:grid-cols-[4rem_minmax(0,1fr)_minmax(18rem,0.9fr)] 2xl:items-start"
-            key={entry.heading ?? entry.label ?? `story-${index}`}
+            key={step.heading ?? step.label ?? `story-${index}`}
           >
             <p className="text-[32px] font-normal text-muted-foreground tabular-nums">
               {String(index + 1).padStart(2, "0")}
             </p>
             <div>
-              {entry.label ? (
-                <WireframeLabel>{entry.label}</WireframeLabel>
+              {step.label ? (
+                <WireframeLabel>{step.label}</WireframeLabel>
               ) : null}
-              {entry.heading ? (
+              {step.heading ? (
                 <h3 className="mt-4 max-w-2xl font-heading text-2xl leading-tight font-semibold tracking-[-0.02em]">
-                  {entry.heading}
+                  {step.heading}
                 </h3>
               ) : null}
-              {entry.body.map((paragraph) => (
+              {step.body.map((paragraph) => (
                 <p
                   className="mt-4 max-w-2xl leading-6 text-muted-foreground"
                   key={paragraph}
@@ -227,12 +214,11 @@ function ConnectedStorySection({ section }: SectionProps) {
                 </p>
               ))}
             </div>
-            {productScreenReferences.story[index] ? (
-              <ProductScreenFigure
-                location={`story-step-${index + 1}`}
-                reference={productScreenReferences.story[index]}
-              />
-            ) : null}
+            <ProductScreenFigure
+              annotationId={reviewAnnotationBindings.storyScreens[index]}
+              location={`story-step-${index + 1}`}
+              screen={step.screen}
+            />
           </li>
         ))}
       </ol>
@@ -240,15 +226,11 @@ function ConnectedStorySection({ section }: SectionProps) {
   )
 }
 
-function RevealSection({ section }: SectionProps) {
-  const entries = contentEntries(section)
-  const copy = entries.find((entry) => entry.heading)
-  // A resolved slot (the GA launch line) projects as copy without a heading;
-  // it takes the place of its former pending box beside the thesis.
-  const asides = entries.filter((entry) => entry !== copy)
-
-  if (!copy?.heading) return null
-
+function RevealSection({
+  section,
+}: {
+  section: TeacherPreviewRevealSectionDto
+}) {
   return (
     <section
       aria-labelledby="wireframe-reveal"
@@ -261,9 +243,9 @@ function RevealSection({ section }: SectionProps) {
             id="wireframe-reveal"
             className="font-heading text-[32px] font-semibold tracking-[-0.035em] sm:text-5xl"
           >
-            {copy.heading}
+            {section.heading}
           </h2>
-          {copy.body.map((paragraph) => (
+          {section.body.map((paragraph) => (
             <p
               className="mt-6 max-w-3xl text-lg leading-7 text-background/75"
               key={paragraph}
@@ -272,12 +254,12 @@ function RevealSection({ section }: SectionProps) {
             </p>
           ))}
         </div>
-        {asides.map((entry, index) => (
+        {section.asides.map((aside, index) => (
           <div
             className="border border-background/30 p-5"
-            key={entry.label ?? `reveal-aside-${index}`}
+            key={aside.body[0] ?? `reveal-aside-${index}`}
           >
-            {entry.body.map((paragraph) => (
+            {aside.body.map((paragraph) => (
               <p className="text-sm text-background/85" key={paragraph}>
                 {paragraph}
               </p>
@@ -289,9 +271,11 @@ function RevealSection({ section }: SectionProps) {
   )
 }
 
-function CapabilitiesSection({ section }: SectionProps) {
-  const entries = contentEntries(section)
-
+function CapabilitiesSection({
+  section,
+}: {
+  section: TeacherPreviewCapabilitiesSectionDto
+}) {
   return (
     <section
       aria-labelledby="wireframe-capabilities"
@@ -299,28 +283,28 @@ function CapabilitiesSection({ section }: SectionProps) {
       data-wireframe-section={section.kind}
     >
       <SectionIntro
-        annotationId="capabilities-overview"
-        chrome={chrome.capabilities}
+        annotationId={reviewAnnotationBindings.capabilities}
         headingId="wireframe-capabilities"
+        title={section.heading}
       />
 
       <ol className="mt-12 border-t border-foreground/30">
-        {entries.map((entry, index) => (
+        {section.items.map((item, index) => (
           <li
             className="grid gap-5 border-b border-border py-8 md:grid-cols-[3rem_minmax(10rem,0.55fr)_minmax(0,1.45fr)]"
-            key={entry.label ?? entry.heading ?? `capability-${index}`}
+            key={item.label ?? item.heading ?? `capability-${index}`}
           >
             <p className="text-sm text-muted-foreground tabular-nums">
               {String(index + 1).padStart(2, "0")}
             </p>
-            <p className="text-lg font-semibold">{entry.label}</p>
+            <p className="text-lg font-semibold">{item.label}</p>
             <div>
-              {entry.heading ? (
+              {item.heading ? (
                 <h3 className="font-heading text-xl leading-snug font-semibold">
-                  {entry.heading}
+                  {item.heading}
                 </h3>
               ) : null}
-              {entry.body.map((paragraph) => (
+              {item.body.map((paragraph) => (
                 <p
                   className="mt-3 max-w-[72ch] leading-6 text-muted-foreground"
                   key={paragraph}
@@ -336,98 +320,11 @@ function CapabilitiesSection({ section }: SectionProps) {
   )
 }
 
-function AudiencesSection({ section }: SectionProps) {
-  const content = contentEntries(section)
-
-  if (content.length === 0) return null
-
-  return (
-    <section
-      aria-labelledby="wireframe-audiences"
-      className="border-b border-border px-6 py-16 md:px-10 md:py-24 lg:px-16"
-      data-wireframe-section={section.kind}
-    >
-      <SectionIntro
-        annotationId="audiences-overview"
-        chrome={chrome.audiences}
-        headingId="wireframe-audiences"
-      />
-
-      <ul className="mt-12 border-y border-foreground/30 md:grid md:grid-cols-3">
-        {content.map((entry) => (
-          <li
-            className="border-b border-border py-7 last:border-b-0 md:border-r md:border-b-0 md:px-6 md:first:pl-0 md:last:border-r-0 md:last:pr-0"
-            key={entry.label ?? entry.heading}
-          >
-            <h3 className="font-heading text-xl font-semibold">
-              {entry.label}
-            </h3>
-            {entry.heading ? <p className="mt-4">{entry.heading}</p> : null}
-            {entry.body.map((paragraph) => (
-              <p
-                className="mt-3 max-w-[72ch] leading-6 text-muted-foreground"
-                key={paragraph}
-              >
-                {paragraph}
-              </p>
-            ))}
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
-}
-
-function ProofSection({ section }: SectionProps) {
-  const content = contentEntries(section)
-
-  if (content.length === 0) return null
-
-  return (
-    <section
-      aria-labelledby="wireframe-proof"
-      className="border-b border-border px-6 py-16 md:px-10 md:py-24 lg:px-16"
-      data-wireframe-section={section.kind}
-    >
-      <div className="grid gap-10 md:grid-cols-[minmax(0,0.7fr)_minmax(20rem,1.3fr)]">
-        <div>
-          <div className="flex items-start gap-3">
-            <h2
-              id="wireframe-proof"
-              className="font-heading text-[32px] font-semibold tracking-[-0.025em]"
-            >
-              {chrome.proof.title}
-            </h2>
-            <ReviewPin id="proof-overview" />
-          </div>
-        </div>
-        <div className="space-y-5">
-          {content.map((entry) => (
-            <div key={entry.heading ?? entry.label}>
-              {entry.heading ? (
-                <h3 className="font-heading text-xl font-semibold">
-                  {entry.heading}
-                </h3>
-              ) : null}
-              {entry.body.map((paragraph) => (
-                <p className="mt-3 leading-6" key={paragraph}>
-                  {paragraph}
-                </p>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function AccessSupportSection({
-  appendix,
   section,
-}: SectionProps & { appendix: ContentReviewWireframeAppendixDto }) {
-  const accessSupport = chrome.accessSupport
-
+}: {
+  section: TeacherPreviewAccessSupportSectionDto
+}) {
   return (
     <section
       aria-labelledby="wireframe-access-support"
@@ -435,24 +332,24 @@ function AccessSupportSection({
       data-wireframe-section={section.kind}
     >
       <SectionIntro
-        annotationId="access-support-overview"
-        chrome={accessSupport}
+        annotationId={reviewAnnotationBindings.accessSupport}
         headingId="wireframe-access-support"
+        title={section.heading}
       />
 
       <div className="mt-12 max-w-2xl">
         <div>
           <h3 className="font-heading text-xl font-semibold">
-            {accessSupport.accessHeading}
+            {section.accessHeading}
           </h3>
           <dl className="mt-6 grid gap-2 border-y border-foreground/30 py-5 sm:grid-cols-[8rem_1fr]">
             <dt className="text-sm font-medium text-muted-foreground">
-              {accessSupport.accessMethodLabel}
+              {section.methodLabel}
             </dt>
-            <dd className="font-semibold">{appendix.access.label}</dd>
+            <dd className="font-semibold">{section.method}</dd>
           </dl>
           <p className="mt-3 text-sm leading-[1.5] text-muted-foreground">
-            {appendix.access.accountNote}
+            {section.accountNote}
           </p>
         </div>
       </div>
@@ -460,13 +357,7 @@ function AccessSupportSection({
   )
 }
 
-function CloseSection({ section }: SectionProps) {
-  const entries = contentEntries(section)
-  const copy = entries.find((entry) => entry.heading)
-  const action = entries.find((entry) => entry.action?.purpose === "product")
-
-  if (!copy?.heading) return null
-
+function CloseSection({ section }: { section: TeacherPreviewCloseSectionDto }) {
   return (
     <section
       aria-labelledby="wireframe-close"
@@ -477,9 +368,9 @@ function CloseSection({ section }: SectionProps) {
         id="wireframe-close"
         className="mx-auto max-w-4xl font-heading text-[32px] font-semibold tracking-[-0.035em] sm:text-5xl"
       >
-        {copy.heading}
+        {section.heading}
       </h2>
-      {copy.body.map((paragraph) => (
+      {section.body.map((paragraph) => (
         <p
           className="mx-auto mt-6 max-w-2xl text-lg leading-7 text-muted-foreground"
           key={paragraph}
@@ -487,52 +378,41 @@ function CloseSection({ section }: SectionProps) {
           {paragraph}
         </p>
       ))}
-      <InertAction entry={action} />
+      <InertAction action={section.action} />
     </section>
   )
 }
 
 export function ContentReviewSection({
-  appendix,
-  ...props
-}: SectionProps & { appendix: ContentReviewWireframeAppendixDto }) {
-  switch (props.section.kind) {
+  section,
+}: {
+  section: TeacherPreviewSectionDto
+}) {
+  switch (section.kind) {
     case "promise":
-      return <HeroSection {...props} />
+      return <HeroSection section={section} />
     case "connected-story":
-      return <ConnectedStorySection {...props} />
+      return <ConnectedStorySection section={section} />
     case "reveal":
-      return <RevealSection {...props} />
+      return <RevealSection section={section} />
     case "capabilities":
-      return <CapabilitiesSection {...props} />
-    case "audiences":
-      return <AudiencesSection {...props} />
-    case "proof":
-      return <ProofSection {...props} />
+      return <CapabilitiesSection section={section} />
     case "close":
-      return <CloseSection {...props} />
+      return <CloseSection section={section} />
     case "access-support":
-      return <AccessSupportSection appendix={appendix} {...props} />
-    case "footer-feedback":
-      return null
+      return <AccessSupportSection section={section} />
   }
 }
 
 export function ContentReviewOutline({
-  appendix,
   sections,
 }: {
-  appendix: ContentReviewWireframeAppendixDto
-  sections: ReadonlyArray<ContentReviewWireframeSectionDto>
+  sections: ReadonlyArray<TeacherPreviewSectionDto>
 }) {
   return (
     <>
       {sections.map((section) => (
-        <ContentReviewSection
-          appendix={appendix}
-          key={section.kind}
-          section={section}
-        />
+        <ContentReviewSection key={section.kind} section={section} />
       ))}
     </>
   )

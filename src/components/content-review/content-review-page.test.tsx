@@ -4,16 +4,20 @@ import { describe, expect, it } from "vitest"
 import { ContentReviewPage } from "./content-review-page"
 import {
   ReviewAnnotationProvider,
-  productScreenReferences,
   reviewAnnotations,
 } from "./review-annotations"
-import type { ContentReviewWireframeReadyPageDto } from "@/content/landing-v2-review.types"
-import { buildContentReviewPageDto } from "@/content/landing-v2-review-state.server"
+import type { TeacherPreviewPageDataDto } from "@/content/teacher-preview-document"
+import { buildTeacherPreviewPageData } from "@/content/teacher-preview-document.server"
 
-function buildReadyReviewPage(): ContentReviewWireframeReadyPageDto {
-  const data = buildContentReviewPageDto()
+type ReadyTeacherPreviewPage = Extract<
+  TeacherPreviewPageDataDto,
+  { kind: "ready" }
+>
+
+function buildReadyReviewPage(): ReadyTeacherPreviewPage {
+  const data = buildTeacherPreviewPageData()
   if (data.kind !== "ready") {
-    throw new Error("Expected the default content-review DTO to be ready")
+    throw new Error("Expected the default teacher preview document to be ready")
   }
   return data
 }
@@ -54,6 +58,21 @@ describe("ContentReviewPage", () => {
     for (let index = 1; index < levels.length; index += 1) {
       expect(levels[index] - levels[index - 1]).toBeLessThanOrEqual(1)
     }
+  })
+
+  it("renders the canonical replacement document in its approved order", () => {
+    const { data } = renderReadyReviewPage()
+
+    expect(data.document.sections.map((section) => section.kind)).toEqual([
+      "promise",
+      "connected-story",
+      "reveal",
+      "capabilities",
+      "close",
+      "access-support",
+    ])
+    expect(data.document.brand).toBe("Teacher Workspace")
+    expect(data.document.footer.brand).toBe("Teacher Workspace")
   })
 
   it("keeps reviewer rationale and pending decisions out of the teacher copy", () => {
@@ -106,8 +125,8 @@ describe("ContentReviewPage", () => {
     ).not.toBeNull()
   })
 
-  it("shows six actual product screens with breadcrumbs instead of prose specifications", () => {
-    const { container } = renderReadyReviewPage()
+  it("shows six actual product screens with their teacher-facing breadcrumbs", () => {
+    const { container, data } = renderReadyReviewPage()
     const figures = Array.from(
       container.querySelectorAll("[data-product-screen]")
     )
@@ -120,9 +139,18 @@ describe("ContentReviewPage", () => {
     const fullSizeLinks = screen.getAllByRole("link", {
       name: /screen at full size$/,
     })
-    const references = [
-      productScreenReferences.hero,
-      ...productScreenReferences.story,
+    const hero = data.document.sections.find(
+      (section) => section.kind === "promise"
+    )
+    const story = data.document.sections.find(
+      (section) => section.kind === "connected-story"
+    )
+    if (hero?.kind !== "promise" || story?.kind !== "connected-story") {
+      throw new Error("Expected the promise and connected-story sections")
+    }
+    const documentScreens = [
+      hero.screen,
+      ...story.steps.map((step) => step.screen),
     ]
 
     expect(figures).toHaveLength(6)
@@ -130,12 +158,20 @@ describe("ContentReviewPage", () => {
     expect(locations).toHaveLength(6)
     expect(fullSizeLinks).toHaveLength(6)
     expect(container.querySelector("[data-interface-description]")).toBeNull()
+    expect(documentScreens.map((item) => item.src)).toEqual([
+      "/content-review/screens/student-profile.png",
+      "/content-review/screens/student-insights-class.png",
+      "/content-review/screens/student-profile-family.png",
+      "/content-review/screens/guidance.png",
+      "/content-review/screens/post-composer.png",
+      "/content-review/screens/post-read-tracking.png",
+    ])
 
-    references.forEach((reference, index) => {
-      expect(images[index].getAttribute("src")).toBe(reference.image)
-      expect(images[index].getAttribute("alt")).toBe(reference.alt)
-      expect(fullSizeLinks[index].getAttribute("href")).toBe(reference.image)
-      for (const crumb of reference.breadcrumb) {
+    documentScreens.forEach((item, index) => {
+      expect(images[index].getAttribute("src")).toBe(item.src)
+      expect(images[index].getAttribute("alt")).toBe(item.alt)
+      expect(fullSizeLinks[index].getAttribute("href")).toBe(item.src)
+      for (const crumb of item.breadcrumb) {
         expect(locations[index].textContent).toContain(crumb)
       }
     })
@@ -143,13 +179,11 @@ describe("ContentReviewPage", () => {
 
   it("renders accessible review pins without turning teacher actions into live controls", () => {
     const { container, data } = renderReadyReviewPage()
-    const entries = data.sections.flatMap((section) => section.entries)
-    const productAction = entries.find(
-      (entry) => entry.kind === "content" && entry.action?.purpose === "product"
+    const promise = data.document.sections.find(
+      (section) => section.kind === "promise"
     )
-    const feedbackAction = entries.find(
-      (entry) =>
-        entry.kind === "content" && entry.action?.purpose === "feedback"
+    const close = data.document.sections.find(
+      (section) => section.kind === "close"
     )
 
     const productActions = Array.from(
@@ -159,8 +193,9 @@ describe("ContentReviewPage", () => {
     expect(productActions.every((action) => action.tagName === "SPAN")).toBe(
       true
     )
-    expect(productAction?.kind).toBe("content")
-    expect(feedbackAction?.kind).toBe("content")
+    expect(promise?.action).not.toBeNull()
+    expect(close?.action).not.toBeNull()
+    expect(data.document.footer.feedbackLabel).toBeTruthy()
 
     const reviewButtons = Array.from(
       container.querySelectorAll<HTMLButtonElement>("button")
@@ -198,10 +233,9 @@ describe("ContentReviewPage", () => {
   })
 
   it("renders a stop-review error without partial teacher content", () => {
-    const data = buildContentReviewPageDto({ manifest: [] })
-    expect(data.kind).toBe("error")
-
+    const data: TeacherPreviewPageDataDto = { kind: "error" }
     const { container } = render(<ContentReviewPage data={data} />)
+
     expect(screen.getByRole("heading", { level: 1 })).not.toBeNull()
     expect(container.querySelector("[data-teacher-preview]")).toBeNull()
     expect(container.querySelector("[data-product-screen]")).toBeNull()

@@ -14,61 +14,19 @@ export type ReviewAnnotation = {
   readonly pending: string | null
 }
 
-export type ProductScreenReference = {
-  readonly annotationId: string
-  readonly alt: string
-  readonly breadcrumb: ReadonlyArray<string>
-  readonly image: string
-}
-
-const screenReferences = {
-  hero: {
-    annotationId: "screen-hero",
-    alt: "Teacher Workspace student profile with attendance, behaviour, wellbeing, and family navigation.",
-    breadcrumb: ["Student Insights", "Student profile"],
-    image: "/content-review/screens/student-profile.png",
-  },
-  story: [
-    {
-      annotationId: "screen-story-promise",
-      alt: "Teacher Workspace Student Insights table for a Secondary 3 class.",
-      breadcrumb: ["Student Insights", "Class 3A"],
-      image: "/content-review/screens/student-insights-class.png",
-    },
-    {
-      annotationId: "screen-story-notice",
-      alt: "Family section of a synthetic student profile in Teacher Workspace.",
-      breadcrumb: ["Student Insights", "Student profile", "Family"],
-      image: "/content-review/screens/student-profile-family.png",
-    },
-    {
-      annotationId: "screen-story-next-steps",
-      alt: "Teacher Workspace student-support guidance opened from a recommended action.",
-      breadcrumb: [
-        "Student Insights",
-        "Student profile",
-        "Recommended action",
-        "Guidance",
-      ],
-      image: "/content-review/screens/guidance.png",
-    },
-    {
-      annotationId: "screen-story-words",
-      alt: "Teacher Workspace Posts composer with a draft financial-assistance message and parent preview.",
-      breadcrumb: ["Posts", "New post"],
-      image: "/content-review/screens/post-composer.png",
-    },
-    {
-      annotationId: "screen-story-family-and-record",
-      alt: "Teacher Workspace sent post with posted status and recipient read tracking.",
-      breadcrumb: ["Posts", "Sent post", "Read tracking"],
-      image: "/content-review/screens/post-read-tracking.png",
-    },
+export const reviewAnnotationBindings = {
+  accessSupport: "access-support-overview",
+  capabilities: "capabilities-overview",
+  heroScreen: "screen-hero",
+  story: "story-overview",
+  storyScreens: [
+    "screen-story-promise",
+    "screen-story-notice",
+    "screen-story-next-steps",
+    "screen-story-words",
+    "screen-story-family-and-record",
   ],
-} as const satisfies {
-  hero: ProductScreenReference
-  story: ReadonlyArray<ProductScreenReference>
-}
+} as const
 
 function screenAnnotation(
   id: string,
@@ -85,21 +43,21 @@ function screenAnnotation(
 
 export const reviewAnnotations: ReadonlyArray<ReviewAnnotation> = [
   screenAnnotation(
-    screenReferences.hero.annotationId,
+    reviewAnnotationBindings.heroScreen,
     contentReviewScreens.hero
   ),
   {
-    id: "story-overview",
+    id: reviewAnnotationBindings.story,
     title: contentReviewChrome.story.label ?? "Story rationale",
     rationale: contentReviewChrome.story.intro ?? "",
     details: [],
     pending: null,
   },
   ...contentReviewScreens.story.map((screen, index) =>
-    screenAnnotation(screenReferences.story[index].annotationId, screen)
+    screenAnnotation(reviewAnnotationBindings.storyScreens[index], screen)
   ),
   {
-    id: "capabilities-overview",
+    id: reviewAnnotationBindings.capabilities,
     title: contentReviewChrome.capabilities.label ?? "Capability rationale",
     rationale: contentReviewChrome.capabilities.intro ?? "",
     details: [],
@@ -120,7 +78,7 @@ export const reviewAnnotations: ReadonlyArray<ReviewAnnotation> = [
     pending: contentReviewChrome.proof.pendingLabel,
   },
   {
-    id: "access-support-overview",
+    id: reviewAnnotationBindings.accessSupport,
     title: contentReviewChrome.accessSupport.label ?? "Access review",
     rationale:
       "Confirm the public support route and access explanation before publication.",
@@ -282,5 +240,3 @@ export function ReviewPin({ id }: { id: string }) {
     </span>
   )
 }
-
-export const productScreenReferences = screenReferences

@@ -17,20 +17,27 @@ describe("content-review route boundary", () => {
     expect(routeSource).not.toContain("landing-v2-review-state.server")
     expect(routeSource).not.toContain("landing-v2-review.server")
     expect(routeSource).not.toContain("landing-v2.ts")
+    expect(routeSource).not.toContain("teacher-preview-document.server")
   })
 
-  it("keeps the wireframe DTO builder behind a literal dynamic server import", () => {
+  it("keeps the teacher-preview builder behind a literal dynamic server import", () => {
     expect(serverSource).toMatch(
       /createServerFn\(\{\s*method:\s*"GET",?\s*\}\)/
     )
     expect(serverSource).toMatch(
-      /import\(\s*"\.\.\/content\/landing-v2-review-state\.server"\s*\)/
+      /import\(\s*"\.\.\/content\/teacher-preview-document\.server"\s*\)/
     )
-    expect(serverSource).toContain("return buildContentReviewPageDto()")
+    expect(serverSource).toContain("return buildTeacherPreviewPageData()")
+    expect(serverSource).not.toContain("buildContentReviewPageDto")
     expect(serverSource).not.toContain("buildContentReviewAnnotatedPageDto")
     expect(serverSource).not.toMatch(
-      /^import .*landing-v2-review-state\.server/m
+      /from\s*["']\.\.\/content\/teacher-preview-document\.server["']/
     )
+    expect(serverSource).not.toMatch(
+      /^\s*import\s*["']\.\.\/content\/teacher-preview-document\.server["']/m
+    )
+    expect(serverSource).not.toContain("landing-v2-review-state.server")
+    expect(serverSource).not.toContain("landing-v2-review.server")
   })
 
   it("does not add a content-review entry point to the public homepage", () => {
