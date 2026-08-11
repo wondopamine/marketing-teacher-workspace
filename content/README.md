@@ -17,7 +17,7 @@ reloads on its own.
 ## Editing on the page with ⌘K
 
 You don't have to find the right file first. This works on the dev server *and*
-on the shared review link — reviewers need no account of any kind:
+on the shared review link. Reviewers need no account of any kind:
 
 1. Press **⌘K** (Ctrl+K on Windows), or click **Edit** in the review panel.
 2. Every piece of editable copy gets a dashed outline. Click one and type.
@@ -29,7 +29,7 @@ on the shared review link — reviewers need no account of any kind:
 
 Two things it will refuse, and tell you why:
 
-- **Empty copy.** Clear a block and it snaps back — delete the wording in the
+- **Empty copy.** Clear a block and it snaps back. Delete the wording in the
   file instead if a slot should be blank.
 - **Line breaks.** One block is one line of copy. To add a paragraph, edit the
   `.mdx` file directly.
@@ -95,8 +95,8 @@ You want to understand the progress and help it continue.
 </Item>
 ```
 
-- `id` is the block's name in code. **Do not change it or reorder blocks** —
-  that is what connects this copy to the right product capability.
+- `id` is the block's name in code. **Do not change it or reorder blocks.**
+  That is what connects this copy to the right product capability.
 - `label` is the small line above the heading. Change it freely.
 - The `##` line and the paragraphs under it are yours to rewrite.
 
@@ -109,7 +109,7 @@ Some slots on the wireframe show **Copy pending** because nobody has decided
 the wording yet. Two of them you can resolve here, and the pending note
 disappears as soon as you do.
 
-**An audience question and answer** — in `landing/07-audiences.mdx`, change
+**An audience question and answer**: in `landing/07-audiences.mdx`, change
 
 ```mdx
 <Item id="teachers" label="Form Teachers" />
@@ -127,10 +127,10 @@ You see one student's full picture without opening four systems.
 </Item>
 ```
 
-**The GA launch line** — in `landing/04-reveal.mdx`, put your line after
+**The GA launch line**: in `landing/04-reveal.mdx`, put your line after
 `launchLine:`.
 
-The remaining pending slots — testimonials and the public support route — are
+The remaining pending slots (testimonials and the public support route) are
 waiting on approvals rather than wording, so they stay pending until those
 decisions are made in code.
 

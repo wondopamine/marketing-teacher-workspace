@@ -1,4 +1,4 @@
-# Design decision record — PM-facing Teacher Workspace landing wireframe
+# Design decision record: PM-facing Teacher Workspace landing wireframe
 
 - **Date:** 2026-08-05
 - **Product:** TW
@@ -28,9 +28,9 @@ The existing public homepage, shared masthead, content registry, validation, sna
 
 ## Rejected options
 
-- **Keep the semantic review document only** — it exposes the content model but does not let PMs judge the hierarchy and pace of a landing page.
-- **Build a branded interactive prototype now** — it would mix content review with unresolved visual and interaction decisions.
-- **Replace the public `/` route during review** — it would disturb the website already deployed to the public.
+- **Keep the semantic review document only**: it exposes the content model but does not let PMs judge the hierarchy and pace of a landing page.
+- **Build a branded interactive prototype now**: it would mix content review with unresolved visual and interaction decisions.
+- **Replace the public `/` route during review**: it would disturb the website already deployed to the public.
 
 ## Tradeoffs, named
 
@@ -52,16 +52,16 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
 
 | Control | Tier | Reason              | Approver | Where recorded |
 | ------- | ---- | ------------------- | -------- | -------------- |
-| None    | —    | No waivers required | —        | —              |
+| None    | N/A    | No waivers required | N/A        | N/A              |
 
 ## Plan approval
 
 - **Approved by:** Designer and workspace owner
-- **Approved on:** 2026-08-05 — “ok let's do it now. I consider this wireframe as a comm tool for PMs”
+- **Approved on:** 2026-08-05: “ok let's do it now. I consider this wireframe as a comm tool for PMs”
 
-## Scoped amendment — descriptive interface blocks
+## Scoped amendment: descriptive interface blocks
 
-- **Approved on:** 2026-08-05 — “For each interface blocks, plz include the description of what interface should be.”
+- **Approved on:** 2026-08-05: “For each interface blocks, plz include the description of what interface should be.”
 - **Intent:** Help PM, policy, and security reviewers understand which product screen, image, and interface elements each landing-page slot may show.
 - **Scope:** Replace the hero, five story, and three explorer ghosts with nine static interface briefs. Each brief names the screen, its purpose, and three concrete elements.
 - **Positive-story guardrail:** Use a synthetic student from the general class list. Lead with a positive-growth tag and show no additional-needs or attention tag.
@@ -84,16 +84,16 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
 ## Verify verdict
 
 - **Screenshots:**
-  - `/private/tmp/tw-interface-brief-evidence/content-review-320.png` — 320 × 900 viewport; full page; document scroll width 320.
-  - `/private/tmp/tw-interface-brief-evidence/content-review-360.png` — 360 × 900 viewport; full page; document scroll width 360.
-  - `/private/tmp/tw-interface-brief-evidence/content-review-768.png` — 768 × 1024 viewport; full page; document scroll width 768.
-  - `/private/tmp/tw-interface-brief-evidence/content-review-1280.png` — 1280 × 900 viewport; full page; document scroll width 1280.
-  - `/private/tmp/tw-interface-brief-evidence/public-home-1280.png` — current public-home isolation check.
+  - `/private/tmp/tw-interface-brief-evidence/content-review-320.png`: 320 × 900 viewport; full page; document scroll width 320.
+  - `/private/tmp/tw-interface-brief-evidence/content-review-360.png`: 360 × 900 viewport; full page; document scroll width 360.
+  - `/private/tmp/tw-interface-brief-evidence/content-review-768.png`: 768 × 1024 viewport; full page; document scroll width 768.
+  - `/private/tmp/tw-interface-brief-evidence/content-review-1280.png`: 1280 × 900 viewport; full page; document scroll width 1280.
+  - `/private/tmp/tw-interface-brief-evidence/public-home-1280.png`: current public-home isolation check.
 - **Capture environment:** Production preview at `http://127.0.0.1:3003`; no development editing toolbar is present in the evidence.
 - **320-pixel reflow:** Document width and scroll width both resolve to 320 pixels. All nine briefs and the positive-growth tag remain present.
 - **Component inventory:** `ContentReviewPage` renders `ContentReviewOutline`, one hero `ProductFrame`, nine route-local `InterfaceDescription` blocks, and the unchanged reveal, capabilities, proof, access, close, footer, appendix, and error regions.
 - **Interaction inventory:** Zero route-local controls. Two inert CTA spans remain in separate hero and closing regions.
-- **Live DOM evidence:** Nine visible interface descriptions, three concrete list elements per brief, no ghost placeholders, no hidden brief, logical H1–H4 nesting, semantic capability and audience lists, and no `SwAN` label.
+- **Live DOM evidence:** Nine visible interface descriptions, three concrete list elements per brief, no ghost placeholders, no hidden brief, logical H1 to H4 nesting, semantic capability and audience lists, and no `SwAN` label.
 - **Public-home isolation:** The current `/` title, width, and structure remain intact. It contains no interface descriptions and no link to `/content-review`.
 - **Automated checks:** 170 tests passed. TypeScript, ESLint, production build, public-output scanner, built-SSR route scanner, and five available TFX detector checks passed.
 - **Build environment note:** Checks ran on Node 25.9.0 while the repository requests Node 24.x.
@@ -118,14 +118,14 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
 
     CONTRACT ASSESSMENT
 
-    1. **Met — greyscale static PM wireframe.** The route identifies itself as “PM communication wireframe · Content and order only.” Production-preview captures show restrained neutral styling with no product simulation or development toolbar.
-    2. **Met — exactly nine accessible interface briefs.** The typed map contains one hero, five story, and three explorer entries. The DOM exposes nine `[data-interface-description]` regions, zero ghost placeholders, descriptive H2/H4 headings, and three semantic list items per brief.
-    3. **Met — safe positive-growth story.** “Positive student profile” says, “Help teachers recognise a student’s progress at a glance,” uses a synthetic student from the general class list, and names the distinct “Positive growth · Growing confidence tag.” No additional-needs, attention, or `SwAN` classification is rendered.
-    4. **Met — audience skeletons replaced.** Three semantic audience items each show: “PM to confirm the question and approved answer for this audience.” No audience skeleton remains.
-    5. **Met — route-local presentation scaffolding.** Descriptions live only in `content-review-interface-descriptions.ts`, imported by the route-local outline. Review snapshots, annotated DTOs, public browser DTOs, and server projection types are unchanged.
-    6. **Met — public homepage isolated.** `src/routes/index.tsx` is unchanged and contains no `/content-review` entry point. Built SSR verification confirms `/` retains its existing title and shell and does not link to the review route.
-    7. **Met — static boundary.** Route-local inventory contains zero links, buttons, form controls, handlers, media, animation, analytics, product simulation, or new backend behavior. Two CTA placements remain inert `<span>` elements.
-    8. **Met — responsive behavior.** Document width equals scroll width at 320, 360, 768, and 1280px. Hero, story, and explorer layouts remain stacked through 768px and use the approved side-by-side layouts at 1280px.
+    1. **Met: greyscale static PM wireframe.** The route identifies itself as “PM communication wireframe · Content and order only.” Production-preview captures show restrained neutral styling with no product simulation or development toolbar.
+    2. **Met: exactly nine accessible interface briefs.** The typed map contains one hero, five story, and three explorer entries. The DOM exposes nine `[data-interface-description]` regions, zero ghost placeholders, descriptive H2/H4 headings, and three semantic list items per brief.
+    3. **Met: safe positive-growth story.** “Positive student profile” says, “Help teachers recognise a student’s progress at a glance,” uses a synthetic student from the general class list, and names the distinct “Positive growth · Growing confidence tag.” No additional-needs, attention, or `SwAN` classification is rendered.
+    4. **Met: audience skeletons replaced.** Three semantic audience items each show: “PM to confirm the question and approved answer for this audience.” No audience skeleton remains.
+    5. **Met: route-local presentation scaffolding.** Descriptions live only in `content-review-interface-descriptions.ts`, imported by the route-local outline. Review snapshots, annotated DTOs, public browser DTOs, and server projection types are unchanged.
+    6. **Met: public homepage isolated.** `src/routes/index.tsx` is unchanged and contains no `/content-review` entry point. Built SSR verification confirms `/` retains its existing title and shell and does not link to the review route.
+    7. **Met: static boundary.** Route-local inventory contains zero links, buttons, form controls, handlers, media, animation, analytics, product simulation, or new backend behavior. Two CTA placements remain inert `<span>` elements.
+    8. **Met: responsive behavior.** Document width equals scroll width at 320, 360, 768, and 1280px. Hero, story, and explorer layouts remain stacked through 768px and use the approved side-by-side layouts at 1280px.
 
     PLAN FIDELITY
 
@@ -164,28 +164,28 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
 
     QUALITY GRADES
 
-    - **Design quality: strong** — the hero clearly leads, briefs remain subordinate to the landing narrative, and section hierarchy is easy to scan.
-    - **Originality: strong** — the restrained storyboard treatment is distinctive enough for PM communication without introducing novelty or branded-product implications.
-    - **Craft: strong** — semantic structure, aligned edges, bounded copy, responsive stacking, and production-clean captures are deliberate and consistent.
-    - **Functionality: strong** — the intentionally static artifact communicates all screen intentions and pending decisions without implying working product behavior.
+    - **Design quality: strong.** The hero clearly leads, briefs remain subordinate to the landing narrative, and section hierarchy is easy to scan.
+    - **Originality: strong.** The restrained storyboard treatment is distinctive enough for PM communication without introducing novelty or branded-product implications.
+    - **Craft: strong.** Semantic structure, aligned edges, bounded copy, responsive stacking, and production-clean captures are deliberate and consistent.
+    - **Functionality: strong.** The intentionally static artifact communicates all screen intentions and pending decisions without implying working product behavior.
 
     JUDGMENT CONTROL NOTES
 
-    - A11Y-6: pass — method: manual. No informative media exists; decorative browser chrome is hidden while brief content remains accessible.
-    - A11Y-7: pass — method: manual. One H1, logical H2–H4 nesting, ordered story/explorer/capability lists, an unordered audience list, and semantic three-item brief lists express the visible structure.
-    - CNT-2: pass — method: manual. Screen names are functional and plain; no internal codename or unexplained classification appears.
-    - CNT-3: pass — method: script. Content lint passed; brief instructions are active, concise, and below the sentence-length ceiling.
-    - CNT-4: pass — method: manual. “Proposed interface” framing and explicit synthetic-story language prevent invented product details from reading as live data.
-    - CNT-6: pass — method: script. Content lint found no empty opener or low-information filler.
-    - CNT-7: pass — method: manual. All nine briefs now lead with purpose, including “Help teachers…,” “Make the positive tag traceable…,” and “Let teachers…,” before mechanism.
-    - SLP-9: pass — method: manual. No buzzwords, chatbot artifacts, em-dash chains, forced rhetorical triads, or redundant label/helper pairs remain.
-    - SLP-11: pass — method: manual. Borders denote wireframe screen framing, sequence cells, or pending slots; they do not falsely signal clickable cards.
-    - LAY-2: pass — method: manual. Single-column reflow and reading order hold at 320/360/768; intended editorial grids return at 1280 with no horizontal overflow.
-    - LAY-4: pass — method: manual. Changed brief, capability, explorer-intro, and audience prose is explicitly capped at 72ch; no running prose exceeds 80ch.
-    - LAY-5: pass — method: manual. Density suits a detailed PM review artifact at all supplied widths.
-    - LAY-6: pass — method: manual. Story columns, brief frames, headings, audience divisions, and section insets share consistent edges.
-    - LAY-7: pass — method: manual. The hero promise remains the first focal region at every breakpoint; delaying the hero split until `lg` prevents competition at 768px.
-    - CMP-1: asserted, no manifest — manifest absent for Teacher Workspace.
+    - A11Y-6: pass. Method: manual. No informative media exists; decorative browser chrome is hidden while brief content remains accessible.
+    - A11Y-7: pass. Method: manual. One H1, logical H2 to H4 nesting, ordered story/explorer/capability lists, an unordered audience list, and semantic three-item brief lists express the visible structure.
+    - CNT-2: pass. Method: manual. Screen names are functional and plain; no internal codename or unexplained classification appears.
+    - CNT-3: pass. Method: script. Content lint passed; brief instructions are active, concise, and below the sentence-length ceiling.
+    - CNT-4: pass. Method: manual. “Proposed interface” framing and explicit synthetic-story language prevent invented product details from reading as live data.
+    - CNT-6: pass. Method: script. Content lint found no empty opener or low-information filler.
+    - CNT-7: pass. Method: manual. All nine briefs now lead with purpose, including “Help teachers…,” “Make the positive tag traceable…,” and “Let teachers…,” before mechanism.
+    - SLP-9: pass. Method: manual. No buzzwords, chatbot artifacts, em-dash chains, forced rhetorical triads, or redundant label/helper pairs remain.
+    - SLP-11: pass. Method: manual. Borders denote wireframe screen framing, sequence cells, or pending slots; they do not falsely signal clickable cards.
+    - LAY-2: pass. Method: manual. Single-column reflow and reading order hold at 320/360/768; intended editorial grids return at 1280 with no horizontal overflow.
+    - LAY-4: pass. Method: manual. Changed brief, capability, explorer-intro, and audience prose is explicitly capped at 72ch; no running prose exceeds 80ch.
+    - LAY-5: pass. Method: manual. Density suits a detailed PM review artifact at all supplied widths.
+    - LAY-6: pass. Method: manual. Story columns, brief frames, headings, audience divisions, and section insets share consistent edges.
+    - LAY-7: pass. Method: manual. The hero promise remains the first focal region at every breakpoint; delaying the hero split until `lg` prevents competition at 768px.
+    - CMP-1: asserted, no manifest: manifest absent for Teacher Workspace.
 
     VERIFICATION LEDGER
 
@@ -219,7 +219,7 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
 | Control | Method | Evidence |
 | --- | --- | --- |
 | A11Y-6 | manual | Interface descriptions remain visible to assistive technology; only decorative browser chrome is hidden. |
-| A11Y-7 | manual | One H1; descriptive H2–H4 hierarchy; ordered story and explorer lists; three semantic list items per brief. |
+| A11Y-7 | manual | One H1; descriptive H2 to H4 hierarchy; ordered story and explorer lists; three semantic list items per brief. |
 | CNT-2 | manual | Screen names use plain functional language; route output rejects internal capability names and the `SwAN` classification. |
 | CNT-3 | script | Content lint passed; brief instructions use active, concise sentences. |
 | CNT-4 | manual | Every screen brief states its synthetic intent; the featured profile comes from the general class list and carries a positive-growth tag. |
@@ -233,16 +233,16 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
 | LAY-6 | manual | Brief, heading, and list edges align at all evidence widths. |
 | LAY-7 | manual | Hero promise remains the first focal region; descriptions stay subordinate to the landing-page story. |
 
-## Original verification — historical baseline
+## Original verification: historical baseline
 
 - **Screenshots:**
-  - `/private/tmp/tw-wireframe-evidence/content-review-360.png` — 360 × 900 viewport; full page; document scroll width 360.
-  - `/private/tmp/tw-wireframe-evidence/content-review-768.png` — 768 × 1024 viewport; full page; document scroll width 768.
-  - `/private/tmp/tw-wireframe-evidence/content-review-1280.png` — 1280 × 900 viewport; full page; document scroll width 1280.
-  - `/private/tmp/tw-wireframe-evidence/public-home-1280.png` — existing public homepage isolation check.
-- **CMP-3 evidence:** N/A — no asynchronous state or interaction exists in the wireframe.
-- **Token block line range:** `src/styles.css:19-22` — the route adds an Inter body token while retaining Plus Jakarta Sans for headings and the existing public homepage default. The Inter font-face import is route-local in `src/routes/content-review.tsx:1-2`.
-- **Dark mode:** N/A — the review route has no user-facing theme toggle and does not claim dark-mode support.
+  - `/private/tmp/tw-wireframe-evidence/content-review-360.png`: 360 × 900 viewport; full page; document scroll width 360.
+  - `/private/tmp/tw-wireframe-evidence/content-review-768.png`: 768 × 1024 viewport; full page; document scroll width 768.
+  - `/private/tmp/tw-wireframe-evidence/content-review-1280.png`: 1280 × 900 viewport; full page; document scroll width 1280.
+  - `/private/tmp/tw-wireframe-evidence/public-home-1280.png`: existing public homepage isolation check.
+- **CMP-3 evidence:** N/A: no asynchronous state or interaction exists in the wireframe.
+- **Token block line range:** `src/styles.css:19-22`: the route adds an Inter body token while retaining Plus Jakarta Sans for headings and the existing public homepage default. The Inter font-face import is route-local in `src/routes/content-review.tsx:1-2`.
+- **Dark mode:** N/A: the review route has no user-facing theme toggle and does not claim dark-mode support.
 - **Component inventory:** Shared `SkipLink` and `MastheadSg`; route-local status banner, wireframe header, hero and product placeholder, five-step story, reveal, capability rows, static explorer, audience rows, proof slot, access and support, close, inert footer, PM review notes after the footer, and the fail-closed `ContentReviewError` branch. Both ready and error branches have zero route-local interactive controls.
 - **Live DOM evidence:** zero route-local links or buttons; two locally labelled static CTA placements; one main; one H1; ten wireframe regions in the accepted order; PM notes immediately after the landing footer. Computed typography is Inter for body/UI, Plus Jakarta Sans 600 for headings, and weight 400 for story numerals. The complete live document contains none of the prohibited review fields, hashes, references, or unused destinations.
 - **Automated project checks:** 168 tests passed; TypeScript, ESLint, the full production build, route-and-error component checks, and the harness detector passed. The production postbuild scanners inspect the content-review client chunk and built SSR response, including hydration, while confirming `/` isolation.
@@ -258,7 +258,7 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
   | A11Y-5  | manual          | Source and live render contain no route-local animation or transition.                                                                                                                                                          |
   | A11Y-6  | manual          | Source, tests, and rendered DOM contain no image, video, canvas, or meaningful icon. Placeholder geometry is CSS and decorative.                                                                                                |
   | A11Y-7  | manual          | Accessibility snapshot confirms one H1, ordered H2/H3 regions, semantic ordered lists for story and explorer, and no skipped heading level. The fail-closed branch has one H1 and no partial story.                             |
-  | A11Y-9  | manual          | Live document title is “Teacher Workspace landing wireframe — Draft”; shared root retains its language declaration.                                                                                                             |
+  | A11Y-9  | manual          | Live document title is “Teacher Workspace landing wireframe: Draft”; shared root retains its language declaration.                                                                                                             |
   | A11Y-10 | manual          | Live accessibility snapshot exposes “Skip to main content”; the target is the single `main#main`.                                                                                                                               |
   | TOK-1   | script          | Harness token audit passed across all route components, including the fail-closed branch, with semantic tokens and no raw component colour.                                                                                     |
   | TOK-2   | script          | Harness token audit passed with on-scale spacing.                                                                                                                                                                               |
@@ -266,7 +266,7 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
   | COL-1   | manual          | Greyscale is an explicit wireframe constraint; primary-looking static actions use semantic foreground/background tokens consistently.                                                                                           |
   | COL-2   | script          | Harness token audit found no Tailwind palette bypass after semantic-token remediation.                                                                                                                                          |
   | TYP-1   | manual          | Harness type scan passed; live computed styles confirm route-local body/UI in Inter 400/500/600 and headings in Plus Jakarta Sans 600.                                                                                          |
-  | TYP-2   | manual          | Harness type scan passed; multiline body copy resolves to 1.5–1.6 line-height ratios.                                                                                                                                           |
+  | TYP-2   | manual          | Harness type scan passed; multiline body copy resolves to 1.5 to 1.6 line-height ratios.                                                                                                                                           |
   | TYP-3   | manual          | Harness type scan passed; headings use the published 20/24/32/48/72px scale steps.                                                                                                                                              |
   | TYP-4   | script          | Harness type scan passed; ready and error labels remain sentence case with no text transform.                                                                                                                                   |
   | TYP-5   | manual          | Story and capability step numbers use `tabular-nums`; story numerals resolve to approved weight 400.                                                                                                                            |
@@ -303,12 +303,12 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
 
     ## CONTRACT ASSESSMENT
 
-    1. **MET — Real low-fidelity landing page.** `/content-review` renders a recognisable landing page with hero, narrative, product frame placeholders, content sections, close, and footer—not an IA ledger.
-    2. **MET — Required content order.** The page follows hero → five-step positive-growth story → reveal → capabilities → static explorer → audiences → proof → access/support → close → footer. PM notes follow outside the footer.
-    3. **MET — Pending decisions and public safety.** Audience, proof, product-reveal, support, and related decisions are visibly marked pending. Internal names, review IDs, snapshots, source references, private destinations, and superseded story material are absent from the complete SSR response and hydration payload.
-    4. **MET — Greyscale communication artifact.** The route uses semantic greyscale tokens, static skeleton frames, no product media, no route-local motion or JavaScript interaction, and two clearly labelled inert CTA placements.
-    5. **MET — Responsive and semantic.** Captures at 360, 768, and 1280 show coherent reflow without visible clipping. The built output contains exactly one `main`, one `h1`, descriptive sections, lists, and definition lists.
-    6. **MET — Isolated draft route.** `/content-review` is `noindex, nofollow`, has no canonical/social-image metadata, is not linked from `/`, and is backed by a public-safe DTO. The public homepage remained visually and structurally isolated.
+    1. **MET: Real low-fidelity landing page.** `/content-review` renders a recognisable landing page with hero, narrative, product frame placeholders, content sections, close, and footer, not an IA ledger.
+    2. **MET: Required content order.** The page follows hero → five-step positive-growth story → reveal → capabilities → static explorer → audiences → proof → access/support → close → footer. PM notes follow outside the footer.
+    3. **MET: Pending decisions and public safety.** Audience, proof, product-reveal, support, and related decisions are visibly marked pending. Internal names, review IDs, snapshots, source references, private destinations, and superseded story material are absent from the complete SSR response and hydration payload.
+    4. **MET: Greyscale communication artifact.** The route uses semantic greyscale tokens, static skeleton frames, no product media, no route-local motion or JavaScript interaction, and two clearly labelled inert CTA placements.
+    5. **MET: Responsive and semantic.** Captures at 360, 768, and 1280 show coherent reflow without visible clipping. The built output contains exactly one `main`, one `h1`, descriptive sections, lists, and definition lists.
+    6. **MET: Isolated draft route.** `/content-review` is `noindex, nofollow`, has no canonical/social-image metadata, is not linked from `/`, and is backed by a public-safe DTO. The public homepage remained visually and structurally isolated.
 
     ## PLAN FIDELITY
 
@@ -337,33 +337,33 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
 
     ## QUALITY GRADES
 
-    - **Design quality — strong:** The hero establishes the page proposition, and the narrative-to-capability sequence gives PMs a clear reading order.
-    - **Originality — strong:** The composition is purposefully editorial and restrained without introducing novelty inappropriate for a low-fidelity review tool.
-    - **Craft — strong:** Typography, spacing, semantic structure, responsive states, pending-copy treatment, and validation failure state are deliberate and consistent.
-    - **Functionality — strong:** The artifact completes its communication task without pretending unavailable interactions or exposing implementation-only review data.
-    - **Dark mode — N/A:** No dark-mode experience is exposed or required for this wireframe.
+    - **Design quality: strong.** The hero establishes the page proposition, and the narrative-to-capability sequence gives PMs a clear reading order.
+    - **Originality: strong.** The composition is purposefully editorial and restrained without introducing novelty inappropriate for a low-fidelity review tool.
+    - **Craft: strong.** Typography, spacing, semantic structure, responsive states, pending-copy treatment, and validation failure state are deliberate and consistent.
+    - **Functionality: strong.** The artifact completes its communication task without pretending unavailable interactions or exposing implementation-only review data.
+    - **Dark mode: N/A.** No dark-mode experience is exposed or required for this wireframe.
 
     ## JUDGMENT CONTROL NOTES
 
-    - **A11Y-7 pass** — One descriptive H1, sequenced H2/H3 hierarchy, an ordered story list, semantic lists and definition lists, and descriptive section labels.
-    - **COL-1 pass-with-caveat** — There is no live primary action or product-brand moment; black CTA blocks are explicitly labelled inert placement markers under the approved greyscale contract.
-    - **TYP-5 pass** — Story and capability sequence numbers use `tabular-nums`; there are no live updating figures.
-    - **CNT-2 pass** — “Student insights”, “Message drafting”, “Posts”, and other labels use teacher-facing language; internal agent and capability names are absent.
-    - **CNT-3 pass** — Copy is active, direct, and concise; automated content lint is clean.
-    - **CNT-4 pass** — The classroom story and product screens are explicitly illustrative/synthetic, and proof awaiting approval remains visibly pending.
-    - **CNT-5 pass** — Action wording names outcomes such as “Sign in with Google”; no device-bound instructions appear.
-    - **CNT-6 pass** — No empty openers or filler materially weaken the visible copy.
-    - **CNT-7 pass** — Section introductions lead with teacher value and purpose before describing product mechanics.
-    - **CMP-1 pass** — The route uses semantic primitives for a non-interactive communication artifact; no existing stack component is bypassed for a comparable need.
-    - **CMP-5 pass** — No live primary buttons exist; the two CTA mock placements occur in distinct regions and are explicitly inert.
-    - **CMP-7 pass** — Semantic tokens and repeated wireframe primitives are consistent; no route-local control group or unexplained design-system override exists.
-    - **SLP-9 pass** — No marketing buzzwords, chatbot phrases, forced triads, em-dash chains, or redundant helper pairs.
-    - **SLP-10 pass** — The long multi-section review artifact is correctly presented as a page, not a modal.
-    - **SLP-11 pass** — Static content is primarily grouped by spacing and rules; bordered elements are explicitly diagram frames, pending slots, or low-fi storyboard cells rather than faux interactive cards.
-    - **LAY-3 pass** — The surface fits a standalone landing-page/content-review template inside the established root shell.
-    - **LAY-7 pass** — The hero is the clear focal region; narrative, capabilities, decisions, close, and PM appendix step down in the intended priority order.
+    - **A11Y-7 pass**: One descriptive H1, sequenced H2/H3 hierarchy, an ordered story list, semantic lists and definition lists, and descriptive section labels.
+    - **COL-1 pass-with-caveat**: There is no live primary action or product-brand moment; black CTA blocks are explicitly labelled inert placement markers under the approved greyscale contract.
+    - **TYP-5 pass**: Story and capability sequence numbers use `tabular-nums`; there are no live updating figures.
+    - **CNT-2 pass**: “Student insights”, “Message drafting”, “Posts”, and other labels use teacher-facing language; internal agent and capability names are absent.
+    - **CNT-3 pass**: Copy is active, direct, and concise; automated content lint is clean.
+    - **CNT-4 pass**: The classroom story and product screens are explicitly illustrative/synthetic, and proof awaiting approval remains visibly pending.
+    - **CNT-5 pass**: Action wording names outcomes such as “Sign in with Google”; no device-bound instructions appear.
+    - **CNT-6 pass**: No empty openers or filler materially weaken the visible copy.
+    - **CNT-7 pass**: Section introductions lead with teacher value and purpose before describing product mechanics.
+    - **CMP-1 pass**: The route uses semantic primitives for a non-interactive communication artifact; no existing stack component is bypassed for a comparable need.
+    - **CMP-5 pass**: No live primary buttons exist; the two CTA mock placements occur in distinct regions and are explicitly inert.
+    - **CMP-7 pass**: Semantic tokens and repeated wireframe primitives are consistent; no route-local control group or unexplained design-system override exists.
+    - **SLP-9 pass**: No marketing buzzwords, chatbot phrases, forced triads, em-dash chains, or redundant helper pairs.
+    - **SLP-10 pass**: The long multi-section review artifact is correctly presented as a page, not a modal.
+    - **SLP-11 pass**: Static content is primarily grouped by spacing and rules; bordered elements are explicitly diagram frames, pending slots, or low-fi storyboard cells rather than faux interactive cards.
+    - **LAY-3 pass**: The surface fits a standalone landing-page/content-review template inside the established root shell.
+    - **LAY-7 pass**: The hero is the clear focal region; narrative, capabilities, decisions, close, and PM appendix step down in the intended priority order.
 
-    CMP-1: asserted, no manifest — manifest absent for Teacher Workspace.
+    CMP-1: asserted, no manifest: manifest absent for Teacher Workspace.
 
     ## VERIFICATION LEDGER
 
@@ -384,7 +384,7 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
     | COL-1 | manual | No live primary action; greyscale CTA markers are explicitly labelled as static wireframe placements. |
     | COL-2 | script | Token audit clean; no functional-colour system is introduced on this route. |
     | TYP-1 | script | Type scan clean; body uses Inter and headings use Plus Jakarta Sans at approved weights. |
-    | TYP-2 | script | Type scan clean; body copy is at least 14px with 1.5–1.6 line height. |
+    | TYP-2 | script | Type scan clean; body copy is at least 14px with 1.5 to 1.6 line height. |
     | TYP-3 | script | Type scan clean; route sizes use the TFX scale. |
     | TYP-4 | script | Type scan clean; no styled all-caps copy. |
     | TYP-5 | manual | Numeric story/capability sequences carry `tabular-nums`; no updating figures exist. |
@@ -415,20 +415,20 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
     - Add automated visual evidence for the error branch at mobile width.
     - Consider a reusable check that rejects navigation-like fields such as `href`, review metadata, and snapshots from browser-bound DTO schemas.
 
-## Scoped amendment — MDX authoring surface
+## Scoped amendment: MDX authoring surface
 
-- **Approved on:** 2026-08-06 — "make it editable for my PM to change the contents. Use MDX."
+- **Approved on:** 2026-08-06: "make it editable for my PM to change the contents. Use MDX."
 - **Intent:** Let a PM revise any word on the wireframe without opening TypeScript, so the artifact can be edited in the same conversation where it is reviewed.
-- **Scope:** Move every author-facing string into `content/*.mdx`. `src/content/landing-v2.ts` keeps the structure — sections, order, journey-to-capability mapping, governance — and reads only its wording from `content/`. `content/README.md` is the PM-facing guide.
+- **Scope:** Move every author-facing string into `content/*.mdx`. `src/content/landing-v2.ts` keeps the structure (sections, order, journey-to-capability mapping, and governance) and reads only its wording from `content/`. `content/README.md` is the PM-facing guide.
 - **Boundary preserved:** The proposed-interface briefs stay route-local in `src/components/content-review/content-review-chrome.ts`, out of the content registry, review snapshots, annotated DTO, and browser DTO, exactly as the earlier amendment requires. Only the source of their words moved, from a typed map to `content/screens.mdx`.
 - **No runtime parser:** `src/content/mdx-plugin.ts` compiles each `.mdx` file to plain data at build time. Neither the browser bundle nor the server runtime contains a markdown parser, and a malformed file fails the dev server or the build with a message naming the file and the block.
 - **Pending slots:** The GA launch line and the three audience answers are now resolvable in `content/`. Filling one in previously produced the fail-closed error page, because the review manifest fixed those items as omissions; `createContentReviewManifest` now derives that classification from the content, so a resolved slot becomes reviewable copy under its existing `TW-` reference.
 - **Unchanged:** Rendered output, the public-safe DTO shape, the snapshot and approval model, the greyscale static presentation, and the isolation of the public `/` route.
-- **Tradeoff:** Wording and structure now live in two places. That is the point — a copy edit cannot silently rewire a product claim — but it means renaming a section still needs a developer.
+- **Tradeoff:** Wording and structure now live in two places. That is the point. A copy edit cannot silently rewire a product claim, but renaming a section still needs a developer.
 
-## Scoped amendment — ⌘K edit mode (dev server only)
+## Scoped amendment: ⌘K edit mode (dev server only)
 
-- **Approved on:** 2026-08-06 — "Add cmd+k to enter the edit mode."
+- **Approved on:** 2026-08-06: "Add cmd+k to enter the edit mode."
 - **Intent:** Let a PM change wording by clicking it on the page, instead of locating the block in an `.mdx` file first.
 - **Tension named:** Done-criteria 4 and 5 forbid JavaScript interaction and route-local interactive controls, and the A11Y-2, A11Y-4, A11Y-5, and CMP-7 evidence all rests on that emptiness. An interactive editor on the shared artifact would void them.
 - **Resolution:** Edit mode is gated on `import.meta.env.MODE === "development"`. It exists only while `pnpm dev` runs on an author's own machine. The built artifact, every preview deploy, and the shared review URL keep zero route-local controls, so the contract and its evidence hold **unamended**. Verified: `__content/edit`, `__content/map`, `plaintext-only`, `data-edit-chrome`, and the edit chrome copy appear in zero files across `.output/`. `import.meta.env.DEV` was rejected as the gate because Vitest sets it true, which would have switched the editor on inside the tests that assert the route has no controls.
@@ -437,13 +437,13 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
 - **Unchanged:** Rendered output, the public-safe DTO, the snapshot and approval model, the greyscale static presentation, and the isolation of the public `/` route.
 - **Tradeoff:** The editor is invisible to anyone reviewing a deployed preview; it helps only the person running the app locally. That is the cost of leaving the shared artifact's static contract intact, and it is the right trade while the route remains unauthenticated.
 
-## Scoped amendment — bursary care journey, seven-section IA
+## Scoped amendment: bursary care journey, seven-section IA
 
-- **Approved on:** 2026-08-07 — grill session on issue #3's intent; decisions
+- **Approved on:** 2026-08-07: grill session on issue #3's intent; decisions
   delegated to the agent ("I lean on your judgement… If you are confident.
   Just go ahead.")
 - **Intent:** Make the wireframe carry the ticket's actual value-position
-  angle — a near-miss averted — instead of the substituted positive-growth
+  angle, a near-miss averted, instead of the substituted positive-growth
   celebration, and land the IA back on the ticket's seven sections.
 - **Story:** The five acts now tell the bursary care journey with the
   synthetic student "Xiao Ming" carried through every act. Canonical-story
@@ -454,7 +454,7 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
   conduct, offence, or counselling marker appears anywhere in the story or
   briefs; eligibility signals come from household context and a sibling's
   record, never the student's own behaviour; public copy spells out
-  "financial assistance" — the FAS abbreviation stays denylisted.
+  "financial assistance". The FAS abbreviation stays denylisted.
 - **IA:** The explorer section is removed
   ([ADR-0002](../adr/0002-cut-the-product-explorer-from-the-ga-page.md)) and
   access-and-support moves after the close as a footer-adjacent block. Section
@@ -467,7 +467,7 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
   titled "Real schools" and states the role-and-school-level attribution
   policy. Per-quote publication approval is unchanged.
 - **Denylist change, named:** "xiao ming" and "bursary" are removed from the
-  review-projection and build-output denylists — they are the reviewable story
+  review-projection and build-output denylists. They are the reviewable story
   now. Bans on "contextual intelligence", "heytalia", "swan", "xingyu", the
   FAS word pattern, and the ticket screenshot's comment URL all remain.
 - **Pending decisions preserved:** launch positioning line (pilot or GA),
@@ -483,7 +483,7 @@ CMP-2 and CMP-3 are not in scope because the wireframe has no destructive or asy
   scanner (six briefs, care-journey copy, `/` isolation) all pass. Evidence:
   this amendment's implementing session; scanners re-run on the built output.
 
-### PM confirmations — 2026-08-07
+### PM confirmations: 2026-08-07
 
 Relayed by the Designer in session; formal approval records in the governance
 model remain separate.
@@ -494,21 +494,21 @@ model remain separate.
   The wireframe's reveal section now renders a resolved launch line beside the
   thesis instead of a pending box.
 - **Act 2 signals confirmed as written:** sibling on financial assistance,
-  household circumstances update, no bursary on file — all surfaced on one
-  profile.
+  household circumstances update, no bursary on file. The profile surfaced all
+  three.
 - **Act 3 scope confirmed including deadlines:** "and when it closes" restored
   to the story act, the capability scenario, and the interface brief.
 - **Naming:** `contextual-intelligence` renders publicly as **"AI next-step
-  guidance"** (PM asked for AI in the name). **"Posts" is retained** — its
+  guidance"** (PM asked for AI in the name). **"Posts" is retained**: its
   card's job line carries the what-it-does description.
 
-## Scoped amendment — public review layer (supersedes the ⌘K dev-only gate)
+## Scoped amendment: public review layer (supersedes the ⌘K dev-only gate)
 
-- **Approved on:** 2026-08-09 — "for anyone doesn't require any login, just
+- **Approved on:** 2026-08-09: "for anyone doesn't require any login, just
   edit and the comments and edits the person makes are applied or comes to me
   to edit", with the repo-write path chosen over export-only or Blob storage.
-- **Intent:** Reviewers with the link — no Vercel account, no GitHub account,
-  no login of any kind — can change wording and leave notes, and that feedback
+- **Intent:** Reviewers with the link (no Vercel account, no GitHub account,
+  and no login of any kind) can change wording and leave notes, and that feedback
   reaches the Designer as a reviewable diff.
 - **What replaces what:** `content-edit-mode.tsx` (dev-server only, wrote to
   the local filesystem) is deleted. `public-review-mode.tsx` replaces it and
@@ -529,7 +529,7 @@ Rather than amend those criteria, the layer is **mounted after hydration**: it
 returns `null` until `useEffect` runs, so the server-rendered artifact is
 byte-identical to the one the contract was verified against.
 
-- The built-SSR scanner still passes unchanged — six briefs, care-journey copy,
+- The built-SSR scanner still passes unchanged: six briefs, care-journey copy,
   `/` isolation, and no controls in the SSR response.
 - `content-review-page.test.tsx` still asserts zero links and zero buttons; the
   review layer is a route sibling, not part of the reviewed page component.
@@ -544,11 +544,11 @@ recorded here rather than silently widening the contract.
 
 ### Accessibility (explicit requirement of this amendment)
 
-- Every control is a real `<button>` or labelled form field — no click-only
+- Every control is a real `<button>` or labelled form field: no click-only
   affordances, no `div` handlers.
 - Editable text takes `role="textbox"`, `tabIndex=0`, and an `aria-label`
   naming the block, so it is reachable and identifiable from the keyboard.
-- Enter commits, Escape reverts — no pointer required for any operation.
+- Enter commits, Escape reverts: no pointer required for any operation.
 - Hit targets are `min-h-11` (44px); focus is a visible 2px ring with offset.
 - Status is announced through an `aria-live="polite"` region.
 - The panel's only transition is `motion-safe:`, honouring
@@ -573,7 +573,7 @@ access. Accepted for a time-boxed review; revoke the token to end it.
   refusal, config defaults, and the bundled raw sources. TypeScript, ESLint,
   production build, and both public-safety scanners pass.
 
-## Preview record — 2026-08-08
+## Preview record: 2026-08-08
 
 Authorised by the workspace owner ("deploy"). Deployed as a **preview**, never
 promoted to production, per the preview-lifecycle rule in
@@ -590,7 +590,7 @@ promoted to production, per the preview-lifecycle rule in
 | IA-order snapshot | `v2-sha256-69d167437b39a2b7` |
 | Composed-story snapshot | `v2-sha256-edaac56c6c9cdcdd` |
 | Created | 2026-08-08 |
-| Expiry | 2026-09-08 — retire or re-record after one month, or immediately when superseded |
+| Expiry | 2026-09-08: retire or re-record after one month, or immediately when superseded |
 | Retirement | Pending. Retire before sharing a replacement preview. |
 
 **Remote verification.** Vercel's own build ran the postbuild gates: the
@@ -599,12 +599,12 @@ content-review chunks; no known denylisted values found", and the built-SSR
 route scanner reported "Verified /content-review through the built Start
 handler and confirmed / remains isolated."
 
-**Access finding — not yet shareable.** Every deployment on this project sits
+**Access finding: not yet shareable.** Every deployment on this project sits
 behind Vercel Deployment Protection: `/content-review` answers HTTP 302 to
 `vercel.com/sso-api`. Reviewers without access to the `wondopamines-projects`
 team cannot open it. This is stricter than the artifact's design (which assumes
 an unauthenticated but public-safe route), so it is a sharing gap, not a safety
-gap. Resolving it — a Vercel share link, or relaxing preview protection — is a
+gap. Resolving it (a Vercel share link or relaxing preview protection) is a
 project-settings change and remains the owner's decision.
 
 **Superseded preview.** `marketing-teacher-workspace-f2lnd28t1-…` (2026-08-06)
