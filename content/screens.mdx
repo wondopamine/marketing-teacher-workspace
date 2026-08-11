@@ -1,7 +1,7 @@
 ---
-# Descriptions of the product screens proposed beside the landing copy.
-# Each block: a `##` heading, one paragraph of intent, then exactly three
-# bullets naming what has to be visible on that screen.
+# Reviewer rationale for the captured product screens shown in the teacher
+# preview. Each block has a `##` heading, one paragraph of intent, then exactly
+# three bullets naming what a reviewer should verify on that screen.
 #
 # Every screen below is a real surface in the product prototype
 # (String-dxd/design-teacher-workspace): the Profiles student table, the
@@ -9,17 +9,19 @@
 # the guidance page it opens, and the Posts composer and read tracking.
 # Do not introduce a screen that does not exist there.
 #
-# Guardrail for every brief: the featured student is synthetic ("Xiao Ming"),
-# carries no attention, conduct, offence, or counselling marker anywhere in
-# frame, and the eligibility signal comes from household context and a
-# sibling's record, not from the student's own behaviour.
+# Guardrail for a future story-state capture: the featured student is synthetic
+# ("Xiao Ming"), carries no attention, conduct, offence, or counselling marker,
+# and the eligibility signal comes from household context and a sibling's
+# record. Current pattern captures must state where they differ from that brief.
 label: Proposed interface
 
 # Where the story claims an interface the product does not have yet, the
-# brief carries a yellow tag with a question for the PM. Add one by writing
+# annotation carries a question for the PM. Add one by writing
 # "pendingInterface-<item id>:" with the question as its value.
 pendingInterfaceLabel: Interface not built yet
-pendingInterface-story-next-steps: "Question for the PM: the profile's recommended-action banner and its guidance page exist today, but matching a bursary scheme with the documents, the submission point, and the closing date does not. Is this planned for the GA build?"
+pendingInterface-story-promise: "The current prototype uses a different synthetic class list and includes attention tags for other students. A Xiao Ming story-state capture still needs to be built."
+pendingInterface-story-notice: "The built Family section shows household, contact, sibling-count, and assistance fields. It does not yet show the sibling assistance record or last-term household update described in the story."
+pendingInterface-story-next-steps: "The recommended-action banner and its guidance page exist today. Question for the PM: matching a bursary scheme to the documents, submission point, and closing date does not. Is this planned for the GA build?"
 pendingInterface-story-family-and-record: "Question for the PM: Posts tracks reads per post today. A communication record on the student's profile, and updates when the application goes in and is approved, do not exist yet. Are these planned for the GA build?"
 ---
 
@@ -27,11 +29,11 @@ pendingInterface-story-family-and-record: "Question for the PM: Posts tracks rea
 
 ## Student profile
 
-The one product screen the story keeps returning to: a student profile in Student Insights. The Family section signal, the recommended action, and the drafted family message all live on or open from this screen.
+The built Student Insights profile shows the student header, section cards, and route into Family. The capture does not include the bursary-specific profile state. Later annotations separate the built pattern from the proposed story state.
 
-- Synthetic student profile with its section cards
-- Recommended-action banner naming the support prompt
-- Family section showing the eligibility signals
+- Synthetic student header and class context
+- Attendance, behaviour, wellbeing, and academic cards
+- Family destination in the profile navigation
 
 </Item>
 
@@ -39,11 +41,11 @@ The one product screen the story keeps returning to: a student profile in Studen
 
 ## Profiles student table
 
-Ground the story in an ordinary class. The Profiles screen lists Xiao Ming's form class in the student table, and he is one row among the rest, with no conduct, offence, or attention marker anywhere in the frame.
+The built Student Insights class table is the story's starting point. It shows the class-level view, columns, and row pattern. The proposed Xiao Ming row is not present, and other synthetic rows carry attention tags.
 
-- Student table filtered to his form class
-- Xiao Ming's row among his classmates
-- No conduct or attention markers
+- Secondary 3 class view
+- Search, filter, and student table controls
+- Synthetic student rows with class and support columns
 
 </Item>
 
@@ -51,11 +53,11 @@ Ground the story in an ordinary class. The Profiles screen lists Xiao Ming's for
 
 ## Family section of the profile
 
-Make the "may qualify" claim traceable. All three signals sit in the Family section of his profile, and none of them is about the student's own behaviour.
+The Family capture sits within a student's profile and shows the household fields that exist now. It does not yet contain every eligibility signal named in the story.
 
-- Siblings in MOE schools entry, with the sibling's financial-assistance record
-- Household circumstances updated last term
-- Financial-assistance status showing none active
+- Financial-assistance status
+- Housing and ownership fields
+- Primary contact and sibling count
 
 </Item>
 
@@ -63,11 +65,11 @@ Make the "may qualify" claim traceable. All three signals sit in the Family sect
 
 ## Guidance opened from the profile banner
 
-Show the process arriving where the teacher already is. The recommended-action banner on the profile opens the support-guidance page, with the matched scheme beside the student context that triggered it.
+The recommended action opens the built guidance pattern shown here. The example covers behavioural support, not financial assistance. The layout has three parts; the bursary match described in the story is still proposed.
 
-- Recommended-action banner on the profile
-- Matched support scheme and the documents the family needs
-- Where to submit and when it closes
+- Student context beside the guidance
+- Prioritised next steps in the main panel
+- Related resources in a separate panel
 
 </Item>
 
@@ -87,10 +89,10 @@ Keep the teacher in control of a delicate note. The Posts composer holds the dra
 
 ## Post delivery and read tracking
 
-Close the loop on the Posts screens. The sent post carries its posted status, and the recipient read table shows the family has seen it.
+The built Posts capture shows a sent term letter with posted status and recipient-level read data. The proposed financial-assistance message still needs its own capture.
 
 - Posted status on the sent message
-- Recipient read table with the family marked as read
-- The exchange kept on the student's record
+- Recipient table with read and unread states
+- Post detail shown beside the delivery record
 
 </Item>

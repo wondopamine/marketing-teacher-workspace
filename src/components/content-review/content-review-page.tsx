@@ -1,4 +1,3 @@
-import { contentReviewChrome } from "./content-review-chrome"
 import { ContentReviewError } from "./content-review-error"
 import { ContentReviewOutline } from "./content-review-outline"
 
@@ -40,35 +39,17 @@ export function ContentReviewPage({
   const brand = footerCopy?.label ?? "Teacher Workspace"
 
   return (
-    <>
+    <div data-teacher-preview>
       <main
         id="main"
-        className="min-h-screen bg-muted px-3 pt-[calc(var(--masthead-h)+1.5rem)] pb-0 font-body text-foreground sm:px-6"
+        className="min-h-screen bg-muted px-3 pt-6 pb-0 font-body text-foreground sm:px-6"
       >
         <div className="mx-auto max-w-[90rem] border-x border-border bg-background">
-          <section
-            aria-label="Wireframe status"
-            className="border-b border-background/30 bg-foreground px-6 py-4 text-background md:px-10 lg:px-16"
-          >
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-              <p className="text-sm font-semibold">{data.artifactLabel}</p>
-              <p className="text-xs tracking-[0.1em] text-background/70">
-                {contentReviewChrome.statusNote}
-              </p>
-            </div>
-            <p className="mt-2 max-w-4xl text-sm leading-[1.5] text-background/70">
-              {data.warning}
-            </p>
-          </section>
-
           <header
-            aria-label="Teacher Workspace wireframe header"
+            aria-label="Teacher Workspace header"
             className="flex min-h-20 flex-col items-start justify-between gap-3 border-b border-border px-6 py-5 sm:flex-row sm:items-center sm:gap-6 md:px-10 lg:px-16"
           >
             <p className="text-lg font-semibold tracking-[-0.015em]">{brand}</p>
-            <p className="border border-border px-3 py-1.5 text-xs font-medium tracking-[0.08em] text-muted-foreground">
-              {contentReviewChrome.badge}
-            </p>
           </header>
 
           <ContentReviewOutline
@@ -79,7 +60,7 @@ export function ContentReviewPage({
       </main>
 
       <footer
-        aria-label="Teacher Workspace wireframe"
+        aria-label="Teacher Workspace footer"
         className="bg-muted px-3 font-body text-foreground sm:px-6"
         data-wireframe-section={footerSection?.kind}
       >
@@ -99,6 +80,6 @@ export function ContentReviewPage({
           ) : null}
         </div>
       </footer>
-    </>
+    </div>
   )
 }

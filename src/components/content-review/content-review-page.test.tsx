@@ -2,6 +2,11 @@ import { render, screen, within } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import { ContentReviewPage } from "./content-review-page"
+import {
+  ReviewAnnotationProvider,
+  productScreenReferences,
+  reviewAnnotations,
+} from "./review-annotations"
 import type { ContentReviewWireframeReadyPageDto } from "@/content/landing-v2-review.types"
 import { buildContentReviewPageDto } from "@/content/landing-v2-review-state.server"
 
@@ -13,15 +18,26 @@ function buildReadyReviewPage(): ContentReviewWireframeReadyPageDto {
   return data
 }
 
-describe("ContentReviewPage", () => {
-  it("renders one greyscale landing-page wireframe with the footer outside main", () => {
-    const data = buildReadyReviewPage()
+function renderReadyReviewPage() {
+  const data = buildReadyReviewPage()
+  const rendered = render(
+    <ReviewAnnotationProvider>
+      <ContentReviewPage data={data} />
+    </ReviewAnnotationProvider>
+  )
+  return { data, ...rendered }
+}
 
-    const { container } = render(<ContentReviewPage data={data} />)
+describe("ContentReviewPage", () => {
+  it("renders one teacher-facing preview with a complete document structure", () => {
+    const { container } = renderReadyReviewPage()
+    const preview = container.querySelector("[data-teacher-preview]")
     const main = screen.getByRole("main")
     const footer = screen.getByRole("contentinfo", {
-      name: "Teacher Workspace wireframe",
+      name: "Teacher Workspace footer",
     })
+
+    expect(preview).not.toBeNull()
     expect(main.id).toBe("main")
     expect(screen.getAllByRole("main")).toHaveLength(1)
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
@@ -29,26 +45,7 @@ describe("ContentReviewPage", () => {
       "Every student gets the support they qualify for"
     )
     expect(within(main).queryByRole("contentinfo")).toBeNull()
-    expect(within(main).queryByRole("complementary")).toBeNull()
-    expect(screen.queryAllByRole("article")).toHaveLength(0)
-    expect(container.querySelectorAll("img, video, canvas")).toHaveLength(0)
-    const interfaceDescriptions = Array.from(
-      container.querySelectorAll("[data-interface-description]")
-    )
-    expect(interfaceDescriptions).toHaveLength(6)
-    expect(
-      interfaceDescriptions.every(
-        (description) =>
-          description.getAttribute("aria-hidden") === null &&
-          description.textContent.trim().length > 0
-      )
-    ).toBe(true)
-    expect(
-      container.querySelectorAll("[data-wireframe-placeholder]")
-    ).toHaveLength(0)
-    // The PM-notes region is gone; the page ends at the footer.
-    expect(container.querySelector("[data-wireframe-appendix]")).toBeNull()
-    expect(screen.queryAllByRole("complementary")).toHaveLength(0)
+    expect(footer.closest("[data-teacher-preview]")).toBe(preview)
 
     const levels = Array.from(container.querySelectorAll("h1, h2, h3, h4")).map(
       (heading) => Number(heading.tagName.slice(1))
@@ -57,20 +54,46 @@ describe("ContentReviewPage", () => {
     for (let index = 1; index < levels.length; index += 1) {
       expect(levels[index] - levels[index - 1]).toBeLessThanOrEqual(1)
     }
-
-    expect(footer.previousElementSibling).toBe(main)
-    expect(footer.nextElementSibling).toBeNull()
   })
 
-  it("renders the accepted IA, actual story content, and explicit pending slots", () => {
-    const data = buildReadyReviewPage()
+  it("keeps reviewer rationale and pending decisions out of the teacher copy", () => {
+    const { container } = renderReadyReviewPage()
+    const preview = container.querySelector<HTMLElement>(
+      "[data-teacher-preview]"
+    )
+    expect(preview).not.toBeNull()
+    if (!preview) return
 
-    const { container } = render(<ContentReviewPage data={data} />)
-    const sectionKinds = Array.from(
-      container.querySelectorAll("[data-wireframe-section]")
-    ).map((element) => element.getAttribute("data-wireframe-section"))
+    expect(preview.textContent).not.toContain("Proposed interface")
+    expect(preview.textContent).not.toContain("Story flow")
+    expect(preview.textContent).not.toContain(
+      "The page follows one synthetic student through a single care journey"
+    )
+    expect(preview.textContent).not.toContain("Question for the PM")
+    expect(preview.textContent).not.toContain("Interface not built yet")
+    expect(preview.textContent).not.toContain("GA launch line")
+    expect(preview.textContent).not.toContain(
+      "PM to confirm the question and approved answer"
+    )
+    const reviewChromeInsidePreview = Array.from(
+      preview.querySelectorAll<HTMLElement>("[data-review-chrome]")
+    )
+    expect(reviewChromeInsidePreview.length).toBeGreaterThan(0)
+    expect(
+      reviewChromeInsidePreview.every((element) =>
+        element.hasAttribute("data-review-annotation")
+      )
+    ).toBe(true)
+    expect(
+      reviewChromeInsidePreview.every((element) =>
+        /^\d+$/.test(element.textContent.trim())
+      )
+    ).toBe(true)
+    expect(
+      screen.queryByRole("heading", { name: "For the people who run schools" })
+    ).toBeNull()
+    expect(screen.queryByRole("heading", { name: "Real schools" })).toBeNull()
 
-    expect(sectionKinds).toEqual(data.sections.map((section) => section.kind))
     expect(
       screen.getByRole("heading", {
         name: "Xiao Ming's family may qualify for support. Nobody has applied.",
@@ -81,94 +104,45 @@ describe("ContentReviewPage", () => {
         name: "The family hears from you, and the record shows it.",
       })
     ).not.toBeNull()
+  })
 
-    // The three-step explorer has no slot on the GA page.
-    expect(
-      screen.queryByRole("heading", { name: "Explore the flow in three steps" })
-    ).toBeNull()
-    expect(screen.queryByText("Placement to confirm")).toBeNull()
-    expect(screen.queryAllByRole("combobox")).toHaveLength(0)
-    expect(screen.queryAllByRole("dialog")).toHaveLength(0)
-
-    const capabilities = screen
-      .getByRole("heading", {
-        name: "The apps, up close",
-      })
-      .closest("section")
-    expect(capabilities?.querySelectorAll("ol > li")).toHaveLength(4)
-
-    const formTeachers = screen.getByRole("heading", {
-      name: "Form Teachers",
+  it("shows six actual product screens with breadcrumbs instead of prose specifications", () => {
+    const { container } = renderReadyReviewPage()
+    const figures = Array.from(
+      container.querySelectorAll("[data-product-screen]")
+    )
+    const images = Array.from(
+      container.querySelectorAll<HTMLImageElement>("[data-product-screen] img")
+    )
+    const locations = screen.getAllByRole("navigation", {
+      name: "Product location",
     })
-    const audiences = formTeachers.closest("section")
-    expect(formTeachers).not.toBeNull()
-    expect(audiences?.querySelectorAll("ul > li")).toHaveLength(3)
-    expect(
-      screen.getByRole("heading", { name: "Key Personnel" })
-    ).not.toBeNull()
-    expect(
-      screen.getByRole("heading", { name: "School Leaders" })
-    ).not.toBeNull()
-    expect(
-      screen.getAllByText(
-        "PM to confirm the question and approved answer for this audience."
-      )
-    ).toHaveLength(3)
-    expect(
-      screen.getByText("Proof copy and testimonial permission")
-    ).not.toBeNull()
-    expect(screen.getByText("Public support route")).not.toBeNull()
+    const fullSizeLinks = screen.getAllByRole("link", {
+      name: /screen at full size$/,
+    })
+    const references = [
+      productScreenReferences.hero,
+      ...productScreenReferences.story,
+    ]
+
+    expect(figures).toHaveLength(6)
+    expect(images).toHaveLength(6)
+    expect(locations).toHaveLength(6)
+    expect(fullSizeLinks).toHaveLength(6)
+    expect(container.querySelector("[data-interface-description]")).toBeNull()
+
+    references.forEach((reference, index) => {
+      expect(images[index].getAttribute("src")).toBe(reference.image)
+      expect(images[index].getAttribute("alt")).toBe(reference.alt)
+      expect(fullSizeLinks[index].getAttribute("href")).toBe(reference.image)
+      for (const crumb of reference.breadcrumb) {
+        expect(locations[index].textContent).toContain(crumb)
+      }
+    })
   })
 
-  it("describes every proposed interface with the synthetic care-journey guardrails", () => {
-    const data = buildReadyReviewPage()
-
-    const { container } = render(<ContentReviewPage data={data} />)
-    const descriptions = Array.from(
-      container.querySelectorAll("[data-interface-description]")
-    )
-
-    expect(descriptions).toHaveLength(6)
-    expect(
-      descriptions.every(
-        (description) =>
-          description.querySelector("h2, h4") &&
-          description.querySelectorAll("ul > li").length === 3
-      )
-    ).toBe(true)
-    expect(
-      screen.getByRole("heading", {
-        name: "Profiles student table",
-      })
-    ).not.toBeNull()
-    expect(screen.getByText("No conduct or attention markers")).not.toBeNull()
-    expect(
-      screen.getByText(
-        "Ground the story in an ordinary class. The Profiles screen lists Xiao Ming's form class in the student table, and he is one row among the rest, with no conduct, offence, or attention marker anywhere in the frame."
-      )
-    ).not.toBeNull()
-    expect(JSON.stringify(data).toLowerCase()).not.toContain("swan")
-
-    // Story claims without a built product surface carry a yellow tag with a
-    // direct question for the PM: scheme matching (act 3) and the student
-    // communication record with application updates (act 5). The page is
-    // public, so the question addresses "the PM", never a name.
-    const pendingInterfaces = descriptions.flatMap((description) =>
-      Array.from(description.querySelectorAll("[data-pending-interface]"))
-    )
-    expect(pendingInterfaces).toHaveLength(2)
-    for (const pending of pendingInterfaces) {
-      expect(pending.textContent).toContain("Interface not built yet")
-      expect(pending.textContent).toContain("Question for the PM:")
-      expect(pending.textContent).toContain("GA build?")
-    }
-  })
-
-  it("shows two inert product actions and feedback without redundant UI captions", () => {
-    const data = buildReadyReviewPage()
-
-    const { container } = render(<ContentReviewPage data={data} />)
-
+  it("renders accessible review pins without turning teacher actions into live controls", () => {
+    const { container, data } = renderReadyReviewPage()
     const entries = data.sections.flatMap((section) => section.entries)
     const productAction = entries.find(
       (entry) => entry.kind === "content" && entry.action?.purpose === "product"
@@ -178,47 +152,35 @@ describe("ContentReviewPage", () => {
         entry.kind === "content" && entry.action?.purpose === "feedback"
     )
 
-    expect(productAction?.kind).toBe("content")
-    expect(feedbackAction?.kind).toBe("content")
-    if (
-      productAction?.kind !== "content" ||
-      feedbackAction?.kind !== "content" ||
-      !productAction.action ||
-      !feedbackAction.action
-    ) {
-      return
-    }
-
     const productActions = Array.from(
       container.querySelectorAll("[data-wireframe-action]")
     )
     expect(productActions).toHaveLength(2)
+    expect(productActions.every((action) => action.tagName === "SPAN")).toBe(
+      true
+    )
+    expect(productAction?.kind).toBe("content")
+    expect(feedbackAction?.kind).toBe("content")
+
+    const reviewButtons = Array.from(
+      container.querySelectorAll<HTMLButtonElement>("button")
+    )
+    expect(reviewButtons.length).toBeGreaterThan(0)
     expect(
-      productActions.every(
-        (action) => action.textContent === productAction.action?.label
-      )
+      reviewButtons.every((button) => button.closest("[data-review-chrome]"))
     ).toBe(true)
-    expect(screen.getByText(feedbackAction.action.label)).not.toBeNull()
-    expect(screen.queryByText("Static CTA placement")).toBeNull()
-    expect(screen.queryByText("Feedback link placement")).toBeNull()
-    expect(screen.queryAllByRole("link")).toHaveLength(0)
-    expect(screen.queryAllByRole("button")).toHaveLength(0)
-    expect(container.querySelectorAll("[href]")).toHaveLength(0)
+    for (const button of reviewButtons) {
+      expect(button.getAttribute("aria-label")).toMatch(/^Review note:/)
+      expect(button.hasAttribute("aria-expanded")).toBe(true)
+    }
+
+    expect(reviewAnnotations).toHaveLength(11)
   })
 
-  it("renders no PM-notes region and leaks no raw server material", () => {
-    const data = buildReadyReviewPage()
-
-    const { container } = render(<ContentReviewPage data={data} />)
-    // Governance detail is server-side only now — none of it reaches the page.
-    expect(screen.queryByRole("heading", { name: "PM review notes" })).toBeNull()
-    expect(screen.queryByText("Provider-neutral")).toBeNull()
-    expect(screen.queryByText("Page metadata draft")).toBeNull()
-    expect(screen.queryByText("Measurement boundary")).toBeNull()
-    expect(screen.queryByText("Capability mapping:")).toBeNull()
-    expect(container.querySelector("[data-review-reference]")).toBeNull()
-
+  it("keeps raw governance material and real-student identifiers out of the preview", () => {
+    const { container } = renderReadyReviewPage()
     const html = container.innerHTML.toLowerCase()
+
     for (const prohibitedValue of [
       "tw-ia-order",
       "tw-story-composed",
@@ -235,26 +197,13 @@ describe("ContentReviewPage", () => {
     }
   })
 
-  it("renders a stop-review error without partial story or diagnostics", () => {
+  it("renders a stop-review error without partial teacher content", () => {
     const data = buildContentReviewPageDto({ manifest: [] })
     expect(data.kind).toBe("error")
 
     const { container } = render(<ContentReviewPage data={data} />)
-    const main = screen.getByRole("main")
-
-    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
-    expect(
-      screen.getByRole("heading", { name: "Wireframe unavailable" })
-    ).not.toBeNull()
-    expect(within(main).getByText(/review is paused/i)).not.toBeNull()
-    expect(screen.queryAllByRole("link")).toHaveLength(0)
-    expect(screen.queryAllByRole("button")).toHaveLength(0)
-    expect(container.querySelectorAll("[href]")).toHaveLength(0)
-    expect(container.textContent).not.toContain(
-      "Every student gets the support they qualify for"
-    )
-    expect(container.innerHTML).not.toContain("manifest-coverage")
-    expect(container.innerHTML).not.toContain("CONTENT_REVIEW_INVALID")
-    expect(container.innerHTML).not.toContain("build snapshot")
+    expect(screen.getByRole("heading", { level: 1 })).not.toBeNull()
+    expect(container.querySelector("[data-teacher-preview]")).toBeNull()
+    expect(container.querySelector("[data-product-screen]")).toBeNull()
   })
 })

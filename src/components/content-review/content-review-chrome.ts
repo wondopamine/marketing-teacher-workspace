@@ -75,8 +75,10 @@ function screen(id: string): ContentReviewScreen {
 }
 
 export const contentReviewChrome = {
+  artifactLabel: wireframe.text("artifactLabel"),
   badge: wireframe.text("badge"),
   statusNote: wireframe.text("statusNote"),
+  warning: itemBody(wireframe, wireframe.item("warning")),
   pendingLabel: wireframe.text("pendingLabel"),
   pendingNote: itemBody(wireframe, wireframe.item("pending-note")),
   story: sectionChrome(story),
@@ -86,12 +88,16 @@ export const contentReviewChrome = {
     ...sectionChrome(audiences),
     pendingNote: audiences.text("pendingNote"),
   },
-  proof: sectionChrome(proof),
+  proof: {
+    ...sectionChrome(proof),
+    pendingLabel: proof.text("pendingLabel"),
+  },
   accessSupport: {
     ...sectionChrome(accessSupport),
     accessHeading: accessSupport.text("accessHeading"),
     accessMethodLabel: accessSupport.text("accessMethodLabel"),
     supportHeading: accessSupport.text("supportHeading"),
+    pendingLabel: accessSupport.text("pendingLabel"),
   },
 } as const
 

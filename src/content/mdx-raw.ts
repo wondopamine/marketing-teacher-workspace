@@ -26,8 +26,11 @@ export const mdxSources: Readonly<Record<string, string>> = Object.freeze(
   )
 )
 
+/** Only teacher-facing landing copy belongs in the public editing surface. */
 export function editableSpans(): ReadonlyArray<EditableSpan> {
   return Object.entries(mdxSources).flatMap(([file, source]) =>
-    collectEditableSpans(file, source)
+    file.startsWith("content/landing/")
+      ? collectEditableSpans(file, source)
+      : []
   )
 }

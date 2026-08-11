@@ -16,7 +16,7 @@ reloads on its own.
 
 ## Editing on the page with ⌘K
 
-You don't have to find the right file first. This works on the dev server *and*
+You don't have to find the right file first. This works on the dev server _and_
 on the shared review link. Reviewers need no account of any kind:
 
 1. Press **⌘K** (Ctrl+K on Windows), or click **Edit** in the review panel.
@@ -43,20 +43,20 @@ See `docs/review-feedback-setup.md` for switching sending on.
 
 Files in `landing/` are numbered in the order they appear down the page.
 
-| File                          | What it controls                                       |
-| ----------------------------- | ------------------------------------------------------ |
-| `landing/01-meta.mdx`         | Browser-tab title and search-result description        |
-| `landing/02-hero.mdx`         | Opening headline, opening copy, and the button         |
-| `landing/03-story.mdx`        | The five-act student care journey                      |
-| `landing/04-reveal.mdx`       | The "This is Teacher Workspace" moment                 |
-| `landing/05-capabilities.mdx` | The four product capabilities                          |
-| `landing/07-audiences.mdx`    | Who the page is written for                            |
-| `landing/08-proof.mdx`        | The testimonial section framing                        |
-| `landing/09-access-support.mdx` | How teachers get in, and where support comes from    |
-| `landing/10-close.mdx`        | The closing headline and copy                          |
-| `landing/11-footer.mdx`       | Copyright line and feedback link label                 |
-| `screens.mdx`                 | Descriptions of the product screens shown beside the copy |
-| `wireframe.mdx`               | Labels the review page uses to describe itself         |
+| File                            | What it controls                                  |
+| ------------------------------- | ------------------------------------------------- |
+| `landing/01-meta.mdx`           | Browser-tab title and search-result description   |
+| `landing/02-hero.mdx`           | Opening headline, opening copy, and the button    |
+| `landing/03-story.mdx`          | The five-act student care journey                 |
+| `landing/04-reveal.mdx`         | The "This is Teacher Workspace" moment            |
+| `landing/05-capabilities.mdx`   | The four product capabilities                     |
+| `landing/07-audiences.mdx`      | Who the page is written for                       |
+| `landing/08-proof.mdx`          | The testimonial section framing                   |
+| `landing/09-access-support.mdx` | How teachers get in, and where support comes from |
+| `landing/10-close.mdx`          | The closing headline and copy                     |
+| `landing/11-footer.mdx`         | Copyright line and feedback link label            |
+| `screens.mdx`                   | Reviewer rationale for each product screen        |
+| `wireframe.mdx`                 | Labels used only by the review workspace          |
 
 ## How a file is put together
 
@@ -100,14 +100,16 @@ You want to understand the progress and help it continue.
 - `label` is the small line above the heading. Change it freely.
 - The `##` line and the paragraphs under it are yours to rewrite.
 
-In `screens.mdx`, the bullet list inside each block becomes the three elements
-listed under the description. Keep it to exactly three.
+In `screens.mdx`, each block explains why a captured product screen supports
+the story. Reviewers see this rationale after selecting a numbered annotation.
+The teacher preview shows the screen itself, its product breadcrumb, and a short
+prototype caption. Keep each bullet list to exactly three items.
 
 ## Filling in a "Copy pending" slot
 
-Some slots on the wireframe show **Copy pending** because nobody has decided
-the wording yet. Two of them you can resolve here, and the pending note
-disappears as soon as you do.
+Some slots are still waiting for a content or product decision. Reviewers see
+these in the annotation workspace; teachers do not see them in the preview.
+Two of them can be resolved here.
 
 **An audience question and answer**: in `landing/07-audiences.mdx`, change
 
@@ -131,8 +133,8 @@ You see one student's full picture without opening four systems.
 `launchLine:`.
 
 The remaining pending slots (testimonials and the public support route) are
-waiting on approvals rather than wording, so they stay pending until those
-decisions are made in code.
+waiting on approvals rather than wording. They stay in the review workspace
+until those decisions are made in code.
 
 ## If something goes wrong
 

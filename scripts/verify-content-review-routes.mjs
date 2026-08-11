@@ -80,13 +80,14 @@ assert(
   "The content-review route published canonical, social-image, or preload metadata."
 )
 assert(
-  countMatches(reviewHtml, /data-interface-description/g) === 6 &&
-    countMatches(reviewHtml, /data-wireframe-placeholder/g) === 0 &&
-    reviewHtml.includes("Profiles student table") &&
-    reviewHtml.includes("No conduct or attention markers") &&
-    countMatches(reviewHtml, /data-pending-interface/g) === 2 &&
-    countMatches(reviewHtml, /Question for the PM:/g) === 2,
-  "The content-review route lost its complete set of descriptive interface briefs."
+  countMatches(reviewHtml, /data-product-screen/g) === 6 &&
+    countMatches(reviewHtml, /aria-label="Product location"/g) === 6 &&
+    countMatches(reviewHtml, /<img[^>]+content-review\/screens\//g) === 6 &&
+    countMatches(reviewHtml, /data-interface-description/g) === 0 &&
+    countMatches(reviewHtml, /Question for the PM:/g) === 0 &&
+    reviewHtml.includes("Student Insights") &&
+    reviewHtml.includes("Read tracking"),
+  "The content-review route lost its product screenshots or breadcrumb map."
 )
 
 const prohibitedReviewOutput = [

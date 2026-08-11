@@ -1,12 +1,8 @@
-import {
-  contentReviewChrome,
-  contentReviewScreens,
-} from "./content-review-chrome"
+import { contentReviewChrome } from "./content-review-chrome"
+import { ReviewPin, productScreenReferences } from "./review-annotations"
 
-import type {
-  ContentReviewScreen,
-  SectionChrome,
-} from "./content-review-chrome"
+import type { SectionChrome } from "./content-review-chrome"
+import type { ProductScreenReference } from "./review-annotations"
 import type {
   ContentReviewWireframeAppendixDto,
   ContentReviewWireframeEntryDto,
@@ -14,31 +10,17 @@ import type {
 } from "@/content/landing-v2-review.types"
 
 type ContentEntry = Extract<ContentReviewWireframeEntryDto, { kind: "content" }>
-type DecisionEntry = Extract<
-  ContentReviewWireframeEntryDto,
-  { kind: "decision" }
->
-
 type SectionProps = {
   section: ContentReviewWireframeSectionDto
 }
 
 const chrome = contentReviewChrome
-const screens = contentReviewScreens
 
 function contentEntries(
   section: ContentReviewWireframeSectionDto
 ): ReadonlyArray<ContentEntry> {
   return section.entries.filter(
     (entry): entry is ContentEntry => entry.kind === "content"
-  )
-}
-
-function decisionEntries(
-  section: ContentReviewWireframeSectionDto
-): ReadonlyArray<DecisionEntry> {
-  return section.entries.filter(
-    (entry): entry is DecisionEntry => entry.kind === "decision"
   )
 }
 
@@ -70,127 +52,97 @@ function InertAction({ entry }: { entry: ContentEntry | undefined }) {
   )
 }
 
-function PendingSlot({ label }: { label: string }) {
-  return (
-    <div className="border border-dashed border-foreground/40 bg-background p-5">
-      <WireframeLabel>{chrome.pendingLabel}</WireframeLabel>
-      <p className="mt-3 font-medium text-foreground">{label}</p>
-      <p className="mt-2 text-sm leading-[1.5] text-muted-foreground">
-        {chrome.pendingNote}
-      </p>
-    </div>
-  )
-}
-
 function SectionIntro({
+  annotationId,
   chrome: sectionChrome,
   headingId,
 }: {
+  annotationId?: string
   chrome: SectionChrome
   headingId: string
 }) {
   return (
     <div className="max-w-3xl">
-      {sectionChrome.label ? (
-        <WireframeLabel>{sectionChrome.label}</WireframeLabel>
-      ) : null}
-      <h2
-        id={headingId}
-        className="mt-4 font-heading text-[32px] font-semibold tracking-[-0.025em]"
-      >
-        {sectionChrome.title}
-      </h2>
-      {sectionChrome.intro ? (
-        <p className="mt-4 max-w-[72ch] leading-6 text-muted-foreground">
-          {sectionChrome.intro}
-        </p>
-      ) : null}
+      <div className="flex items-start gap-3">
+        <h2
+          id={headingId}
+          className="font-heading text-[32px] font-semibold tracking-[-0.025em]"
+        >
+          {sectionChrome.title}
+        </h2>
+        {annotationId ? <ReviewPin id={annotationId} /> : null}
+      </div>
     </div>
   )
 }
 
-function InterfaceDescription({
-  className = "border border-border bg-background p-5",
-  headingLevel,
-  label,
+function ProductScreenFigure({
   location,
-  screen,
+  reference,
 }: {
-  className?: string
-  headingLevel: 2 | 4
-  label: string
   location: string
-  screen: ContentReviewScreen
+  reference: ProductScreenReference
 }) {
-  const Heading = headingLevel === 2 ? "h2" : "h4"
-
   return (
-    <div
-      className={className}
-      data-interface-description
+    <figure
+      className="relative min-w-0 border border-border bg-background"
+      data-product-screen
       data-wireframe-interface={location}
     >
-      <p className="text-xs font-medium tracking-[0.08em] text-muted-foreground">
-        {label}
-      </p>
-      <Heading className="mt-3 font-heading text-lg leading-snug font-semibold">
-        {screen.heading}
-      </Heading>
-      <p className="mt-3 max-w-[72ch] text-sm leading-[1.5] text-muted-foreground">
-        {screen.body}
-      </p>
-      <ul className="mt-4 max-w-[72ch] border-t border-border pt-2 text-sm text-foreground">
-        {screen.keyElements.map((element) => (
-          <li
-            className="border-b border-border py-2 last:border-b-0"
-            key={element}
-          >
-            {element}
-          </li>
-        ))}
-      </ul>
-      {screen.pendingInterface ? (
-        <div
-          className="mt-4 max-w-[72ch] border border-amber-600/40 bg-amber-50 p-4"
-          data-pending-interface
+      <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-2">
+        <nav aria-label="Product location" className="min-w-0">
+          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            {reference.breadcrumb.map((item, index) => (
+              <li className="flex items-center gap-2" key={item}>
+                {index > 0 ? <span aria-hidden>/</span> : null}
+                <span
+                  className={
+                    index === reference.breadcrumb.length - 1
+                      ? "font-semibold text-foreground"
+                      : undefined
+                  }
+                >
+                  {item}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </nav>
+        <ReviewPin id={reference.annotationId} />
+      </div>
+      <div className="overflow-hidden bg-white">
+        <img
+          alt={reference.alt}
+          className="block h-auto w-full"
+          decoding="async"
+          height="1000"
+          loading="lazy"
+          src={reference.image}
+          width="1600"
+        />
+      </div>
+      <figcaption className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border px-3 py-2 text-xs text-muted-foreground">
+        <span>Illustrative Teacher Workspace prototype</span>
+        <a
+          href={reference.image}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex min-h-11 items-center font-semibold text-foreground underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
+          aria-label={`Open ${reference.breadcrumb.at(-1) ?? "product"} screen at full size`}
         >
-          <span className="inline-flex border border-amber-700/40 bg-amber-100 px-2.5 py-1 text-xs font-medium tracking-[0.08em] text-amber-900">
-            {screen.pendingInterface.label}
-          </span>
-          <p className="mt-3 text-sm leading-[1.5] text-amber-950">
-            {screen.pendingInterface.question}
-          </p>
-        </div>
-      ) : null}
-    </div>
+          Open full size
+        </a>
+      </figcaption>
+    </figure>
   )
 }
 
 function ProductFrame() {
   return (
-    <div
-      className="border-2 border-foreground/30 bg-background p-3"
-      data-wireframe-interface-frame="product-view"
-    >
-      <div
-        aria-hidden="true"
-        className="flex items-center justify-between border-b border-border pb-3"
-      >
-        <div className="flex gap-1.5">
-          <span className="size-2.5 rounded-full bg-muted-foreground/50" />
-          <span className="size-2.5 rounded-full bg-muted-foreground/30" />
-          <span className="size-2.5 rounded-full bg-muted-foreground/30" />
-        </div>
-        <span className="text-xs tracking-[0.12em] text-muted-foreground">
-          Teacher Workspace
-        </span>
-      </div>
-      <InterfaceDescription
-        className="pt-5"
-        headingLevel={2}
-        label={screens.label}
+    <div data-wireframe-interface-frame="product-view">
+      <ProductScreenFigure
         location="hero-product-view"
-        screen={screens.hero}
+        reference={productScreenReferences.hero}
       />
     </div>
   )
@@ -206,7 +158,7 @@ function HeroSection({ section }: SectionProps) {
   return (
     <section
       aria-labelledby="wireframe-hero-heading"
-      className="grid gap-12 border-b border-border px-6 py-16 md:px-10 md:py-24 lg:grid-cols-[minmax(0,0.9fr)_minmax(24rem,1.1fr)] lg:items-center lg:px-16"
+      className="grid gap-12 border-b border-border px-6 py-16 md:px-10 md:py-24 lg:px-16 2xl:grid-cols-[minmax(0,0.9fr)_minmax(24rem,1.1fr)] 2xl:items-center"
       data-wireframe-section={section.kind}
     >
       <div>
@@ -243,6 +195,7 @@ function ConnectedStorySection({ section }: SectionProps) {
       data-wireframe-section={section.kind}
     >
       <SectionIntro
+        annotationId="story-overview"
         chrome={chrome.story}
         headingId="wireframe-connected-story"
       />
@@ -250,7 +203,7 @@ function ConnectedStorySection({ section }: SectionProps) {
       <ol className="mt-12 border-t border-border">
         {entries.map((entry, index) => (
           <li
-            className="grid gap-8 border-b border-border py-10 lg:grid-cols-[4rem_minmax(0,1fr)_minmax(18rem,0.9fr)] lg:items-start"
+            className="grid gap-8 border-b border-border py-10 2xl:grid-cols-[4rem_minmax(0,1fr)_minmax(18rem,0.9fr)] 2xl:items-start"
             key={entry.heading ?? entry.label ?? `story-${index}`}
           >
             <p className="text-[32px] font-normal text-muted-foreground tabular-nums">
@@ -273,21 +226,11 @@ function ConnectedStorySection({ section }: SectionProps) {
                   {paragraph}
                 </p>
               ))}
-              {entry.capabilityLabel ? (
-                <p className="mt-5 text-sm text-muted-foreground">
-                  <span className="font-semibold text-foreground">
-                    Product capability:
-                  </span>{" "}
-                  {entry.capabilityLabel}
-                </p>
-              ) : null}
             </div>
-            {screens.story[index] ? (
-              <InterfaceDescription
-                headingLevel={4}
-                label={screens.label}
+            {productScreenReferences.story[index] ? (
+              <ProductScreenFigure
                 location={`story-step-${index + 1}`}
-                screen={screens.story[index]}
+                reference={productScreenReferences.story[index]}
               />
             ) : null}
           </li>
@@ -303,7 +246,6 @@ function RevealSection({ section }: SectionProps) {
   // A resolved slot (the GA launch line) projects as copy without a heading;
   // it takes the place of its former pending box beside the thesis.
   const asides = entries.filter((entry) => entry !== copy)
-  const decisions = decisionEntries(section)
 
   if (!copy?.heading) return null
 
@@ -315,12 +257,9 @@ function RevealSection({ section }: SectionProps) {
     >
       <div className="grid gap-10 md:grid-cols-[minmax(0,1.2fr)_minmax(16rem,0.8fr)] md:items-end">
         <div>
-          <p className="text-xs font-medium tracking-[0.12em] text-background/60">
-            {chrome.revealLabel}
-          </p>
           <h2
             id="wireframe-reveal"
-            className="mt-4 font-heading text-[32px] font-semibold tracking-[-0.035em] sm:text-5xl"
+            className="font-heading text-[32px] font-semibold tracking-[-0.035em] sm:text-5xl"
           >
             {copy.heading}
           </h2>
@@ -338,29 +277,11 @@ function RevealSection({ section }: SectionProps) {
             className="border border-background/30 p-5"
             key={entry.label ?? `reveal-aside-${index}`}
           >
-            {entry.label ? (
-              <p className="text-xs font-medium tracking-[0.1em] text-background/60">
-                {entry.label}
-              </p>
-            ) : null}
             {entry.body.map((paragraph) => (
-              <p className="mt-3 text-sm text-background/85" key={paragraph}>
+              <p className="text-sm text-background/85" key={paragraph}>
                 {paragraph}
               </p>
             ))}
-          </div>
-        ))}
-        {decisions.map((entry) => (
-          <div
-            className="border border-dashed border-background/30 p-5"
-            key={entry.reviewLabel}
-          >
-            <p className="text-xs font-medium tracking-[0.1em] text-background/60">
-              {chrome.pendingLabel}
-            </p>
-            <p className="mt-3 text-sm text-background/85">
-              {entry.reviewLabel}
-            </p>
           </div>
         ))}
       </div>
@@ -378,6 +299,7 @@ function CapabilitiesSection({ section }: SectionProps) {
       data-wireframe-section={section.kind}
     >
       <SectionIntro
+        annotationId="capabilities-overview"
         chrome={chrome.capabilities}
         headingId="wireframe-capabilities"
       />
@@ -414,13 +336,10 @@ function CapabilitiesSection({ section }: SectionProps) {
   )
 }
 
-function audienceLabel(reviewLabel: string): string {
-  return reviewLabel.replace(/:\s*question and answer$/i, "")
-}
-
 function AudiencesSection({ section }: SectionProps) {
   const content = contentEntries(section)
-  const decisions = decisionEntries(section)
+
+  if (content.length === 0) return null
 
   return (
     <section
@@ -428,7 +347,11 @@ function AudiencesSection({ section }: SectionProps) {
       className="border-b border-border px-6 py-16 md:px-10 md:py-24 lg:px-16"
       data-wireframe-section={section.kind}
     >
-      <SectionIntro chrome={chrome.audiences} headingId="wireframe-audiences" />
+      <SectionIntro
+        annotationId="audiences-overview"
+        chrome={chrome.audiences}
+        headingId="wireframe-audiences"
+      />
 
       <ul className="mt-12 border-y border-foreground/30 md:grid md:grid-cols-3">
         {content.map((entry) => (
@@ -450,19 +373,6 @@ function AudiencesSection({ section }: SectionProps) {
             ))}
           </li>
         ))}
-        {decisions.map((entry) => (
-          <li
-            className="border-b border-border py-7 last:border-b-0 md:border-r md:border-b-0 md:px-6 md:first:pl-0 md:last:border-r-0 md:last:pr-0"
-            key={entry.reviewLabel}
-          >
-            <h3 className="font-heading text-xl font-semibold">
-              {audienceLabel(entry.reviewLabel)}
-            </h3>
-            <p className="mt-4 max-w-[72ch] text-sm leading-[1.5] text-muted-foreground">
-              {chrome.audiences.pendingNote}
-            </p>
-          </li>
-        ))}
       </ul>
     </section>
   )
@@ -470,7 +380,8 @@ function AudiencesSection({ section }: SectionProps) {
 
 function ProofSection({ section }: SectionProps) {
   const content = contentEntries(section)
-  const decisions = decisionEntries(section)
+
+  if (content.length === 0) return null
 
   return (
     <section
@@ -480,20 +391,15 @@ function ProofSection({ section }: SectionProps) {
     >
       <div className="grid gap-10 md:grid-cols-[minmax(0,0.7fr)_minmax(20rem,1.3fr)]">
         <div>
-          {chrome.proof.label ? (
-            <WireframeLabel>{chrome.proof.label}</WireframeLabel>
-          ) : null}
-          <h2
-            id="wireframe-proof"
-            className="mt-4 font-heading text-[32px] font-semibold tracking-[-0.025em]"
-          >
-            {chrome.proof.title}
-          </h2>
-          {chrome.proof.intro ? (
-            <p className="mt-4 leading-6 text-muted-foreground">
-              {chrome.proof.intro}
-            </p>
-          ) : null}
+          <div className="flex items-start gap-3">
+            <h2
+              id="wireframe-proof"
+              className="font-heading text-[32px] font-semibold tracking-[-0.025em]"
+            >
+              {chrome.proof.title}
+            </h2>
+            <ReviewPin id="proof-overview" />
+          </div>
         </div>
         <div className="space-y-5">
           {content.map((entry) => (
@@ -510,9 +416,6 @@ function ProofSection({ section }: SectionProps) {
               ))}
             </div>
           ))}
-          {decisions.map((entry) => (
-            <PendingSlot key={entry.reviewLabel} label={entry.reviewLabel} />
-          ))}
         </div>
       </div>
     </section>
@@ -523,7 +426,6 @@ function AccessSupportSection({
   appendix,
   section,
 }: SectionProps & { appendix: ContentReviewWireframeAppendixDto }) {
-  const decisions = decisionEntries(section)
   const accessSupport = chrome.accessSupport
 
   return (
@@ -533,11 +435,12 @@ function AccessSupportSection({
       data-wireframe-section={section.kind}
     >
       <SectionIntro
+        annotationId="access-support-overview"
         chrome={accessSupport}
         headingId="wireframe-access-support"
       />
 
-      <div className="mt-12 grid gap-10 md:grid-cols-2 md:gap-16">
+      <div className="mt-12 max-w-2xl">
         <div>
           <h3 className="font-heading text-xl font-semibold">
             {accessSupport.accessHeading}
@@ -551,22 +454,6 @@ function AccessSupportSection({
           <p className="mt-3 text-sm leading-[1.5] text-muted-foreground">
             {appendix.access.accountNote}
           </p>
-          <p className="mt-5 border-l-2 border-foreground/30 pl-4 text-sm leading-[1.5] text-muted-foreground">
-            {appendix.access.implementationBoundary}
-          </p>
-        </div>
-        <div>
-          <h3 className="font-heading text-xl font-semibold">
-            {accessSupport.supportHeading}
-          </h3>
-          <p className="mt-4 leading-6 text-muted-foreground">
-            {appendix.support.summary}
-          </p>
-          <div className="mt-6 space-y-4">
-            {decisions.map((entry) => (
-              <PendingSlot key={entry.reviewLabel} label={entry.reviewLabel} />
-            ))}
-          </div>
         </div>
       </div>
     </section>

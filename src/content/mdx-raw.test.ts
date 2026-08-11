@@ -33,5 +33,14 @@ describe("bundled MDX sources", () => {
       (span) => span.text === "Every student gets the support they qualify for"
     )
     expect(headline?.file).toBe("content/landing/02-hero.mdx")
+    expect(
+      spans.every((span) => span.file.startsWith("content/landing/"))
+    ).toBe(true)
+    expect(spans.some((span) => span.file === "content/screens.mdx")).toBe(
+      false
+    )
+    expect(spans.some((span) => span.file === "content/wireframe.mdx")).toBe(
+      false
+    )
   })
 })
