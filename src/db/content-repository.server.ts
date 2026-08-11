@@ -141,6 +141,13 @@ export type CmsVersionHistoryPage = {
   readonly nextCursor: number | null
 }
 
+export type CmsPageState = {
+  readonly pageId: string
+  readonly lifecycle: "active" | "archived"
+  readonly draftHead: CmsHead
+  readonly publishedHead: CmsHead | null
+}
+
 export type ImportInitialCmsPageInput = {
   readonly pageId: string
   readonly attemptId: string
@@ -1263,6 +1270,32 @@ export function createCmsContentRepository(database: CmsDatabase) {
     return snapshot
   }
 
+  async function loadPageState(pageId: string): Promise<CmsPageState> {
+    assertRepositoryId(pageId)
+    const result = await database.execute<StoredPageHeadRow>(sql`
+      select
+        pages.id as "pageId",
+        pages.lifecycle as "lifecycle",
+        pages.draft_version_id as "draftVersionId",
+        pages.draft_version_number as "draftVersionNumber",
+        pages.draft_digest as "draftDigest",
+        pages.published_version_id as "publishedVersionId",
+        pages.published_version_number as "publishedVersionNumber",
+        pages.published_digest as "publishedDigest"
+      from cms_pages as pages
+      where pages.id = ${pageId}
+      limit 1
+    `)
+    const page = result.rows.at(0)
+    if (!page) throw new CmsRepositoryError("PAGE_NOT_FOUND")
+    return {
+      pageId,
+      lifecycle: page.lifecycle,
+      draftHead: draftHeadFromPage(page),
+      publishedHead: publishedHeadFromPage(page),
+    }
+  }
+
   async function loadPublishedPage(
     requestedPath: string
   ): Promise<CmsVersionSnapshot> {
@@ -1295,6 +1328,7 @@ export function createCmsContentRepository(database: CmsDatabase) {
     getVersion,
     listVersions,
     loadDraft,
+    loadPageState,
     loadPublishedPage,
     publishVersion,
     restoreVersion,

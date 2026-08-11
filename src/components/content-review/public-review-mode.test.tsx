@@ -5,6 +5,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react"
+import { useState } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { PublicReviewMode } from "./public-review-mode"
@@ -224,6 +225,48 @@ describe("PublicReviewMode", () => {
       screen.getByRole<HTMLTextAreaElement>("textbox", { name: "Add a note" })
         .value
     ).toBe("Whole-page draft")
+  })
+
+  it("hands Cmd+K and Escape to the persistent CMS editor", () => {
+    function ExternalEditorHarness() {
+      const [active, setActive] = useState(false)
+      const toggle = () => setActive((current) => !current)
+      return (
+        <PublicReviewMode
+          externalEditor={{
+            active,
+            busy: false,
+            controls: (
+              <button type="button" onClick={toggle}>
+                {active ? "Finish editing" : "Edit content"}
+              </button>
+            ),
+            statusMessage: active ? "Editing is on." : "Ready to review.",
+            onToggle: toggle,
+          }}
+        />
+      )
+    }
+
+    render(
+      <ReviewAnnotationProvider>
+        <ExternalEditorHarness />
+      </ReviewAnnotationProvider>
+    )
+
+    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    expect(
+      screen.getByRole("button", { name: "Finish editing" })
+    ).not.toBeNull()
+    expect(screen.getByText("Editing is on.")).not.toBeNull()
+    expect(
+      screen.getByRole<HTMLButtonElement>("button", { name: "Show rationale" })
+        .disabled
+    ).toBe(true)
+
+    fireEvent.keyDown(window, { key: "Escape" })
+    expect(screen.getByRole("button", { name: "Edit content" })).not.toBeNull()
+    expect(screen.getByText("Ready to review.")).not.toBeNull()
   })
 
   it("reopens edits when two blocks now have the same text", async () => {

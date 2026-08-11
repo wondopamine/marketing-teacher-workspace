@@ -418,6 +418,12 @@ export function projectCmsPageDocument(
 ): TeacherPreviewDocumentDto | null {
   if (!isCmsPageDocument(document)) return null
 
+  return projectCmsPageDocumentForEditor(document)
+}
+
+export function projectCmsPageDocumentForEditor(
+  document: CmsPageDocument
+): TeacherPreviewDocumentDto | null {
   const visible = document.sections.filter(
     (section) => section.state === "visible"
   )

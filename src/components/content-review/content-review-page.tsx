@@ -1,12 +1,16 @@
 import { ContentReviewError } from "./content-review-error"
 import { ContentReviewOutline } from "./content-review-outline"
+import { EditableCopy } from "./editor/editable-copy"
 
 import type { TeacherPreviewPageDataDto } from "@/content/teacher-preview-document"
+import type { ContentReviewEditAdapter } from "./editor/content-review-edit-adapter"
 
 export function ContentReviewPage({
   data,
+  editor,
 }: {
   data: TeacherPreviewPageDataDto
+  editor?: ContentReviewEditAdapter
 }) {
   if (data.kind === "error") return <ContentReviewError />
 
@@ -24,12 +28,20 @@ export function ContentReviewPage({
             aria-label="Teacher Workspace header"
             className="flex min-h-20 flex-col items-start justify-between gap-3 border-b border-border px-6 py-5 sm:flex-row sm:items-center sm:gap-6 md:px-10 lg:px-16"
           >
-            <p className="text-lg font-semibold tracking-[-0.015em]">
-              {document.brand}
-            </p>
+            <EditableCopy
+              as="p"
+              value={document.brand}
+              label="Edit product name"
+              className="text-lg font-semibold tracking-[-0.015em]"
+              onChange={
+                editor
+                  ? (value) => editor.updatePageText("brand", value)
+                  : undefined
+              }
+            />
           </header>
 
-          <ContentReviewOutline sections={document.sections} />
+          <ContentReviewOutline sections={document.sections} editor={editor} />
         </div>
       </main>
 
@@ -40,17 +52,44 @@ export function ContentReviewPage({
       >
         <div className="mx-auto flex max-w-[90rem] flex-col gap-5 border-x border-t border-border bg-background px-6 py-8 sm:flex-row sm:items-center sm:justify-between md:px-10 lg:px-16">
           <div>
-            <p className="font-semibold">{footer.brand}</p>
-            {footer.body.map((paragraph) => (
-              <p className="mt-1 text-sm text-muted-foreground" key={paragraph}>
-                {paragraph}
-              </p>
+            <EditableCopy
+              as="p"
+              value={footer.brand}
+              label="Edit footer product name"
+              className="font-semibold"
+              onChange={
+                editor
+                  ? (value) => editor.updateFooterText(["brand"], value)
+                  : undefined
+              }
+            />
+            {footer.body.map((paragraph, index) => (
+              <EditableCopy
+                as="p"
+                value={paragraph}
+                label={`Edit footer paragraph ${index + 1}`}
+                className="mt-1 text-sm text-muted-foreground"
+                key={index}
+                onChange={
+                  editor
+                    ? (value) => editor.updateFooterText(["body", index], value)
+                    : undefined
+                }
+              />
             ))}
           </div>
           {footer.feedbackLabel ? (
-            <span className="text-sm font-medium select-none">
-              {footer.feedbackLabel}
-            </span>
+            <EditableCopy
+              as="span"
+              value={footer.feedbackLabel}
+              label="Edit footer feedback label"
+              className="text-sm font-medium select-none"
+              onChange={
+                editor
+                  ? (value) => editor.updateFooterText(["feedbackLabel"], value)
+                  : undefined
+              }
+            />
           ) : null}
         </div>
       </footer>

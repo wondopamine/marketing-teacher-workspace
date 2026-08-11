@@ -1,5 +1,7 @@
 import { ReviewPin, reviewAnnotationBindings } from "./review-annotations"
+import { EditableCopy } from "./editor/editable-copy"
 
+import type { ContentReviewEditAdapter } from "./editor/content-review-edit-adapter"
 import type {
   TeacherPreviewAccessSupportSectionDto,
   TeacherPreviewActionDto,
@@ -12,29 +14,64 @@ import type {
   TeacherPreviewSectionDto,
 } from "@/content/teacher-preview-document"
 
-function WireframeLabel({ children }: { children: string }) {
+type SectionTextChange = (
+  fieldPath: ReadonlyArray<string | number>,
+  value: string
+) => void
+
+function WireframeLabel({
+  children,
+  label,
+  onChange,
+}: {
+  children: string
+  label?: string
+  onChange?: (value: string) => void
+}) {
   return (
-    <span className="inline-flex border border-foreground/30 bg-background px-2.5 py-1 text-xs font-medium tracking-[0.08em] text-muted-foreground">
-      {children}
-    </span>
+    <EditableCopy
+      as="span"
+      value={children}
+      label={label ?? "Edit label"}
+      onChange={onChange}
+      className="inline-flex border border-foreground/30 bg-background px-2.5 py-1 text-xs font-medium tracking-[0.08em] text-muted-foreground"
+    />
   )
 }
 
-function InertAction({ action }: { action: TeacherPreviewActionDto | null }) {
+function InertAction({
+  action,
+  onChange,
+}: {
+  action: TeacherPreviewActionDto | null
+  onChange?: SectionTextChange
+}) {
   if (!action) return null
 
   return (
     <div className="mt-7">
-      <span
+      <EditableCopy
+        as="span"
+        value={action.label}
+        label="Edit action label"
+        onChange={
+          onChange ? (value) => onChange(["action", "label"], value) : undefined
+        }
         className="inline-flex min-h-12 items-center justify-center border-2 border-foreground bg-foreground px-6 py-3 font-semibold text-background select-none"
         data-wireframe-action
-      >
-        {action.label}
-      </span>
+      />
       {action.note ? (
-        <p className="mt-3 text-sm leading-[1.5] text-muted-foreground">
-          {action.note}
-        </p>
+        <EditableCopy
+          as="p"
+          value={action.note}
+          label="Edit action note"
+          onChange={
+            onChange
+              ? (value) => onChange(["action", "note"], value)
+              : undefined
+          }
+          className="mt-3 text-sm leading-[1.5] text-muted-foreground"
+        />
       ) : null}
     </div>
   )
@@ -44,20 +81,24 @@ function SectionIntro({
   annotationId,
   headingId,
   title,
+  onTitleChange,
 }: {
   annotationId?: string
   headingId: string
   title: string
+  onTitleChange?: (value: string) => void
 }) {
   return (
     <div className="max-w-3xl">
       <div className="flex items-start gap-3">
-        <h2
+        <EditableCopy
+          as="h2"
           id={headingId}
+          value={title}
+          label={`Edit ${title} heading`}
+          onChange={onTitleChange}
           className="font-heading text-[32px] font-semibold tracking-[-0.025em]"
-        >
-          {title}
-        </h2>
+        />
         {annotationId ? <ReviewPin id={annotationId} /> : null}
       </div>
     </div>
@@ -129,8 +170,10 @@ function ProductScreenFigure({
 
 function HeroSection({
   section,
+  onChange,
 }: {
   section: TeacherPreviewPromiseSectionDto
+  onChange?: SectionTextChange
 }) {
   return (
     <section
@@ -140,23 +183,38 @@ function HeroSection({
     >
       <div>
         {section.eyebrow ? (
-          <WireframeLabel>{section.eyebrow}</WireframeLabel>
-        ) : null}
-        <h1
-          id="wireframe-hero-heading"
-          className="max-w-[13ch] font-heading text-[32px] leading-tight font-semibold tracking-[-0.035em] sm:text-5xl lg:text-[72px]"
-        >
-          {section.heading}
-        </h1>
-        {section.body.map((paragraph) => (
-          <p
-            className="mt-6 max-w-[42rem] text-lg leading-7 text-muted-foreground"
-            key={paragraph}
+          <WireframeLabel
+            label="Edit opening label"
+            onChange={
+              onChange ? (value) => onChange(["eyebrow"], value) : undefined
+            }
           >
-            {paragraph}
-          </p>
+            {section.eyebrow}
+          </WireframeLabel>
+        ) : null}
+        <EditableCopy
+          as="h1"
+          id="wireframe-hero-heading"
+          value={section.heading}
+          label="Edit opening heading"
+          onChange={
+            onChange ? (value) => onChange(["heading"], value) : undefined
+          }
+          className="max-w-[13ch] font-heading text-[32px] leading-tight font-semibold tracking-[-0.035em] sm:text-5xl lg:text-[72px]"
+        />
+        {section.body.map((paragraph, index) => (
+          <EditableCopy
+            as="p"
+            value={paragraph}
+            label={`Edit opening paragraph ${index + 1}`}
+            onChange={
+              onChange ? (value) => onChange(["body", index], value) : undefined
+            }
+            className="mt-6 max-w-[42rem] text-lg leading-7 text-muted-foreground"
+            key={index}
+          />
         ))}
-        <InertAction action={section.action} />
+        <InertAction action={section.action} onChange={onChange} />
       </div>
 
       <div data-wireframe-interface-frame="product-view">
@@ -172,8 +230,10 @@ function HeroSection({
 
 function ConnectedStorySection({
   section,
+  onChange,
 }: {
   section: TeacherPreviewConnectedStorySectionDto
+  onChange?: SectionTextChange
 }) {
   return (
     <section
@@ -185,6 +245,9 @@ function ConnectedStorySection({
         annotationId={reviewAnnotationBindings.story}
         headingId="wireframe-connected-story"
         title={section.heading}
+        onTitleChange={
+          onChange ? (value) => onChange(["heading"], value) : undefined
+        }
       />
 
       <ol className="mt-12 border-t border-border">
@@ -198,20 +261,47 @@ function ConnectedStorySection({
             </p>
             <div>
               {step.label ? (
-                <WireframeLabel>{step.label}</WireframeLabel>
+                <WireframeLabel
+                  label={`Edit story step ${index + 1} label`}
+                  onChange={
+                    onChange
+                      ? (value) => onChange(["steps", index, "label"], value)
+                      : undefined
+                  }
+                >
+                  {step.label}
+                </WireframeLabel>
               ) : null}
               {step.heading ? (
-                <h3 className="mt-4 max-w-2xl font-heading text-2xl leading-tight font-semibold tracking-[-0.02em]">
-                  {step.heading}
-                </h3>
+                <EditableCopy
+                  as="h3"
+                  value={step.heading}
+                  label={`Edit story step ${index + 1} heading`}
+                  onChange={
+                    onChange
+                      ? (value) => onChange(["steps", index, "heading"], value)
+                      : undefined
+                  }
+                  className="mt-4 max-w-2xl font-heading text-2xl leading-tight font-semibold tracking-[-0.02em]"
+                />
               ) : null}
-              {step.body.map((paragraph) => (
-                <p
+              {step.body.map((paragraph, paragraphIndex) => (
+                <EditableCopy
+                  as="p"
+                  value={paragraph}
+                  label={`Edit story step ${index + 1} paragraph ${paragraphIndex + 1}`}
+                  onChange={
+                    onChange
+                      ? (value) =>
+                          onChange(
+                            ["steps", index, "body", paragraphIndex],
+                            value
+                          )
+                      : undefined
+                  }
                   className="mt-4 max-w-2xl leading-6 text-muted-foreground"
-                  key={paragraph}
-                >
-                  {paragraph}
-                </p>
+                  key={paragraphIndex}
+                />
               ))}
             </div>
             <ProductScreenFigure
@@ -228,8 +318,10 @@ function ConnectedStorySection({
 
 function RevealSection({
   section,
+  onChange,
 }: {
   section: TeacherPreviewRevealSectionDto
+  onChange?: SectionTextChange
 }) {
   return (
     <section
@@ -239,19 +331,29 @@ function RevealSection({
     >
       <div className="grid gap-10 md:grid-cols-[minmax(0,1.2fr)_minmax(16rem,0.8fr)] md:items-end">
         <div>
-          <h2
+          <EditableCopy
+            as="h2"
             id="wireframe-reveal"
+            value={section.heading}
+            label="Edit reveal heading"
+            onChange={
+              onChange ? (value) => onChange(["heading"], value) : undefined
+            }
             className="font-heading text-[32px] font-semibold tracking-[-0.035em] sm:text-5xl"
-          >
-            {section.heading}
-          </h2>
-          {section.body.map((paragraph) => (
-            <p
+          />
+          {section.body.map((paragraph, index) => (
+            <EditableCopy
+              as="p"
+              value={paragraph}
+              label={`Edit reveal paragraph ${index + 1}`}
+              onChange={
+                onChange
+                  ? (value) => onChange(["body", index], value)
+                  : undefined
+              }
               className="mt-6 max-w-3xl text-lg leading-7 text-background/75"
-              key={paragraph}
-            >
-              {paragraph}
-            </p>
+              key={index}
+            />
           ))}
         </div>
         {section.asides.map((aside, index) => (
@@ -259,10 +361,23 @@ function RevealSection({
             className="border border-background/30 p-5"
             key={aside.body[0] ?? `reveal-aside-${index}`}
           >
-            {aside.body.map((paragraph) => (
-              <p className="text-sm text-background/85" key={paragraph}>
-                {paragraph}
-              </p>
+            {aside.body.map((paragraph, paragraphIndex) => (
+              <EditableCopy
+                as="p"
+                value={paragraph}
+                label={`Edit reveal note ${index + 1}`}
+                onChange={
+                  onChange
+                    ? (value) =>
+                        onChange(
+                          ["asides", index, "body", paragraphIndex],
+                          value
+                        )
+                    : undefined
+                }
+                className="text-sm text-background/85"
+                key={paragraphIndex}
+              />
             ))}
           </div>
         ))}
@@ -273,8 +388,10 @@ function RevealSection({
 
 function CapabilitiesSection({
   section,
+  onChange,
 }: {
   section: TeacherPreviewCapabilitiesSectionDto
+  onChange?: SectionTextChange
 }) {
   return (
     <section
@@ -286,6 +403,9 @@ function CapabilitiesSection({
         annotationId={reviewAnnotationBindings.capabilities}
         headingId="wireframe-capabilities"
         title={section.heading}
+        onTitleChange={
+          onChange ? (value) => onChange(["heading"], value) : undefined
+        }
       />
 
       <ol className="mt-12 border-t border-foreground/30">
@@ -297,20 +417,50 @@ function CapabilitiesSection({
             <p className="text-sm text-muted-foreground tabular-nums">
               {String(index + 1).padStart(2, "0")}
             </p>
-            <p className="text-lg font-semibold">{item.label}</p>
+            {item.label ? (
+              <EditableCopy
+                as="p"
+                value={item.label}
+                label={`Edit capability ${index + 1} label`}
+                onChange={
+                  onChange
+                    ? (value) => onChange(["items", index, "label"], value)
+                    : undefined
+                }
+                className="text-lg font-semibold"
+              />
+            ) : null}
             <div>
               {item.heading ? (
-                <h3 className="font-heading text-xl leading-snug font-semibold">
-                  {item.heading}
-                </h3>
+                <EditableCopy
+                  as="h3"
+                  value={item.heading}
+                  label={`Edit capability ${index + 1} heading`}
+                  onChange={
+                    onChange
+                      ? (value) => onChange(["items", index, "heading"], value)
+                      : undefined
+                  }
+                  className="font-heading text-xl leading-snug font-semibold"
+                />
               ) : null}
-              {item.body.map((paragraph) => (
-                <p
+              {item.body.map((paragraph, paragraphIndex) => (
+                <EditableCopy
+                  as="p"
+                  value={paragraph}
+                  label={`Edit capability ${index + 1} paragraph ${paragraphIndex + 1}`}
+                  onChange={
+                    onChange
+                      ? (value) =>
+                          onChange(
+                            ["items", index, "body", paragraphIndex],
+                            value
+                          )
+                      : undefined
+                  }
                   className="mt-3 max-w-[72ch] leading-6 text-muted-foreground"
-                  key={paragraph}
-                >
-                  {paragraph}
-                </p>
+                  key={paragraphIndex}
+                />
               ))}
             </div>
           </li>
@@ -322,8 +472,10 @@ function CapabilitiesSection({
 
 function AccessSupportSection({
   section,
+  onChange,
 }: {
   section: TeacherPreviewAccessSupportSectionDto
+  onChange?: SectionTextChange
 }) {
   return (
     <section
@@ -335,84 +487,143 @@ function AccessSupportSection({
         annotationId={reviewAnnotationBindings.accessSupport}
         headingId="wireframe-access-support"
         title={section.heading}
+        onTitleChange={
+          onChange ? (value) => onChange(["heading"], value) : undefined
+        }
       />
 
       <div className="mt-12 max-w-2xl">
         <div>
-          <h3 className="font-heading text-xl font-semibold">
-            {section.accessHeading}
-          </h3>
+          <EditableCopy
+            as="h3"
+            value={section.accessHeading}
+            label="Edit access heading"
+            onChange={
+              onChange
+                ? (value) => onChange(["accessHeading"], value)
+                : undefined
+            }
+            className="font-heading text-xl font-semibold"
+          />
           <dl className="mt-6 grid gap-2 border-y border-foreground/30 py-5 sm:grid-cols-[8rem_1fr]">
-            <dt className="text-sm font-medium text-muted-foreground">
-              {section.methodLabel}
-            </dt>
-            <dd className="font-semibold">{section.method}</dd>
+            <EditableCopy
+              as="dt"
+              value={section.methodLabel}
+              label="Edit access method label"
+              onChange={
+                onChange
+                  ? (value) => onChange(["methodLabel"], value)
+                  : undefined
+              }
+              className="text-sm font-medium text-muted-foreground"
+            />
+            <EditableCopy
+              as="dd"
+              value={section.method}
+              label="Edit access method"
+              onChange={
+                onChange ? (value) => onChange(["method"], value) : undefined
+              }
+              className="font-semibold"
+            />
           </dl>
-          <p className="mt-3 text-sm leading-[1.5] text-muted-foreground">
-            {section.accountNote}
-          </p>
+          <EditableCopy
+            as="p"
+            value={section.accountNote}
+            label="Edit access note"
+            onChange={
+              onChange ? (value) => onChange(["accountNote"], value) : undefined
+            }
+            className="mt-3 text-sm leading-[1.5] text-muted-foreground"
+          />
         </div>
       </div>
     </section>
   )
 }
 
-function CloseSection({ section }: { section: TeacherPreviewCloseSectionDto }) {
+function CloseSection({
+  section,
+  onChange,
+}: {
+  section: TeacherPreviewCloseSectionDto
+  onChange?: SectionTextChange
+}) {
   return (
     <section
       aria-labelledby="wireframe-close"
       className="px-6 py-20 text-center md:px-10 md:py-28 lg:px-16"
       data-wireframe-section={section.kind}
     >
-      <h2
+      <EditableCopy
+        as="h2"
         id="wireframe-close"
+        value={section.heading}
+        label="Edit closing heading"
+        onChange={
+          onChange ? (value) => onChange(["heading"], value) : undefined
+        }
         className="mx-auto max-w-4xl font-heading text-[32px] font-semibold tracking-[-0.035em] sm:text-5xl"
-      >
-        {section.heading}
-      </h2>
-      {section.body.map((paragraph) => (
-        <p
+      />
+      {section.body.map((paragraph, index) => (
+        <EditableCopy
+          as="p"
+          value={paragraph}
+          label={`Edit closing paragraph ${index + 1}`}
+          onChange={
+            onChange ? (value) => onChange(["body", index], value) : undefined
+          }
           className="mx-auto mt-6 max-w-2xl text-lg leading-7 text-muted-foreground"
-          key={paragraph}
-        >
-          {paragraph}
-        </p>
+          key={index}
+        />
       ))}
-      <InertAction action={section.action} />
+      <InertAction action={section.action} onChange={onChange} />
     </section>
   )
 }
 
 export function ContentReviewSection({
   section,
+  onChange,
 }: {
   section: TeacherPreviewSectionDto
+  onChange?: SectionTextChange
 }) {
   switch (section.kind) {
     case "promise":
-      return <HeroSection section={section} />
+      return <HeroSection section={section} onChange={onChange} />
     case "connected-story":
-      return <ConnectedStorySection section={section} />
+      return <ConnectedStorySection section={section} onChange={onChange} />
     case "reveal":
-      return <RevealSection section={section} />
+      return <RevealSection section={section} onChange={onChange} />
     case "capabilities":
-      return <CapabilitiesSection section={section} />
+      return <CapabilitiesSection section={section} onChange={onChange} />
     case "close":
-      return <CloseSection section={section} />
+      return <CloseSection section={section} onChange={onChange} />
     case "access-support":
-      return <AccessSupportSection section={section} />
+      return <AccessSupportSection section={section} onChange={onChange} />
   }
 }
 
 export function ContentReviewOutline({
   sections,
+  editor,
 }: {
   sections: ReadonlyArray<TeacherPreviewSectionDto>
+  editor?: ContentReviewEditAdapter
 }) {
   return (
     <>
-      {sections.map((section) => (
-        <ContentReviewSection key={section.kind} section={section} />
+      {sections.map((section, index) => (
+        <ContentReviewSection
+          key={section.kind}
+          section={section}
+          onChange={
+            editor
+              ? (path, value) => editor.updateSectionText(index, path, value)
+              : undefined
+          }
+        />
       ))}
     </>
   )

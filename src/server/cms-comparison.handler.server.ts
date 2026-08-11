@@ -7,10 +7,9 @@ import {
   CmsCapabilityError,
   requireCmsCapability,
 } from "@/auth/cms-capability.server"
-import { projectCmsPageDocument } from "@/cms/validation"
 import { getCmsDatabase } from "@/db/client.server"
 import { createCmsContentRepository } from "@/db/content-repository.server"
-
+import { cmsHomepagePageId } from "@/cms/templates/homepage-v1.server"
 
 function setPrivateHeaders(): void {
   setResponseHeaders(
@@ -27,8 +26,9 @@ export async function loadCmsComparisonPageData(
   request: Request
 ): Promise<CmsComparisonPageData> {
   setPrivateHeaders()
+  let session
   try {
-    requireCmsCapability(request)
+    session = requireCmsCapability(request)
   } catch (error) {
     return error instanceof CmsCapabilityError &&
       (error.code === "UNAUTHORIZED" || error.code === "EXPIRED")
@@ -37,10 +37,17 @@ export async function loadCmsComparisonPageData(
   }
 
   try {
-    const snapshot =
-      await createCmsContentRepository(getCmsDatabase()).loadPublishedPage("/")
-    const document = projectCmsPageDocument(snapshot.pageDocument)
-    return document ? { status: "ready", document } : { status: "unavailable" }
+    const repository = createCmsContentRepository(getCmsDatabase())
+    const [snapshot, page] = await Promise.all([
+      repository.loadDraft(cmsHomepagePageId),
+      repository.loadPageState(cmsHomepagePageId),
+    ])
+    return {
+      status: "ready",
+      snapshot,
+      publishedHead: page.publishedHead,
+      csrfToken: session.csrfToken,
+    }
   } catch {
     return { status: "unavailable" }
   }

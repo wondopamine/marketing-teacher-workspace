@@ -166,7 +166,19 @@ function locationOf(element: HTMLElement): string {
   return heading?.textContent.trim().slice(0, 120) ?? "Page"
 }
 
-export function PublicReviewMode() {
+export type ExternalReviewEditor = {
+  readonly active: boolean
+  readonly busy: boolean
+  readonly controls: React.ReactNode
+  readonly statusMessage: string
+  readonly onToggle: () => void
+}
+
+export function PublicReviewMode({
+  externalEditor,
+}: {
+  externalEditor?: ExternalReviewEditor
+} = {}) {
   const {
     annotations,
     open,
@@ -381,10 +393,13 @@ export function PublicReviewMode() {
         (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k"
       if (toggle) {
         event.preventDefault()
-        if (active) deactivate()
+        if (externalEditor) externalEditor.onToggle()
+        else if (active) deactivate()
         else if (!editLoading) void activate()
       }
-      if (event.key === "Escape" && active) deactivate()
+      if (event.key === "Escape" && externalEditor?.active) {
+        externalEditor.onToggle()
+      } else if (event.key === "Escape" && active) deactivate()
       else if (event.key === "Escape" && panelOpen) {
         const opener = panelOpenerId
           ? document.querySelector<HTMLElement>(
@@ -403,6 +418,7 @@ export function PublicReviewMode() {
     active,
     deactivate,
     editLoading,
+    externalEditor,
     panelOpen,
     panelOpenerId,
     setPanelOpen,
@@ -552,6 +568,7 @@ export function PublicReviewMode() {
                 : pending > 0
                   ? readySummary
                   : "Review a section or edit the teacher copy."
+  const visibleStatusMessage = externalEditor?.statusMessage ?? statusMessage
 
   const toggleRationale = () => {
     if (active) {
@@ -576,11 +593,11 @@ export function PublicReviewMode() {
               aria-live="polite"
               className="mt-0.5 max-w-[62ch] text-xs text-muted-foreground"
             >
-              {statusMessage}
+              {visibleStatusMessage}
             </p>
           </div>
           <div
-            className="grid w-full shrink-0 grid-cols-2 gap-2 sm:w-auto"
+            className="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto sm:justify-end"
             role="group"
             aria-label="Review tools"
           >
@@ -591,28 +608,32 @@ export function PublicReviewMode() {
               ref={rationaleRef}
               aria-controls="review-rationale-panel"
               aria-expanded={panelOpen}
-              disabled={editLoading}
+              disabled={
+                editLoading || externalEditor?.active || externalEditor?.busy
+              }
               onClick={toggleRationale}
               className="min-h-11 px-4"
             >
               {panelOpen ? "Hide rationale" : "Show rationale"}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              ref={toggleRef}
-              aria-pressed={active}
-              disabled={editLoading}
-              onClick={() => (active ? deactivate() : void activate())}
-              className="min-h-11 px-4 aria-pressed:bg-foreground aria-pressed:text-background"
-            >
-              {editLoading
-                ? "Preparing…"
-                : active
-                  ? "Finish editing"
-                  : "Edit content"}
-            </Button>
+            {externalEditor?.controls ?? (
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                ref={toggleRef}
+                aria-pressed={active}
+                disabled={editLoading}
+                onClick={() => (active ? deactivate() : void activate())}
+                className="min-h-11 px-4 aria-pressed:bg-foreground aria-pressed:text-background"
+              >
+                {editLoading
+                  ? "Preparing…"
+                  : active
+                    ? "Finish editing"
+                    : "Edit content"}
+              </Button>
+            )}
           </div>
         </div>
       </header>

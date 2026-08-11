@@ -26,8 +26,9 @@ describe("protected CMS preview boundary", () => {
 
   it("checks the capability before loading any CMS document", () => {
     expect(handlerSource.indexOf("requireCmsCapability(request)")).toBeLessThan(
-      handlerSource.indexOf("loadPublishedPage")
+      handlerSource.indexOf("loadDraft")
     )
+    expect(handlerSource).toContain("loadPageState")
     expect(handlerSource).toContain('"Cache-Control": "private, no-store"')
     expect(handlerSource).toContain('Vary: "Cookie"')
   })

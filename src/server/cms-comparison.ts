@@ -1,13 +1,18 @@
 import { createServerFn } from "@tanstack/react-start"
 
-import type { TeacherPreviewDocumentDto } from "@/content/teacher-preview-document"
+import type {
+  CmsHead,
+  CmsVersionSnapshot,
+} from "@/db/content-repository.server"
 
 export type CmsComparisonPageData =
   | { readonly status: "locked" }
   | { readonly status: "unavailable" }
   | {
       readonly status: "ready"
-      readonly document: TeacherPreviewDocumentDto
+      readonly snapshot: CmsVersionSnapshot
+      readonly publishedHead: CmsHead | null
+      readonly csrfToken: string
     }
 
 export const getCmsComparisonPageData = createServerFn({
