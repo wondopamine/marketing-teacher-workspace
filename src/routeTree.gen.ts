@@ -10,11 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CmsPreviewRouteImport } from './routes/cms-preview'
 import { Route as ContentReviewRouteImport } from './routes/content-review'
+import { Route as ApiCmsSessionRouteImport } from './routes/api/cms/session'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CmsPreviewRoute = CmsPreviewRouteImport.update({
+  id: '/cms-preview',
+  path: '/cms-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContentReviewRoute = ContentReviewRouteImport.update({
@@ -22,31 +29,44 @@ const ContentReviewRoute = ContentReviewRouteImport.update({
   path: '/content-review',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCmsSessionRoute = ApiCmsSessionRouteImport.update({
+  id: '/api/cms/session',
+  path: '/api/cms/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cms-preview': typeof CmsPreviewRoute
   '/content-review': typeof ContentReviewRoute
+  '/api/cms/session': typeof ApiCmsSessionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cms-preview': typeof CmsPreviewRoute
   '/content-review': typeof ContentReviewRoute
+  '/api/cms/session': typeof ApiCmsSessionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cms-preview': typeof CmsPreviewRoute
   '/content-review': typeof ContentReviewRoute
+  '/api/cms/session': typeof ApiCmsSessionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/content-review'
+  fullPaths: '/' | '/cms-preview' | '/content-review' | '/api/cms/session'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/content-review'
-  id: '__root__' | '/' | '/content-review'
+  to: '/' | '/cms-preview' | '/content-review' | '/api/cms/session'
+  id: '__root__' | '/' | '/cms-preview' | '/content-review' | '/api/cms/session'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CmsPreviewRoute: typeof CmsPreviewRoute
   ContentReviewRoute: typeof ContentReviewRoute
+  ApiCmsSessionRoute: typeof ApiCmsSessionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,6 +78,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cms-preview': {
+      id: '/cms-preview'
+      path: '/cms-preview'
+      fullPath: '/cms-preview'
+      preLoaderRoute: typeof CmsPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/content-review': {
       id: '/content-review'
       path: '/content-review'
@@ -65,12 +92,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContentReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cms/session': {
+      id: '/api/cms/session'
+      path: '/api/cms/session'
+      fullPath: '/api/cms/session'
+      preLoaderRoute: typeof ApiCmsSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CmsPreviewRoute: CmsPreviewRoute,
   ContentReviewRoute: ContentReviewRoute,
+  ApiCmsSessionRoute: ApiCmsSessionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
