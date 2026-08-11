@@ -41,6 +41,7 @@ type Status =
   | { kind: "idle" }
   | { kind: "sending" }
   | { kind: "sent"; message: string; url: string | null }
+  | { kind: "copied" }
   | { kind: "error"; message: string }
 
 const editableSelector = "h1, h2, h3, h4, p, li, dd, dt"
@@ -77,6 +78,38 @@ function matchElements(spans: ReadonlyArray<Span>): Map<HTMLElement, Span> {
   return matched
 }
 
+/**
+ * A plain-text round-up of the reviewer's work, used when sending isn't wired
+ * up on a deployment. Without this the "copy your notes" advice would be a dead
+ * end: there would be nothing to copy.
+ */
+function summarise(
+  reviewer: string,
+  edits: ReadonlyArray<PendingEdit>,
+  comments: ReadonlyArray<{ where: string; note: string }>
+): string {
+  const lines = [
+    `Landing page review${reviewer.trim() ? ` from ${reviewer.trim()}` : ""}`,
+    "",
+  ]
+  if (comments.length > 0) {
+    lines.push("Comments:")
+    for (const comment of comments) {
+      lines.push(`- ${comment.where}: ${comment.note}`)
+    }
+    lines.push("")
+  }
+  if (edits.length > 0) {
+    lines.push("Copy changes:")
+    for (const edit of edits) {
+      lines.push(`- ${edit.span.label} (${edit.span.file})`)
+      lines.push(`  was: ${edit.span.text}`)
+      lines.push(`  now: ${edit.text}`)
+    }
+  }
+  return lines.join("\n")
+}
+
 /** The nearest section heading, so a comment says where it came from. */
 function locationOf(element: HTMLElement): string {
   const section = element.closest("section, footer, header")
@@ -95,6 +128,7 @@ export function PublicReviewMode() {
   >([])
   const [reviewer, setReviewer] = useState("")
   const [note, setNote] = useState("")
+  const [fallbackText, setFallbackText] = useState<string | null>(null)
   const spansRef = useRef<ReadonlyArray<Span>>([])
   const cleanupRef = useRef<() => void>(() => {})
   const toggleRef = useRef<HTMLButtonElement | null>(null)
@@ -221,6 +255,22 @@ export function PublicReviewMode() {
     setNote("")
   }, [note])
 
+  const copyForDesigner = useCallback(async () => {
+    const text = summarise(reviewer, edits, comments)
+    try {
+      await navigator.clipboard.writeText(text)
+      setStatus({ kind: "copied" })
+    } catch {
+      // Clipboard access can be refused; a textarea the reviewer can select
+      // from is better than losing their work.
+      setStatus({
+        kind: "error",
+        message: "Couldn't copy automatically — select the text below instead.",
+      })
+      setFallbackText(text)
+    }
+  }, [comments, edits, reviewer])
+
   const send = useCallback(async () => {
     setStatus({ kind: "sending" })
     try {
@@ -285,7 +335,9 @@ export function PublicReviewMode() {
           <p className="text-muted-foreground">
             {active
               ? "Click any text to change it. Press Enter to keep, Esc to undo."
-              : "Change any wording or leave a note. No account needed. ⌘K toggles editing."}
+              : canSubmit
+                ? "Change any wording or leave a note, then Send. No account needed."
+                : "Change any wording or leave a note, then copy it for the designer. No account needed."}
           </p>
 
           <label className="block">
@@ -320,25 +372,39 @@ export function PublicReviewMode() {
 
           <button
             type="button"
-            onClick={() => void send()}
-            disabled={pending === 0 || status.kind === "sending" || !canSubmit}
+            onClick={() => void (canSubmit ? send() : copyForDesigner())}
+            disabled={pending === 0 || status.kind === "sending"}
             className="min-h-11 w-full rounded-md border-2 border-foreground bg-foreground px-3 py-2 font-semibold text-background disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
           >
             {status.kind === "sending"
               ? "Sending…"
-              : `Send${pending > 0 ? ` (${pending})` : ""}`}
+              : canSubmit
+                ? `Send${pending > 0 ? ` (${pending})` : ""}`
+                : `Copy for the designer${pending > 0 ? ` (${pending})` : ""}`}
           </button>
 
           <p aria-live="polite" className="min-h-5 text-muted-foreground">
             {status.kind === "error" ? status.message : null}
             {status.kind === "sent" ? status.message : null}
-            {status.kind === "idle" && pending > 0
-              ? `${edits.length} edit${edits.length === 1 ? "" : "s"} and ${comments.length} note${comments.length === 1 ? "" : "s"} ready to send.`
+            {status.kind === "copied"
+              ? "Copied. Paste it to the designer — thank you."
               : null}
-            {!canSubmit
-              ? " Sending is off for this deployment — copy your notes to the designer."
+            {status.kind === "idle" && pending > 0
+              ? `${edits.length} edit${edits.length === 1 ? "" : "s"} and ${comments.length} note${comments.length === 1 ? "" : "s"} ready.`
               : null}
           </p>
+
+          {fallbackText ? (
+            <label className="block">
+              <span className="font-medium">Your feedback — select and copy</span>
+              <textarea
+                readOnly
+                rows={6}
+                value={fallbackText}
+                className="mt-1 w-full rounded-md border border-foreground/30 bg-background px-3 py-2 font-mono text-xs focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
+              />
+            </label>
+          ) : null}
         </div>
       </div>
     </div>
