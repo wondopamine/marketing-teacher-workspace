@@ -1,12 +1,21 @@
+import { randomUUID } from "node:crypto"
+
 import { sql } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { migrate } from "drizzle-orm/node-postgres/migrator"
 import { Pool } from "pg"
-import { afterAll, beforeAll, describe, expect, it } from "vitest"
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest"
 
-
-import { createCmsContentRepository } from "./content-repository.server"
+import {
+  CmsRepositoryError,
+  createCmsContentRepository,
+} from "./content-repository.server"
 import * as schema from "./schema"
+import type { CmsVersionContract } from "@/cms/document"
+import type {
+  CmsHead,
+  ImportInitialCmsPageResult,
+} from "./content-repository.server"
 import {
   cmsHomepageImportAttemptId,
   cmsHomepagePageId,
@@ -43,6 +52,36 @@ function databaseErrorText(error: unknown): string {
   return parts.join("\n")
 }
 
+function contractWith(
+  base: CmsVersionContract,
+  changes: {
+    readonly title?: string
+    readonly path?: string
+    readonly description?: string
+  }
+): CmsVersionContract {
+  return {
+    pageSchemaVersion: base.pageSchemaVersion,
+    reviewSchemaVersion: base.reviewSchemaVersion,
+    sectionLibraryVersion: base.sectionLibraryVersion,
+    pageDocument: {
+      ...base.pageDocument,
+      page: { ...base.pageDocument.page, ...changes },
+    },
+    reviewDocument: base.reviewDocument,
+  }
+}
+
+function expectRepositoryError(
+  result: PromiseSettledResult<unknown>,
+  code: CmsRepositoryError["code"]
+): void {
+  expect(result.status).toBe("rejected")
+  if (result.status !== "rejected") return
+  expect(result.reason).toBeInstanceOf(CmsRepositoryError)
+  expect((result.reason as CmsRepositoryError).code).toBe(code)
+}
+
 async function expectDatabaseError(
   operation: Promise<unknown>,
   pattern: RegExp
@@ -63,6 +102,7 @@ databaseSuite("CMS PostgreSQL repository", () => {
   const pool = new Pool({ connectionString: testDatabaseUrl, max: 4 })
   const database = drizzle(pool, { schema, casing: "snake_case" })
   const repository = createCmsContentRepository(database)
+  let imported: ImportInitialCmsPageResult
 
   beforeAll(async () => {
     await pool.query("drop schema if exists drizzle cascade")
@@ -70,6 +110,15 @@ databaseSuite("CMS PostgreSQL repository", () => {
     await pool.query("create schema public")
     await migrate(database, { migrationsFolder: "drizzle" })
   }, 30_000)
+
+  beforeEach(async () => {
+    await pool.query("truncate cms_pages cascade")
+    imported = await repository.importInitialPage({
+      pageId: cmsHomepagePageId,
+      attemptId: cmsHomepageImportAttemptId,
+      contract: homepageV1Contract,
+    })
+  })
 
   afterAll(async () => {
     await pool.end()
@@ -82,16 +131,15 @@ databaseSuite("CMS PostgreSQL repository", () => {
       contract: homepageV1Contract,
     } as const
 
-    const first = await repository.importInitialPage(input)
     const retry = await repository.importInitialPage(input)
     const draft = await repository.loadDraft(cmsHomepagePageId)
     const published = await repository.loadPublishedPage("/")
 
-    expect(first.created).toBe(true)
+    expect(imported.created).toBe(true)
     expect(retry.created).toBe(false)
-    expect(retry.snapshot).toEqual(first.snapshot)
-    expect(draft).toEqual(first.snapshot)
-    expect(published).toEqual(first.snapshot)
+    expect(retry.snapshot).toEqual(imported.snapshot)
+    expect(draft).toEqual(imported.snapshot)
+    expect(published).toEqual(imported.snapshot)
     expect(draft.pageDocument).toEqual(homepageV1Contract.pageDocument)
 
     const counts = await database.execute<
@@ -212,5 +260,386 @@ databaseSuite("CMS PostgreSQL repository", () => {
       `),
       /cms_page_versions_page_attempt_uq/i
     )
+  })
+
+  it("saves one immutable draft without changing the published head", async () => {
+    const contract = contractWith(homepageV1Contract, {
+      title: "Teacher Workspace draft",
+    })
+    const saved = await repository.saveVersion({
+      pageId: cmsHomepagePageId,
+      expectedHead: imported.snapshot.head,
+      contract,
+      displayName: "Alex Tan",
+      attemptId: randomUUID(),
+    })
+
+    expect(saved.outcome).toBe("committed")
+    expect(saved.committed.head.versionNumber).toBe(2)
+    expect(saved.committed.parentVersionId).toBe(
+      imported.snapshot.head.versionId
+    )
+    expect(saved.committed.editorDisplayName).toBe("Alex Tan")
+    expect((await repository.loadDraft(cmsHomepagePageId)).head).toEqual(
+      saved.committed.head
+    )
+    expect((await repository.loadPublishedPage("/")).head).toEqual(
+      imported.snapshot.head
+    )
+
+    const history = await repository.listVersions(cmsHomepagePageId)
+    expect(
+      history.versions.map((version) => version.head.versionNumber)
+    ).toEqual([2, 1])
+    expect(history.versions[0]).toMatchObject({
+      isCurrentDraft: true,
+      isPublished: false,
+    })
+    expect(history.versions[1]).toMatchObject({
+      isCurrentDraft: false,
+      isPublished: true,
+    })
+  })
+
+  it("serializes two saves from one base and preserves the losing document", async () => {
+    const firstContract = contractWith(homepageV1Contract, {
+      title: "First concurrent draft",
+    })
+    const secondContract = contractWith(homepageV1Contract, {
+      title: "Second concurrent draft",
+    })
+    const results = await Promise.allSettled([
+      repository.saveVersion({
+        pageId: cmsHomepagePageId,
+        expectedHead: imported.snapshot.head,
+        contract: firstContract,
+        displayName: "Alex Tan",
+        attemptId: randomUUID(),
+      }),
+      repository.saveVersion({
+        pageId: cmsHomepagePageId,
+        expectedHead: imported.snapshot.head,
+        contract: secondContract,
+        displayName: "Jamie Lim",
+        attemptId: randomUUID(),
+      }),
+    ])
+
+    const successes = results.filter(
+      (
+        result
+      ): result is PromiseFulfilledResult<
+        Awaited<ReturnType<typeof repository.saveVersion>>
+      > => result.status === "fulfilled"
+    )
+    const failures = results.filter(
+      (result): result is PromiseRejectedResult => result.status === "rejected"
+    )
+    expect(successes).toHaveLength(1)
+    expect(failures).toHaveLength(1)
+    expectRepositoryError(failures[0], "STALE_DRAFT")
+    expect((failures[0].reason as CmsRepositoryError).latest?.head).toEqual(
+      successes[0].value.committed.head
+    )
+
+    const counts = await database.execute<
+      Record<string, unknown> & { versions: number }
+    >(sql`select count(*)::int as versions from cms_page_versions`)
+    expect(counts.rows[0].versions).toBe(2)
+  })
+
+  it("deduplicates simultaneous use and later retries of one save attempt", async () => {
+    const attemptId = randomUUID()
+    const input = {
+      pageId: cmsHomepagePageId,
+      expectedHead: imported.snapshot.head,
+      contract: contractWith(homepageV1Contract, {
+        title: "One attempt, one draft",
+      }),
+      displayName: "Alex Tan",
+      attemptId,
+    } as const
+    const [first, duplicate] = await Promise.all([
+      repository.saveVersion(input),
+      repository.saveVersion(input),
+    ])
+    expect(duplicate.committed.head).toEqual(first.committed.head)
+
+    const later = await repository.saveVersion({
+      ...input,
+      expectedHead: first.live.head,
+      contract: contractWith(first.live, {
+        title: "A later saved draft",
+      }),
+      attemptId: randomUUID(),
+    })
+    const retry = await repository.saveVersion(input)
+    expect(retry.outcome).toBe("committed-but-superseded")
+    expect(retry.committed.head).toEqual(first.committed.head)
+    expect(retry.live.head).toEqual(later.committed.head)
+
+    await expect(
+      repository.saveVersion({
+        ...input,
+        contract: contractWith(homepageV1Contract, {
+          title: "Reused for different work",
+        }),
+      })
+    ).rejects.toMatchObject({ code: "ATTEMPT_REUSED" })
+  })
+
+  it("restores an exact old snapshot as a new draft with provenance", async () => {
+    const changed = await repository.saveVersion({
+      pageId: cmsHomepagePageId,
+      expectedHead: imported.snapshot.head,
+      contract: contractWith(homepageV1Contract, {
+        title: "Changed before restore",
+        description: "A changed description before the restore test.",
+      }),
+      displayName: "Alex Tan",
+      attemptId: randomUUID(),
+    })
+    const restored = await repository.restoreVersion({
+      pageId: cmsHomepagePageId,
+      sourceVersionId: imported.snapshot.head.versionId,
+      expectedHead: changed.live.head,
+      displayName: "Jamie Lim",
+      attemptId: randomUUID(),
+    })
+
+    expect(restored.committed.head.versionNumber).toBe(3)
+    expect(restored.committed.parentVersionId).toBe(
+      changed.committed.head.versionId
+    )
+    expect(restored.committed.restoredFromVersionId).toBe(
+      imported.snapshot.head.versionId
+    )
+    expect(restored.committed.pageDocument).toEqual(
+      imported.snapshot.pageDocument
+    )
+    expect(restored.committed.reviewDocument).toEqual(
+      imported.snapshot.reviewDocument
+    )
+    expect((await repository.loadPublishedPage("/")).head).toEqual(
+      imported.snapshot.head
+    )
+    expect(
+      (
+        await repository.getVersion(
+          cmsHomepagePageId,
+          changed.committed.head.versionId
+        )
+      ).pageDocument.page.title
+    ).toBe("Changed before restore")
+  })
+
+  it("keeps target identity while archiving and restoring section context", async () => {
+    const story = homepageV1Contract.pageDocument.sections.find(
+      (section) => section.type === "connected-story"
+    )
+    if (!story) throw new Error("Expected the connected story fixture")
+    const archivedContract: CmsVersionContract = {
+      ...homepageV1Contract,
+      pageDocument: {
+        ...homepageV1Contract.pageDocument,
+        sections: homepageV1Contract.pageDocument.sections.map((section) =>
+          section.id === story.id ? { ...section, state: "archived" } : section
+        ),
+      },
+    }
+    const archived = await repository.saveVersion({
+      pageId: cmsHomepagePageId,
+      expectedHead: imported.snapshot.head,
+      contract: archivedContract,
+      displayName: "Alex Tan",
+      attemptId: randomUUID(),
+    })
+    const archivedTarget = await database.execute<
+      Record<string, unknown> & { state: string; archivedAt: Date | null }
+    >(sql`
+      select state, archived_at as "archivedAt"
+      from cms_review_targets
+      where page_id = ${cmsHomepagePageId} and id = ${story.id}
+    `)
+    expect(archivedTarget.rows[0]).toMatchObject({ state: "archived" })
+    expect(archivedTarget.rows[0].archivedAt).not.toBeNull()
+
+    await repository.restoreVersion({
+      pageId: cmsHomepagePageId,
+      sourceVersionId: imported.snapshot.head.versionId,
+      expectedHead: archived.live.head,
+      displayName: "Jamie Lim",
+      attemptId: randomUUID(),
+    })
+    const restoredTarget = await database.execute<
+      Record<string, unknown> & { state: string; archivedAt: Date | null }
+    >(sql`
+      select state, archived_at as "archivedAt"
+      from cms_review_targets
+      where page_id = ${cmsHomepagePageId} and id = ${story.id}
+    `)
+    expect(restoredTarget.rows[0]).toMatchObject({
+      state: "active",
+      archivedAt: null,
+    })
+  })
+
+  it("publishes only the exact saved draft and retries without a second event", async () => {
+    const saved = await repository.saveVersion({
+      pageId: cmsHomepagePageId,
+      expectedHead: imported.snapshot.head,
+      contract: contractWith(homepageV1Contract, {
+        title: "Ready to publish",
+      }),
+      displayName: "Alex Tan",
+      attemptId: randomUUID(),
+    })
+    const attemptId = randomUUID()
+    const input = {
+      pageId: cmsHomepagePageId,
+      versionId: saved.committed.head.versionId,
+      expectedDraft: saved.committed.head,
+      expectedPublished: imported.snapshot.head,
+      displayName: "Alex Tan",
+      attemptId,
+    } as const
+    const [first, duplicate] = await Promise.all([
+      repository.publishVersion(input),
+      repository.publishVersion(input),
+    ])
+    const retry = await repository.publishVersion(input)
+
+    expect(first.outcome).toBe("committed")
+    expect(duplicate.committed.head).toEqual(first.committed.head)
+    expect(retry.committed.head).toEqual(first.committed.head)
+    expect((await repository.loadDraft(cmsHomepagePageId)).head).toEqual(
+      saved.committed.head
+    )
+    expect((await repository.loadPublishedPage("/")).head).toEqual(
+      saved.committed.head
+    )
+    const events = await database.execute<
+      Record<string, unknown> & { publications: number }
+    >(sql`
+      select count(*)::int as publications
+      from cms_publication_events
+      where page_id = ${cmsHomepagePageId}
+    `)
+    expect(events.rows[0].publications).toBe(2)
+  })
+
+  it("rejects a stale publication and reports an older retry as superseded", async () => {
+    const second = await repository.saveVersion({
+      pageId: cmsHomepagePageId,
+      expectedHead: imported.snapshot.head,
+      contract: contractWith(homepageV1Contract, { title: "Version two" }),
+      displayName: "Alex Tan",
+      attemptId: randomUUID(),
+    })
+    const firstPublishInput = {
+      pageId: cmsHomepagePageId,
+      versionId: second.committed.head.versionId,
+      expectedDraft: second.committed.head,
+      expectedPublished: imported.snapshot.head,
+      displayName: "Alex Tan",
+      attemptId: randomUUID(),
+    } as const
+    const firstPublication = await repository.publishVersion(firstPublishInput)
+    const third = await repository.saveVersion({
+      pageId: cmsHomepagePageId,
+      expectedHead: second.committed.head,
+      contract: contractWith(second.committed, { title: "Version three" }),
+      displayName: "Jamie Lim",
+      attemptId: randomUUID(),
+    })
+
+    await expect(
+      repository.publishVersion({
+        pageId: cmsHomepagePageId,
+        versionId: third.committed.head.versionId,
+        expectedDraft: third.committed.head,
+        expectedPublished: imported.snapshot.head,
+        displayName: "Jamie Lim",
+        attemptId: randomUUID(),
+      })
+    ).rejects.toMatchObject({
+      code: "STALE_PUBLICATION",
+      latest: { head: firstPublication.committed.head },
+    })
+
+    const secondPublication = await repository.publishVersion({
+      pageId: cmsHomepagePageId,
+      versionId: third.committed.head.versionId,
+      expectedDraft: third.committed.head,
+      expectedPublished: firstPublication.committed.head,
+      displayName: "Jamie Lim",
+      attemptId: randomUUID(),
+    })
+    const retry = await repository.publishVersion(firstPublishInput)
+    expect(retry.outcome).toBe("committed-but-superseded")
+    expect(retry.committed.head).toEqual(firstPublication.committed.head)
+    expect(retry.live?.head).toEqual(secondPublication.committed.head)
+  })
+
+  it("reserves a changed draft path without moving the published path early", async () => {
+    const saved = await repository.saveVersion({
+      pageId: cmsHomepagePageId,
+      expectedHead: imported.snapshot.head,
+      contract: contractWith(homepageV1Contract, {
+        title: "Replacement page",
+        path: "/replacement",
+      }),
+      displayName: "Alex Tan",
+      attemptId: randomUUID(),
+    })
+    expect((await repository.loadPublishedPage("/")).head).toEqual(
+      imported.snapshot.head
+    )
+    await expect(
+      repository.loadPublishedPage("/replacement")
+    ).rejects.toMatchObject({ code: "PAGE_NOT_FOUND" })
+
+    await repository.publishVersion({
+      pageId: cmsHomepagePageId,
+      versionId: saved.committed.head.versionId,
+      expectedDraft: saved.committed.head,
+      expectedPublished: imported.snapshot.head,
+      displayName: "Alex Tan",
+      attemptId: randomUUID(),
+    })
+    await expect(repository.loadPublishedPage("/")).rejects.toMatchObject({
+      code: "PAGE_NOT_FOUND",
+    })
+    expect((await repository.loadPublishedPage("/replacement")).head).toEqual(
+      saved.committed.head
+    )
+  })
+
+  it("paginates version history without skipping a version", async () => {
+    let head: CmsHead = imported.snapshot.head
+    for (const title of ["Version two", "Version three", "Version four"]) {
+      const saved = await repository.saveVersion({
+        pageId: cmsHomepagePageId,
+        expectedHead: head,
+        contract: contractWith(homepageV1Contract, { title }),
+        displayName: "Alex Tan",
+        attemptId: randomUUID(),
+      })
+      head = saved.committed.head
+    }
+
+    const firstPage = await repository.listVersions(cmsHomepagePageId, null, 2)
+    const secondPage = await repository.listVersions(
+      cmsHomepagePageId,
+      firstPage.nextCursor,
+      2
+    )
+    expect(
+      firstPage.versions.map((version) => version.head.versionNumber)
+    ).toEqual([4, 3])
+    expect(
+      secondPage.versions.map((version) => version.head.versionNumber)
+    ).toEqual([2, 1])
+    expect(secondPage.nextCursor).toBeNull()
   })
 })

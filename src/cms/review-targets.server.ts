@@ -12,7 +12,7 @@ export type CmsReviewTargetSeed = {
   readonly repeatedItemId: string | null
   readonly parentTargetId: string | null
   readonly kind: "page" | "section" | "field" | "repeated-item" | "screen"
-  readonly state: "active"
+  readonly state: "active" | "archived"
 }
 
 function derivedTargetId(parts: ReadonlyArray<string>): string {
@@ -180,17 +180,23 @@ export function buildCmsReviewTargetSeeds(
     })
   )
   const sectionTargets = document.sections.flatMap((section) => [
-    {
-      id: section.id,
-      pageId,
-      sectionId: section.id,
-      fieldKey: null,
-      repeatedItemId: null,
-      parentTargetId: pageId,
-      kind: "section" as const,
-      state: "active" as const,
-    },
-    ...sectionFieldTargets(pageId, section),
+    ...[
+      {
+        id: section.id,
+        pageId,
+        sectionId: section.id,
+        fieldKey: null,
+        repeatedItemId: null,
+        parentTargetId: pageId,
+        kind: "section" as const,
+        state: "active" as const,
+      },
+      ...sectionFieldTargets(pageId, section),
+    ].map((target) => ({
+      ...target,
+      state:
+        section.state === "archived" ? ("archived" as const) : target.state,
+    })),
   ])
 
   const targets = [pageTarget, ...pageFields, ...sectionTargets]
