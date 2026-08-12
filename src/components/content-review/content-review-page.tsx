@@ -1,16 +1,22 @@
 import { ContentReviewError } from "./content-review-error"
 import { ContentReviewOutline } from "./content-review-outline"
 import { EditableCopy } from "./editor/editable-copy"
+import { ReviewPin } from "./review-annotations"
 
 import type { TeacherPreviewPageDataDto } from "@/content/teacher-preview-document"
-import type { ContentReviewEditAdapter } from "./editor/content-review-edit-adapter"
+import type {
+  ContentReviewEditAdapter,
+  ContentReviewReviewTargets,
+} from "./editor/content-review-edit-adapter"
 
 export function ContentReviewPage({
   data,
   editor,
+  reviewTargets,
 }: {
   data: TeacherPreviewPageDataDto
   editor?: ContentReviewEditAdapter
+  reviewTargets?: ContentReviewReviewTargets
 }) {
   if (data.kind === "error") return <ContentReviewError />
 
@@ -41,7 +47,11 @@ export function ContentReviewPage({
             />
           </header>
 
-          <ContentReviewOutline sections={document.sections} editor={editor} />
+          <ContentReviewOutline
+            sections={document.sections}
+            editor={editor}
+            reviewTargets={reviewTargets?.sections}
+          />
         </div>
       </main>
 
@@ -52,17 +62,22 @@ export function ContentReviewPage({
       >
         <div className="mx-auto flex max-w-[90rem] flex-col gap-5 border-x border-t border-border bg-background px-6 py-8 sm:flex-row sm:items-center sm:justify-between md:px-10 lg:px-16">
           <div>
-            <EditableCopy
-              as="p"
-              value={footer.brand}
-              label="Edit footer product name"
-              className="font-semibold"
-              onChange={
-                editor
-                  ? (value) => editor.updateFooterText(["brand"], value)
-                  : undefined
-              }
-            />
+            <div className="flex items-start gap-3">
+              <EditableCopy
+                as="p"
+                value={footer.brand}
+                label="Edit footer product name"
+                className="font-semibold"
+                onChange={
+                  editor
+                    ? (value) => editor.updateFooterText(["brand"], value)
+                    : undefined
+                }
+              />
+              {reviewTargets?.footerSectionId ? (
+                <ReviewPin id={reviewTargets.footerSectionId} />
+              ) : null}
+            </div>
             {footer.body.map((paragraph, index) => (
               <EditableCopy
                 as="p"

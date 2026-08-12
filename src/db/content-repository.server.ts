@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto"
 import { and, eq, ne, notInArray, sql } from "drizzle-orm"
 
 import {
+  cmsComments,
   cmsPageLifecycleEvents,
   cmsPageVersions,
   cmsPages,
@@ -20,6 +21,8 @@ import {
 } from "@/cms/canonical.server"
 import { buildCmsReviewTargetSeeds } from "@/cms/review-targets.server"
 import {
+  isCmsPageDocument,
+  isCmsReviewDocument,
   isCmsStableId,
   isCmsVersionContract,
   normaliseCmsPath,
@@ -70,6 +73,26 @@ type StoredReviewTargetRow = Record<string, unknown> & {
   readonly parentTargetId: string | null
   readonly kind: "page" | "section" | "field" | "repeated-item" | "screen"
   readonly state: "active" | "archived"
+}
+
+type StoredCommentRow = Record<string, unknown> & {
+  readonly id: string
+  readonly pageId: string
+  readonly targetId: string
+  readonly targetVersionId: string
+  readonly subject: CmsCommentSubject
+  readonly body: string
+  readonly displayName: string
+  readonly status: CmsCommentStatus
+  readonly createdAt: Date | string
+  readonly updatedAt: Date | string
+  readonly targetState: "active" | "archived"
+  readonly targetKind: StoredReviewTargetRow["kind"]
+  readonly sectionId: string | null
+  readonly fieldKey: string | null
+  readonly repeatedItemId: string | null
+  readonly pageDocument: unknown
+  readonly reviewDocument: unknown
 }
 
 export type CmsHead = {
@@ -148,6 +171,44 @@ export type CmsPageState = {
   readonly publishedHead: CmsHead | null
 }
 
+export const cmsCommentSubjects = ["page-content", "design-intent"] as const
+export type CmsCommentSubject = (typeof cmsCommentSubjects)[number]
+
+export const cmsCommentStatuses = ["open", "resolved", "withdrawn"] as const
+export type CmsCommentStatus = (typeof cmsCommentStatuses)[number]
+
+export type CmsComment = {
+  readonly id: string
+  readonly pageId: string
+  readonly targetId: string
+  readonly targetVersionId: string
+  readonly subject: CmsCommentSubject
+  readonly body: string
+  readonly displayName: string
+  readonly status: CmsCommentStatus
+  readonly createdAt: string
+  readonly updatedAt: string
+  readonly targetState: "active" | "archived"
+  readonly targetKind: StoredReviewTargetRow["kind"]
+  readonly targetChanged: boolean
+}
+
+export type CreateCmsCommentInput = {
+  readonly id: string
+  readonly pageId: string
+  readonly targetId: string
+  readonly targetVersionId: string
+  readonly subject: CmsCommentSubject
+  readonly body: string
+  readonly displayName: string
+}
+
+export type UpdateCmsCommentStatusInput = {
+  readonly pageId: string
+  readonly commentId: string
+  readonly status: CmsCommentStatus
+}
+
 export type ImportInitialCmsPageInput = {
   readonly pageId: string
   readonly attemptId: string
@@ -163,6 +224,9 @@ export type CmsRepositoryErrorCode =
   | "ALREADY_PUBLISHED"
   | "ATTEMPT_REUSED"
   | "CORRUPT_STATE"
+  | "COMMENT_ID_REUSED"
+  | "COMMENT_NOT_FOUND"
+  | "INVALID_COMMENT"
   | "INVALID_DISPLAY_NAME"
   | "INVALID_DOCUMENT"
   | "INVALID_HEAD"
@@ -176,6 +240,8 @@ export type CmsRepositoryErrorCode =
   | "PERSISTENCE_FAILED"
   | "STALE_DRAFT"
   | "STALE_PUBLICATION"
+  | "TARGET_ARCHIVED"
+  | "TARGET_NOT_FOUND"
   | "VERSION_NOT_FOUND"
 
 export class CmsRepositoryError extends Error {
@@ -212,6 +278,47 @@ function versionSelect() {
     versions.attempt_id as "attemptId",
     versions.request_fingerprint as "requestFingerprint"
   `
+}
+
+function commentSelect() {
+  return sql`
+    comments.id as "id",
+    comments.page_id as "pageId",
+    comments.target_id as "targetId",
+    comments.target_version_id as "targetVersionId",
+    comments.subject as "subject",
+    comments.body as "body",
+    comments.display_name as "displayName",
+    comments.status as "status",
+    comments.created_at as "createdAt",
+    comments.updated_at as "updatedAt",
+    targets.state as "targetState",
+    targets.kind as "targetKind",
+    targets.section_id as "sectionId",
+    targets.field_key as "fieldKey",
+    targets.repeated_item_id as "repeatedItemId",
+    versions.page_document as "pageDocument",
+    versions.review_document as "reviewDocument"
+  `
+}
+
+async function loadCommentById(
+  executor: CmsExecutor,
+  commentId: string
+): Promise<StoredCommentRow | null> {
+  const result = await executor.execute<StoredCommentRow>(sql`
+    select ${commentSelect()}
+    from cms_comments as comments
+    inner join cms_review_targets as targets
+      on targets.page_id = comments.page_id
+      and targets.id = comments.target_id
+    inner join cms_page_versions as versions
+      on versions.page_id = comments.page_id
+      and versions.id = comments.target_version_id
+    where comments.id = ${commentId}
+    limit 1
+  `)
+  return result.rows[0] ?? null
 }
 
 async function loadVersionByAttempt(
@@ -344,6 +451,138 @@ function normaliseDisplayName(value: string): string {
     throw new CmsRepositoryError("INVALID_DISPLAY_NAME")
   }
   return normalized
+}
+
+function normaliseCommentBody(value: string): string {
+  const normalized = value.normalize("NFC").trim()
+  if (
+    normalized.length === 0 ||
+    [...normalized].length > 4_000 ||
+    /\p{Cc}/u.test(normalized.replace(/[\n\r\t]/g, ""))
+  ) {
+    throw new CmsRepositoryError("INVALID_COMMENT")
+  }
+  return normalized
+}
+
+function isCommentSubject(value: string): value is CmsCommentSubject {
+  return cmsCommentSubjects.some((subject) => subject === value)
+}
+
+function isCommentStatus(value: string): value is CmsCommentStatus {
+  return cmsCommentStatuses.some((status) => status === value)
+}
+
+function isoTime(value: Date | string): string {
+  return value instanceof Date ? value.toISOString() : value
+}
+
+type TargetLocation = Pick<
+  StoredCommentRow,
+  "targetId" | "targetKind" | "sectionId" | "fieldKey" | "repeatedItemId"
+>
+
+function objectWithId(
+  value: unknown,
+  id: string
+): Record<string, unknown> | null {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const match = objectWithId(item, id)
+      if (match) return match
+    }
+    return null
+  }
+  if (typeof value !== "object" || value === null) return null
+  const record = value as Record<string, unknown>
+  if (record.id === id) return record
+  for (const nested of Object.values(record)) {
+    const match = objectWithId(nested, id)
+    if (match) return match
+  }
+  return null
+}
+
+function pathValue(value: unknown, path: ReadonlyArray<string>): unknown {
+  let current = value
+  for (const key of path) {
+    if (
+      typeof current !== "object" ||
+      current === null ||
+      Array.isArray(current)
+    ) {
+      return null
+    }
+    current = (current as Record<string, unknown>)[key]
+  }
+  return current ?? null
+}
+
+function targetContentValue(
+  document: CmsVersionContract["pageDocument"],
+  target: TargetLocation
+): unknown {
+  if (target.targetKind === "page") return document
+  if (target.sectionId === null) {
+    const pageField = target.fieldKey?.replace(/^page\./, "")
+    return pageField ? pathValue(document.page, [pageField]) : null
+  }
+
+  const section = document.sections.find(
+    (candidate) => candidate.id === target.sectionId
+  )
+  if (!section) return null
+  if (target.targetKind === "section") return section
+
+  if (target.targetKind === "repeated-item" || target.targetKind === "screen") {
+    return target.repeatedItemId
+      ? objectWithId(section.fields, target.repeatedItemId)
+      : null
+  }
+
+  if (!target.fieldKey) return null
+  if (target.repeatedItemId) {
+    const entity = objectWithId(section.fields, target.repeatedItemId)
+    const field = target.fieldKey.split(".").at(-1)
+    return entity && field ? pathValue(entity, [field]) : null
+  }
+  return pathValue(section.fields, target.fieldKey.split("."))
+}
+
+function commentFromRow(
+  row: StoredCommentRow,
+  comparison: CmsVersionSnapshot
+): CmsComment {
+  if (
+    !isCmsPageDocument(row.pageDocument) ||
+    !isCmsReviewDocument(row.reviewDocument)
+  ) {
+    throw new CmsRepositoryError("CORRUPT_STATE")
+  }
+  const target: TargetLocation = row
+  const before =
+    row.subject === "design-intent"
+      ? (row.reviewDocument.targets[row.targetId] ?? null)
+      : targetContentValue(row.pageDocument, target)
+  const after =
+    row.subject === "design-intent"
+      ? (comparison.reviewDocument.targets[row.targetId] ?? null)
+      : targetContentValue(comparison.pageDocument, target)
+  return {
+    id: row.id,
+    pageId: row.pageId,
+    targetId: row.targetId,
+    targetVersionId: row.targetVersionId,
+    subject: row.subject,
+    body: row.body,
+    displayName: row.displayName,
+    status: row.status,
+    createdAt: isoTime(row.createdAt),
+    updatedAt: isoTime(row.updatedAt),
+    targetState: row.targetState,
+    targetKind: row.targetKind,
+    targetChanged: digestCmsValue(before) !== digestCmsValue(after),
+  }
 }
 
 function assertContract(contract: CmsVersionContract): void {
@@ -1296,6 +1535,132 @@ export function createCmsContentRepository(database: CmsDatabase) {
     }
   }
 
+  async function listComments(
+    pageId: string,
+    comparisonVersionId: string | null = null
+  ): Promise<ReadonlyArray<CmsComment>> {
+    assertRepositoryId(pageId)
+    if (comparisonVersionId) assertRepositoryId(comparisonVersionId)
+    const comparison = comparisonVersionId
+      ? await getVersion(pageId, comparisonVersionId)
+      : await loadDraft(pageId)
+    const result = await database.execute<StoredCommentRow>(sql`
+      select ${commentSelect()}
+      from cms_comments as comments
+      inner join cms_review_targets as targets
+        on targets.page_id = comments.page_id
+        and targets.id = comments.target_id
+      inner join cms_page_versions as versions
+        on versions.page_id = comments.page_id
+        and versions.id = comments.target_version_id
+      where comments.page_id = ${pageId}
+      order by comments.created_at asc, comments.id asc
+    `)
+    return result.rows.map((row) => commentFromRow(row, comparison))
+  }
+
+  async function createComment(
+    input: CreateCmsCommentInput
+  ): Promise<CmsComment> {
+    assertRepositoryId(input.id)
+    assertRepositoryId(input.pageId)
+    assertRepositoryId(input.targetId)
+    assertRepositoryId(input.targetVersionId)
+    if (!isCommentSubject(input.subject)) {
+      throw new CmsRepositoryError("INVALID_COMMENT")
+    }
+    const body = normaliseCommentBody(input.body)
+    const displayName = normaliseDisplayName(input.displayName)
+
+    return database.transaction(async (transaction) => {
+      const existing = await loadCommentById(transaction, input.id)
+      if (existing) {
+        if (
+          existing.pageId !== input.pageId ||
+          existing.targetId !== input.targetId ||
+          existing.targetVersionId !== input.targetVersionId ||
+          existing.subject !== input.subject ||
+          existing.body !== body ||
+          existing.displayName !== displayName
+        ) {
+          throw new CmsRepositoryError("COMMENT_ID_REUSED")
+        }
+        const comparisonRow = await loadVersionById(
+          transaction,
+          input.pageId,
+          input.targetVersionId
+        )
+        if (!comparisonRow) throw new CmsRepositoryError("CORRUPT_STATE")
+        return commentFromRow(existing, snapshotFromRow(comparisonRow))
+      }
+
+      const targetResult = await transaction.execute<
+        Record<string, unknown> & {
+          id: string
+          state: "active" | "archived"
+        }
+      >(sql`
+        select id, state
+        from cms_review_targets
+        where page_id = ${input.pageId} and id = ${input.targetId}
+        for share
+      `)
+      const target = targetResult.rows.at(0)
+      if (!target) throw new CmsRepositoryError("TARGET_NOT_FOUND")
+      if (target.state === "archived") {
+        throw new CmsRepositoryError("TARGET_ARCHIVED")
+      }
+      const version = await loadVersionById(
+        transaction,
+        input.pageId,
+        input.targetVersionId
+      )
+      if (!version) throw new CmsRepositoryError("VERSION_NOT_FOUND")
+
+      await transaction.insert(cmsComments).values({
+        id: input.id,
+        pageId: input.pageId,
+        targetId: input.targetId,
+        targetVersionId: input.targetVersionId,
+        subject: input.subject,
+        body,
+        displayName,
+        status: "open",
+      })
+      const inserted = await loadCommentById(transaction, input.id)
+      if (!inserted) throw new CmsRepositoryError("PERSISTENCE_FAILED")
+      return commentFromRow(inserted, snapshotFromRow(version))
+    })
+  }
+
+  async function updateCommentStatus(
+    input: UpdateCmsCommentStatusInput
+  ): Promise<CmsComment> {
+    assertRepositoryId(input.pageId)
+    assertRepositoryId(input.commentId)
+    if (!isCommentStatus(input.status)) {
+      throw new CmsRepositoryError("INVALID_COMMENT")
+    }
+
+    return database.transaction(async (transaction) => {
+      const updated = await transaction
+        .update(cmsComments)
+        .set({ status: input.status, updatedAt: sql`now()` })
+        .where(
+          and(
+            eq(cmsComments.pageId, input.pageId),
+            eq(cmsComments.id, input.commentId)
+          )
+        )
+        .returning({ id: cmsComments.id })
+      if (!updated[0]) throw new CmsRepositoryError("COMMENT_NOT_FOUND")
+      const row = await loadCommentById(transaction, input.commentId)
+      const comparison = await loadDraftSnapshot(transaction, input.pageId)
+      if (!row || !comparison) throw new CmsRepositoryError("CORRUPT_STATE")
+      return commentFromRow(row, comparison)
+    })
+  }
+
   async function loadPublishedPage(
     requestedPath: string
   ): Promise<CmsVersionSnapshot> {
@@ -1324,14 +1689,17 @@ export function createCmsContentRepository(database: CmsDatabase) {
   }
 
   return {
+    createComment,
     importInitialPage,
     getVersion,
     listVersions,
+    listComments,
     loadDraft,
     loadPageState,
     loadPublishedPage,
     publishVersion,
     restoreVersion,
     saveVersion,
+    updateCommentStatus,
   }
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from "react"
+import { createContext, useContext, useEffect, useMemo, useState } from "react"
 
 import {
   contentReviewChrome,
@@ -98,6 +98,9 @@ type ReviewAnnotationContextValue = {
   readonly selectionVersion: number
   readonly selectedId: string | null
   readonly open: (id: string) => void
+  readonly replaceAnnotations: (
+    annotations: ReadonlyArray<ReviewAnnotation>
+  ) => void
   readonly setPanelOpen: (open: boolean) => void
   readonly setPinsVisible: (visible: boolean) => void
   readonly toggle: (id: string) => void
@@ -107,24 +110,38 @@ const ReviewAnnotationContext =
   createContext<ReviewAnnotationContextValue | null>(null)
 
 export function ReviewAnnotationProvider({
+  annotations: initialAnnotations = reviewAnnotations,
   children,
 }: {
+  annotations?: ReadonlyArray<ReviewAnnotation>
   children: React.ReactNode
 }) {
+  const [availableAnnotations, setAvailableAnnotations] =
+    useState(initialAnnotations)
   const [panelOpen, setPanelOpenState] = useState(false)
   const [panelOpenerId, setPanelOpenerId] = useState<string | null>(null)
   const [pinsVisible, setPinsVisible] = useState(true)
   const [selectionVersion, setSelectionVersion] = useState(0)
   const [selectedId, setSelectedId] = useState<string | null>(
-    reviewAnnotations[0]?.id ?? null
+    initialAnnotations[0]?.id ?? null
   )
   const annotations = useMemo(
     () =>
       new Map(
-        reviewAnnotations.map((annotation) => [annotation.id, annotation])
+        availableAnnotations.map((annotation) => [annotation.id, annotation])
       ),
-    []
+    [availableAnnotations]
   )
+
+  useEffect(() => {
+    setAvailableAnnotations(initialAnnotations)
+  }, [initialAnnotations])
+
+  useEffect(() => {
+    if (selectedId && annotations.has(selectedId)) return
+    setSelectedId(availableAnnotations[0]?.id ?? null)
+    if (availableAnnotations.length === 0) setPanelOpenState(false)
+  }, [annotations, availableAnnotations, selectedId])
 
   return (
     <ReviewAnnotationContext.Provider
@@ -136,11 +153,13 @@ export function ReviewAnnotationProvider({
         selectionVersion,
         selectedId,
         open: (id) => {
+          if (!annotations.has(id)) return
           setSelectedId(id)
           setPanelOpenerId(id)
           setSelectionVersion((version) => version + 1)
           setPanelOpenState(true)
         },
+        replaceAnnotations: setAvailableAnnotations,
         setPanelOpen: (open) => {
           setPanelOpenState(open)
           if (open) setPanelOpenerId(null)

@@ -174,10 +174,16 @@ export type ExternalReviewEditor = {
   readonly onToggle: () => void
 }
 
+export type ExternalReviewPanel = {
+  readonly content: React.ReactNode
+}
+
 export function PublicReviewMode({
   externalEditor,
+  externalReviewPanel,
 }: {
   externalEditor?: ExternalReviewEditor
+  externalReviewPanel?: ExternalReviewPanel
 } = {}) {
   const {
     annotations,
@@ -190,6 +196,7 @@ export function PublicReviewMode({
     setPinsVisible,
   } = useReviewAnnotations()
   const selectedAnnotation = selectedId ? annotations.get(selectedId) : null
+  const usesExternalReviewPanel = externalReviewPanel !== undefined
   const [active, setActive] = useState(false)
   const [editLoading, setEditLoading] = useState(false)
   const [status, setStatus] = useState<Status>({ kind: "idle" })
@@ -220,6 +227,10 @@ export function PublicReviewMode({
   const noteRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => {
+    if (usesExternalReviewPanel) {
+      setCanSubmit(false)
+      return
+    }
     let cancelled = false
     void getReviewSpans()
       .then((result) => {
@@ -233,7 +244,7 @@ export function PublicReviewMode({
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [usesExternalReviewPanel])
 
   useEffect(() => {
     if (selectionVersion === 0 || !selectedAnnotation) return
@@ -614,7 +625,13 @@ export function PublicReviewMode({
               onClick={toggleRationale}
               className="min-h-11 px-4"
             >
-              {panelOpen ? "Hide rationale" : "Show rationale"}
+              {externalReviewPanel
+                ? panelOpen
+                  ? "Hide section context"
+                  : "Show section context"
+                : panelOpen
+                  ? "Hide rationale"
+                  : "Show rationale"}
             </Button>
             {externalEditor?.controls ?? (
               <Button
@@ -640,166 +657,182 @@ export function PublicReviewMode({
 
       <aside
         id="review-rationale-panel"
-        aria-label="Rationale and section comments"
+        aria-label={
+          externalReviewPanel
+            ? "Section context and feedback"
+            : "Rationale and section comments"
+        }
         data-review-chrome
         hidden={!panelOpen}
         className="z-40 min-w-0 border-b border-foreground/20 bg-background font-body text-sm lg:col-start-2 lg:row-start-2 lg:min-h-screen lg:border-b-0 lg:border-l"
       >
         <div className="lg:sticky lg:top-[calc(var(--masthead-h)+4.25rem)] lg:max-h-[calc(100vh-var(--masthead-h)-4.25rem)] lg:overflow-y-auto">
-          <header className="border-b border-border px-4 py-4">
-            <div>
-              <p className="font-semibold">Rationale and section comments</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Use a numbered pin to review another section.
-              </p>
-            </div>
-            <p className="mt-2 text-muted-foreground">
-              {contentReviewChrome.badge}. {contentReviewChrome.warning}
-            </p>
-          </header>
+          {externalReviewPanel ? (
+            externalReviewPanel.content
+          ) : (
+            <>
+              <header className="border-b border-border px-4 py-4">
+                <div>
+                  <p className="font-semibold">
+                    Rationale and section comments
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Use a numbered pin to review another section.
+                  </p>
+                </div>
+                <p className="mt-2 text-muted-foreground">
+                  {contentReviewChrome.badge}. {contentReviewChrome.warning}
+                </p>
+              </header>
 
-          <div className="space-y-4 px-4 py-4">
-            {selectedAnnotation ? (
-              <section
-                aria-label={`Review note: ${selectedAnnotation.title}`}
-                className="border-b border-border pb-4"
-              >
-                <ReviewAnnotationDetails annotation={selectedAnnotation} />
-              </section>
-            ) : null}
+              <div className="space-y-4 px-4 py-4">
+                {selectedAnnotation ? (
+                  <section
+                    aria-label={`Review note: ${selectedAnnotation.title}`}
+                    className="border-b border-border pb-4"
+                  >
+                    <ReviewAnnotationDetails annotation={selectedAnnotation} />
+                  </section>
+                ) : null}
 
-            <label className="block">
-              <span className="font-medium">Your name</span>
-              <Input
-                value={reviewer}
-                onChange={(event) => setReviewer(event.target.value)}
-                placeholder="So the designer knows who to thank"
-                className="mt-1 min-h-11 rounded-md border-foreground/30 bg-background px-3 py-2"
-              />
-            </label>
+                <label className="block">
+                  <span className="font-medium">Your name</span>
+                  <Input
+                    value={reviewer}
+                    onChange={(event) => setReviewer(event.target.value)}
+                    placeholder="So the designer knows who to thank"
+                    className="mt-1 min-h-11 rounded-md border-foreground/30 bg-background px-3 py-2"
+                  />
+                </label>
 
-            <div className="border-y border-foreground/20 bg-muted px-3 py-3">
-              <p className="text-xs font-medium tracking-[0.06em] text-muted-foreground">
-                Commenting on
-              </p>
-              <p className="mt-1 font-medium break-words">
-                {target ? target.label : "Whole page"}
-              </p>
-              {target ? (
+                <div className="border-y border-foreground/20 bg-muted px-3 py-3">
+                  <p className="text-xs font-medium tracking-[0.06em] text-muted-foreground">
+                    Commenting on
+                  </p>
+                  <p className="mt-1 font-medium break-words">
+                    {target ? target.label : "Whole page"}
+                  </p>
+                  {target ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      onClick={() => setTarget(null)}
+                      className="mt-2 min-h-11 border-foreground/30 px-3 text-xs"
+                    >
+                      Comment on the whole page instead
+                    </Button>
+                  ) : (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Select a numbered pin to target a section.
+                    </p>
+                  )}
+                </div>
+
+                <label className="block">
+                  <span className="font-medium">Add a note</span>
+                  <textarea
+                    ref={noteRef}
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                    rows={3}
+                    placeholder="What should the designer know?"
+                    className="mt-1 w-full rounded-md border border-foreground/30 bg-background px-3 py-2 focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
+                  />
+                </label>
+
                 <Button
                   type="button"
                   variant="outline"
                   size="lg"
-                  onClick={() => setTarget(null)}
-                  className="mt-2 min-h-11 border-foreground/30 px-3 text-xs"
+                  onClick={addComment}
+                  disabled={note.trim().length === 0}
+                  className="min-h-11 w-full border-foreground/30 px-3"
                 >
-                  Comment on the whole page instead
+                  Add note
                 </Button>
-              ) : (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Select a numbered pin to target a section.
-                </p>
-              )}
-            </div>
 
-            <label className="block">
-              <span className="font-medium">Add a note</span>
-              <textarea
-                ref={noteRef}
-                value={note}
-                onChange={(event) => setNote(event.target.value)}
-                rows={3}
-                placeholder="What should the designer know?"
-                className="mt-1 w-full rounded-md border border-foreground/30 bg-background px-3 py-2 focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
-              />
-            </label>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              onClick={addComment}
-              disabled={note.trim().length === 0}
-              className="min-h-11 w-full border-foreground/30 px-3"
-            >
-              Add note
-            </Button>
-
-            {comments.length > 0 ? (
-              <div>
-                <p className="font-medium">Your notes ({comments.length})</p>
-                <ul className="mt-2 space-y-2">
-                  {comments.map((comment, index) => (
-                    <li
-                      key={`${comment.spanId ?? comment.anchorId ?? "page"}-${index}`}
-                      className="border-y border-foreground/20 px-3 py-2"
-                    >
-                      <p className="text-xs break-words text-muted-foreground">
-                        {comment.where}
-                      </p>
-                      <p className="mt-1 break-words">{comment.note}</p>
-                      <div className="mt-2 flex gap-2">
-                        {comment.spanId || comment.anchorId ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="lg"
-                            onClick={() => revealComment(comment)}
-                            className="min-h-11 border-foreground/30 px-3 text-xs"
-                          >
-                            Show me
-                          </Button>
-                        ) : null}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="lg"
-                          onClick={() => removeComment(index)}
-                          className="min-h-11 border-foreground/30 px-3 text-xs"
+                {comments.length > 0 ? (
+                  <div>
+                    <p className="font-medium">
+                      Your notes ({comments.length})
+                    </p>
+                    <ul className="mt-2 space-y-2">
+                      {comments.map((comment, index) => (
+                        <li
+                          key={`${comment.spanId ?? comment.anchorId ?? "page"}-${index}`}
+                          className="border-y border-foreground/20 px-3 py-2"
                         >
-                          Remove
-                        </Button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                          <p className="text-xs break-words text-muted-foreground">
+                            {comment.where}
+                          </p>
+                          <p className="mt-1 break-words">{comment.note}</p>
+                          <div className="mt-2 flex gap-2">
+                            {comment.spanId || comment.anchorId ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="lg"
+                                onClick={() => revealComment(comment)}
+                                className="min-h-11 border-foreground/30 px-3 text-xs"
+                              >
+                                Show me
+                              </Button>
+                            ) : null}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="lg"
+                              onClick={() => removeComment(index)}
+                              className="min-h-11 border-foreground/30 px-3 text-xs"
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                <Button
+                  type="button"
+                  size="lg"
+                  onClick={() => void (canSubmit ? send() : copyForDesigner())}
+                  disabled={
+                    canSubmit === null ||
+                    pending === 0 ||
+                    status.kind === "sending"
+                  }
+                  className="min-h-11 w-full border-2 border-foreground bg-foreground px-3 font-semibold text-background"
+                >
+                  {status.kind === "sending"
+                    ? "Sending…"
+                    : canSubmit === null
+                      ? "Checking feedback…"
+                      : canSubmit
+                        ? `Send${pending > 0 ? ` (${pending})` : ""}`
+                        : `Copy for the designer${pending > 0 ? ` (${pending})` : ""}`}
+                </Button>
+
+                <p className="min-h-5 text-muted-foreground">{statusMessage}</p>
+
+                {fallbackText ? (
+                  <label className="block">
+                    <span className="font-medium">
+                      Your feedback — select and copy
+                    </span>
+                    <textarea
+                      readOnly
+                      rows={6}
+                      value={fallbackText}
+                      className="mt-1 w-full rounded-md border border-foreground/30 bg-background px-3 py-2 text-xs focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
+                    />
+                  </label>
+                ) : null}
               </div>
-            ) : null}
-
-            <Button
-              type="button"
-              size="lg"
-              onClick={() => void (canSubmit ? send() : copyForDesigner())}
-              disabled={
-                canSubmit === null || pending === 0 || status.kind === "sending"
-              }
-              className="min-h-11 w-full border-2 border-foreground bg-foreground px-3 font-semibold text-background"
-            >
-              {status.kind === "sending"
-                ? "Sending…"
-                : canSubmit === null
-                  ? "Checking feedback…"
-                  : canSubmit
-                    ? `Send${pending > 0 ? ` (${pending})` : ""}`
-                    : `Copy for the designer${pending > 0 ? ` (${pending})` : ""}`}
-            </Button>
-
-            <p className="min-h-5 text-muted-foreground">{statusMessage}</p>
-
-            {fallbackText ? (
-              <label className="block">
-                <span className="font-medium">
-                  Your feedback — select and copy
-                </span>
-                <textarea
-                  readOnly
-                  rows={6}
-                  value={fallbackText}
-                  className="mt-1 w-full rounded-md border border-foreground/30 bg-background px-3 py-2 font-mono text-xs focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
-                />
-              </label>
-            ) : null}
-          </div>
+            </>
+          )}
         </div>
       </aside>
     </>

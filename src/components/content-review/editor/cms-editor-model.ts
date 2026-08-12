@@ -228,6 +228,27 @@ export function replaceCmsValue(
   return next as unknown as CmsVersionContract
 }
 
+export function updateCmsReviewContext(
+  contract: CmsVersionContract,
+  targetId: string,
+  context: {
+    readonly designIntent: string
+    readonly checks: ReadonlyArray<string>
+    readonly decisionNeeded?: string
+  }
+): CmsVersionContract {
+  if (!contract.reviewDocument.targets[targetId]) return contract
+  return {
+    ...contract,
+    reviewDocument: {
+      targets: {
+        ...contract.reviewDocument.targets,
+        [targetId]: context,
+      },
+    },
+  }
+}
+
 function sectionWithFreshIds(
   section: CmsSectionDocument,
   createId: () => string

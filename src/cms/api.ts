@@ -1,4 +1,7 @@
 import type {
+  CmsComment,
+  CmsCommentStatus,
+  CmsCommentSubject,
   CmsCommitResult,
   CmsHead,
   CmsPublicationResult,
@@ -69,6 +72,50 @@ export type CmsReadResponse =
       readonly ok: true
       readonly kind: "version"
       readonly version: CmsVersionSnapshot
+    }
+  | {
+      readonly ok: false
+      readonly code: CmsRepositoryErrorCode | "UNAUTHORIZED" | "UNAVAILABLE"
+      readonly message: string
+    }
+
+export type CmsCreateCommentRequest = {
+  readonly operation: "create"
+  readonly commentId: string
+  readonly pageId: string
+  readonly targetId: string
+  readonly targetVersionId: string
+  readonly subject: CmsCommentSubject
+  readonly body: string
+  readonly displayName: string
+}
+
+export type CmsSetCommentStatusRequest = {
+  readonly operation: "set-status"
+  readonly pageId: string
+  readonly commentId: string
+  readonly status: CmsCommentStatus
+}
+
+export type CmsCommentWriteRequest =
+  | CmsCreateCommentRequest
+  | CmsSetCommentStatusRequest
+
+export type CmsCommentReadResponse =
+  | {
+      readonly ok: true
+      readonly comments: ReadonlyArray<CmsComment>
+    }
+  | {
+      readonly ok: false
+      readonly code: CmsRepositoryErrorCode | "UNAUTHORIZED" | "UNAVAILABLE"
+      readonly message: string
+    }
+
+export type CmsCommentWriteResponse =
+  | {
+      readonly ok: true
+      readonly comment: CmsComment
     }
   | {
       readonly ok: false

@@ -3,7 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ReviewAnnotationProvider } from "../review-annotations"
 import { CmsWorkspace } from "./cms-workspace"
-import { readCmsHistory, readCmsVersion, writeCms } from "./cms-client"
+import {
+  readCmsComments,
+  readCmsHistory,
+  readCmsVersion,
+  writeCms,
+  writeCmsComment,
+} from "./cms-client"
 import type { CmsVersionContract } from "@/cms/document"
 import type {
   CmsVersionHistoryItem,
@@ -18,14 +24,18 @@ vi.mock("@/server/review-feedback", () => ({
 }))
 
 vi.mock("./cms-client", () => ({
+  readCmsComments: vi.fn(),
   readCmsHistory: vi.fn(),
   readCmsVersion: vi.fn(),
   writeCms: vi.fn(),
+  writeCmsComment: vi.fn(),
 }))
 
+const mockedReadComments = vi.mocked(readCmsComments)
 const mockedReadHistory = vi.mocked(readCmsHistory)
 const mockedReadVersion = vi.mocked(readCmsVersion)
 const mockedWrite = vi.mocked(writeCms)
+const mockedWriteComment = vi.mocked(writeCmsComment)
 
 function snapshot(
   versionNumber = 1,
@@ -87,9 +97,12 @@ function changeEditable(label: string, value: string): HTMLElement {
 describe("CMS workspace", () => {
   beforeEach(() => {
     window.sessionStorage.clear()
+    mockedReadComments.mockReset()
+    mockedReadComments.mockResolvedValue({ ok: true, comments: [] })
     mockedReadHistory.mockReset()
     mockedReadVersion.mockReset()
     mockedWrite.mockReset()
+    mockedWriteComment.mockReset()
   })
 
   it("supports direct editing, keyboard undo, and every finish choice", async () => {
@@ -231,5 +244,36 @@ describe("CMS workspace", () => {
     expect(
       screen.getByRole("dialog", { name: "Finish editing?" })
     ).not.toBeNull()
+  })
+
+  it("edits reviewer context separately from teacher-facing content", () => {
+    renderWorkspace()
+    fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
+    fireEvent.click(screen.getByRole("button", { name: "Sections" }))
+    fireEvent.click(screen.getAllByRole("button", { name: "Edit context" })[0])
+
+    const intent = screen.getByRole<HTMLTextAreaElement>("textbox", {
+      name: "Design intent",
+    })
+    const original = intent.value
+    fireEvent.change(intent, {
+      target: {
+        value:
+          "The opening states the teacher outcome before showing the product.",
+      },
+    })
+    expect(intent.value).toContain("teacher outcome")
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }))
+    expect(
+      screen.getByRole<HTMLTextAreaElement>("textbox", {
+        name: "Design intent",
+      }).value
+    ).toBe(original)
+    expect(
+      screen.queryByText(
+        "The opening states the teacher outcome before showing the product."
+      )
+    ).toBeNull()
   })
 })

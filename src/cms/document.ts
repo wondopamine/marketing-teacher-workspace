@@ -139,13 +139,15 @@ export type CmsPageDocument = {
 
 export type CmsReviewDocument = {
   readonly targets: Readonly<
-    Record<
-      string,
-      {
-        readonly designIntent: string
-        readonly checks: ReadonlyArray<string>
-        readonly decisionNeeded?: string
-      }
+    Partial<
+      Record<
+        string,
+        {
+          readonly designIntent: string
+          readonly checks: ReadonlyArray<string>
+          readonly decisionNeeded?: string
+        }
+      >
     >
   >
 }

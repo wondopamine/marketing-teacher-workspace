@@ -1,7 +1,10 @@
 import { ReviewPin, reviewAnnotationBindings } from "./review-annotations"
 import { EditableCopy } from "./editor/editable-copy"
 
-import type { ContentReviewEditAdapter } from "./editor/content-review-edit-adapter"
+import type {
+  ContentReviewEditAdapter,
+  ContentReviewSectionReviewTargets,
+} from "./editor/content-review-edit-adapter"
 import type {
   TeacherPreviewAccessSupportSectionDto,
   TeacherPreviewActionDto,
@@ -110,7 +113,7 @@ function ProductScreenFigure({
   location,
   screen,
 }: {
-  annotationId: string
+  annotationId?: string
   location: string
   screen: TeacherPreviewScreenDto
 }) {
@@ -139,7 +142,7 @@ function ProductScreenFigure({
             ))}
           </ol>
         </nav>
-        <ReviewPin id={annotationId} />
+        {annotationId ? <ReviewPin id={annotationId} /> : null}
       </div>
       <div className="overflow-hidden bg-white">
         <img
@@ -171,9 +174,11 @@ function ProductScreenFigure({
 function HeroSection({
   section,
   onChange,
+  reviewTargets,
 }: {
   section: TeacherPreviewPromiseSectionDto
   onChange?: SectionTextChange
+  reviewTargets?: ContentReviewSectionReviewTargets
 }) {
   return (
     <section
@@ -192,16 +197,21 @@ function HeroSection({
             {section.eyebrow}
           </WireframeLabel>
         ) : null}
-        <EditableCopy
-          as="h1"
-          id="wireframe-hero-heading"
-          value={section.heading}
-          label="Edit opening heading"
-          onChange={
-            onChange ? (value) => onChange(["heading"], value) : undefined
-          }
-          className="max-w-[13ch] font-heading text-[32px] leading-tight font-semibold tracking-[-0.035em] sm:text-5xl lg:text-[72px]"
-        />
+        <div className="flex items-start gap-3">
+          <EditableCopy
+            as="h1"
+            id="wireframe-hero-heading"
+            value={section.heading}
+            label="Edit opening heading"
+            onChange={
+              onChange ? (value) => onChange(["heading"], value) : undefined
+            }
+            className="max-w-[13ch] font-heading text-[32px] leading-tight font-semibold tracking-[-0.035em] sm:text-5xl lg:text-[72px]"
+          />
+          {reviewTargets?.sectionId ? (
+            <ReviewPin id={reviewTargets.sectionId} />
+          ) : null}
+        </div>
         {section.body.map((paragraph, index) => (
           <EditableCopy
             as="p"
@@ -219,7 +229,9 @@ function HeroSection({
 
       <div data-wireframe-interface-frame="product-view">
         <ProductScreenFigure
-          annotationId={reviewAnnotationBindings.heroScreen}
+          annotationId={
+            reviewTargets?.screenIds[0] ?? reviewAnnotationBindings.heroScreen
+          }
           location="hero-product-view"
           screen={section.screen}
         />
@@ -231,9 +243,11 @@ function HeroSection({
 function ConnectedStorySection({
   section,
   onChange,
+  reviewTargets,
 }: {
   section: TeacherPreviewConnectedStorySectionDto
   onChange?: SectionTextChange
+  reviewTargets?: ContentReviewSectionReviewTargets
 }) {
   return (
     <section
@@ -242,7 +256,9 @@ function ConnectedStorySection({
       data-wireframe-section={section.kind}
     >
       <SectionIntro
-        annotationId={reviewAnnotationBindings.story}
+        annotationId={
+          reviewTargets?.sectionId ?? reviewAnnotationBindings.story
+        }
         headingId="wireframe-connected-story"
         title={section.heading}
         onTitleChange={
@@ -305,7 +321,10 @@ function ConnectedStorySection({
               ))}
             </div>
             <ProductScreenFigure
-              annotationId={reviewAnnotationBindings.storyScreens[index]}
+              annotationId={
+                reviewTargets?.screenIds[index] ??
+                reviewAnnotationBindings.storyScreens[index]
+              }
               location={`story-step-${index + 1}`}
               screen={step.screen}
             />
@@ -319,9 +338,11 @@ function ConnectedStorySection({
 function RevealSection({
   section,
   onChange,
+  reviewTargets,
 }: {
   section: TeacherPreviewRevealSectionDto
   onChange?: SectionTextChange
+  reviewTargets?: ContentReviewSectionReviewTargets
 }) {
   return (
     <section
@@ -331,16 +352,21 @@ function RevealSection({
     >
       <div className="grid gap-10 md:grid-cols-[minmax(0,1.2fr)_minmax(16rem,0.8fr)] md:items-end">
         <div>
-          <EditableCopy
-            as="h2"
-            id="wireframe-reveal"
-            value={section.heading}
-            label="Edit reveal heading"
-            onChange={
-              onChange ? (value) => onChange(["heading"], value) : undefined
-            }
-            className="font-heading text-[32px] font-semibold tracking-[-0.035em] sm:text-5xl"
-          />
+          <div className="flex items-start gap-3">
+            <EditableCopy
+              as="h2"
+              id="wireframe-reveal"
+              value={section.heading}
+              label="Edit reveal heading"
+              onChange={
+                onChange ? (value) => onChange(["heading"], value) : undefined
+              }
+              className="font-heading text-[32px] font-semibold tracking-[-0.035em] sm:text-5xl"
+            />
+            {reviewTargets?.sectionId ? (
+              <ReviewPin id={reviewTargets.sectionId} />
+            ) : null}
+          </div>
           {section.body.map((paragraph, index) => (
             <EditableCopy
               as="p"
@@ -389,9 +415,11 @@ function RevealSection({
 function CapabilitiesSection({
   section,
   onChange,
+  reviewTargets,
 }: {
   section: TeacherPreviewCapabilitiesSectionDto
   onChange?: SectionTextChange
+  reviewTargets?: ContentReviewSectionReviewTargets
 }) {
   return (
     <section
@@ -400,7 +428,9 @@ function CapabilitiesSection({
       data-wireframe-section={section.kind}
     >
       <SectionIntro
-        annotationId={reviewAnnotationBindings.capabilities}
+        annotationId={
+          reviewTargets?.sectionId ?? reviewAnnotationBindings.capabilities
+        }
         headingId="wireframe-capabilities"
         title={section.heading}
         onTitleChange={
@@ -473,9 +503,11 @@ function CapabilitiesSection({
 function AccessSupportSection({
   section,
   onChange,
+  reviewTargets,
 }: {
   section: TeacherPreviewAccessSupportSectionDto
   onChange?: SectionTextChange
+  reviewTargets?: ContentReviewSectionReviewTargets
 }) {
   return (
     <section
@@ -484,7 +516,9 @@ function AccessSupportSection({
       data-wireframe-section={section.kind}
     >
       <SectionIntro
-        annotationId={reviewAnnotationBindings.accessSupport}
+        annotationId={
+          reviewTargets?.sectionId ?? reviewAnnotationBindings.accessSupport
+        }
         headingId="wireframe-access-support"
         title={section.heading}
         onTitleChange={
@@ -545,9 +579,11 @@ function AccessSupportSection({
 function CloseSection({
   section,
   onChange,
+  reviewTargets,
 }: {
   section: TeacherPreviewCloseSectionDto
   onChange?: SectionTextChange
+  reviewTargets?: ContentReviewSectionReviewTargets
 }) {
   return (
     <section
@@ -555,16 +591,21 @@ function CloseSection({
       className="px-6 py-20 text-center md:px-10 md:py-28 lg:px-16"
       data-wireframe-section={section.kind}
     >
-      <EditableCopy
-        as="h2"
-        id="wireframe-close"
-        value={section.heading}
-        label="Edit closing heading"
-        onChange={
-          onChange ? (value) => onChange(["heading"], value) : undefined
-        }
-        className="mx-auto max-w-4xl font-heading text-[32px] font-semibold tracking-[-0.035em] sm:text-5xl"
-      />
+      <div className="flex items-start justify-center gap-3">
+        <EditableCopy
+          as="h2"
+          id="wireframe-close"
+          value={section.heading}
+          label="Edit closing heading"
+          onChange={
+            onChange ? (value) => onChange(["heading"], value) : undefined
+          }
+          className="max-w-4xl font-heading text-[32px] font-semibold tracking-[-0.035em] sm:text-5xl"
+        />
+        {reviewTargets?.sectionId ? (
+          <ReviewPin id={reviewTargets.sectionId} />
+        ) : null}
+      </div>
       {section.body.map((paragraph, index) => (
         <EditableCopy
           as="p"
@@ -585,32 +626,72 @@ function CloseSection({
 export function ContentReviewSection({
   section,
   onChange,
+  reviewTargets,
 }: {
   section: TeacherPreviewSectionDto
   onChange?: SectionTextChange
+  reviewTargets?: ContentReviewSectionReviewTargets
 }) {
   switch (section.kind) {
     case "promise":
-      return <HeroSection section={section} onChange={onChange} />
+      return (
+        <HeroSection
+          section={section}
+          onChange={onChange}
+          reviewTargets={reviewTargets}
+        />
+      )
     case "connected-story":
-      return <ConnectedStorySection section={section} onChange={onChange} />
+      return (
+        <ConnectedStorySection
+          section={section}
+          onChange={onChange}
+          reviewTargets={reviewTargets}
+        />
+      )
     case "reveal":
-      return <RevealSection section={section} onChange={onChange} />
+      return (
+        <RevealSection
+          section={section}
+          onChange={onChange}
+          reviewTargets={reviewTargets}
+        />
+      )
     case "capabilities":
-      return <CapabilitiesSection section={section} onChange={onChange} />
+      return (
+        <CapabilitiesSection
+          section={section}
+          onChange={onChange}
+          reviewTargets={reviewTargets}
+        />
+      )
     case "close":
-      return <CloseSection section={section} onChange={onChange} />
+      return (
+        <CloseSection
+          section={section}
+          onChange={onChange}
+          reviewTargets={reviewTargets}
+        />
+      )
     case "access-support":
-      return <AccessSupportSection section={section} onChange={onChange} />
+      return (
+        <AccessSupportSection
+          section={section}
+          onChange={onChange}
+          reviewTargets={reviewTargets}
+        />
+      )
   }
 }
 
 export function ContentReviewOutline({
   sections,
   editor,
+  reviewTargets,
 }: {
   sections: ReadonlyArray<TeacherPreviewSectionDto>
   editor?: ContentReviewEditAdapter
+  reviewTargets?: ReadonlyArray<ContentReviewSectionReviewTargets>
 }) {
   return (
     <>
@@ -618,6 +699,7 @@ export function ContentReviewOutline({
         <ContentReviewSection
           key={section.kind}
           section={section}
+          reviewTargets={reviewTargets?.[index]}
           onChange={
             editor
               ? (path, value) => editor.updateSectionText(index, path, value)

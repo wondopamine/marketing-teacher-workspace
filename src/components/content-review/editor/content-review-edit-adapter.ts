@@ -13,3 +13,13 @@ export type ContentReviewEditAdapter = {
     value: string
   ) => void
 }
+
+export type ContentReviewSectionReviewTargets = {
+  readonly sectionId: string
+  readonly screenIds: ReadonlyArray<string>
+}
+
+export type ContentReviewReviewTargets = {
+  readonly sections: ReadonlyArray<ContentReviewSectionReviewTargets>
+  readonly footerSectionId: string | null
+}

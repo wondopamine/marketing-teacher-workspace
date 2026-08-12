@@ -235,5 +235,125 @@ export const homepageV1Contract = {
       },
     ],
   },
-  reviewDocument: { targets: {} },
+  reviewDocument: {
+    targets: {
+      "02e79e5c-bd01-47e5-be54-95b7c939c358": {
+        designIntent:
+          "Teachers need to understand the page's value within seconds. The opening names one clear outcome, then shows where the work begins.",
+        checks: [
+          "Does the opening promise match what Teacher Workspace can deliver today?",
+          "Can a teacher understand the main benefit without reading the rest of the page?",
+        ],
+      },
+      "7d2140d1-15e7-4762-b3b3-17e261c85948": {
+        designIntent:
+          "The student profile makes the opening promise concrete. It shows the signals, actions, and navigation in one familiar view.",
+        checks: [
+          "Does the profile support the promise made beside it?",
+          "Could any name or detail be mistaken for real student data?",
+        ],
+        decisionNeeded:
+          "Replace this capture if the approved student profile changes before launch.",
+      },
+      "e4a6a36b-bb0a-4977-854b-66f3db071123": {
+        designIntent:
+          "One synthetic student gives the page a clear thread, so each step feels connected. The bursary journey shows the hand-off between products without using a real case. It appears before the capability list so each feature has a clear example.",
+        checks: [
+          "Does each step follow naturally from the one before it?",
+          "Could any name, number, or family detail be mistaken for real student data?",
+          "Does the example avoid sensitive groups, including SWaN students?",
+        ],
+      },
+      "74176ccd-fdee-47a2-9308-286146f2366b": {
+        designIntent:
+          "The story starts in a familiar class list before moving into one profile. Teachers can recognise the setting before the support journey begins.",
+        checks: [
+          "Does the class list look familiar to a form teacher?",
+          "Are all student names and details clearly synthetic?",
+        ],
+        decisionNeeded:
+          "Create a clean story-state capture without unrelated attention tags.",
+      },
+      "9618e896-adda-4973-95e0-61c45360a2f5": {
+        designIntent:
+          "The family section shows why a teacher may notice a support need. Its signals are invented and do not describe a real student.",
+        checks: [
+          "Do the visible fields support the eligibility claim in the story?",
+          "Does the example avoid unnecessary family or financial detail?",
+        ],
+        decisionNeeded:
+          "Confirm which bursary eligibility signals the approved product will show.",
+      },
+      "f050b81e-c800-4013-9258-57d991041363": {
+        designIntent:
+          "Guidance follows the eligibility signal so the page answers the teacher's next question: what should I do now?",
+        checks: [
+          "Does the guidance follow directly from the signal shown before it?",
+          "Can a teacher tell which steps still need product approval?",
+        ],
+        decisionNeeded:
+          "Confirm whether bursary matching, documents, submission details, and closing dates are planned for launch.",
+      },
+      "24bef79e-9103-4190-a1ba-9ac4fbfd75c5": {
+        designIntent:
+          "The draft appears after the teacher understands the case. Showing an editable message makes the teacher's review and control clear.",
+        checks: [
+          "Is the message visibly editable before it is sent?",
+          "Does the draft avoid claiming that AI can send a message without teacher approval?",
+        ],
+      },
+      "d9e36bc7-89b2-48b0-b35e-11867763d44a": {
+        designIntent:
+          "Read tracking closes the journey. It shows that the family received the message and that the action stays on record.",
+        checks: [
+          "Does the screen show delivery and read status clearly?",
+          "Does the page distinguish current product behaviour from the proposed student record?",
+        ],
+        decisionNeeded:
+          "Confirm whether application updates will appear on the student's record at launch.",
+      },
+      "fd9a7815-00b4-4a6f-8b69-c83a05b7b90d": {
+        designIntent:
+          "The page names Teacher Workspace after the journey has shown its value. This pause turns the example into a clear product idea without interrupting the story early.",
+        checks: [
+          "Does the reveal feel earned by the story above it?",
+          "Does it describe the product without making a claim the story has not shown?",
+        ],
+      },
+      "c8de156c-516f-4ba6-b7c4-b4ed652cb45d": {
+        designIntent:
+          "After the story, this section maps each moment to a product capability. Teachers can read the list with a clear example in mind.",
+        checks: [
+          "Does every capability connect to a moment shown in the story?",
+          "Are product names and claims accurate for the current release?",
+        ],
+      },
+      "76329aa6-ea3d-4f34-b6a3-3d9a222b2df0": {
+        designIntent:
+          "The closing returns to the teacher's outcome and repeats the sign-in action. It comes after the evidence, when a teacher can decide whether to continue.",
+        checks: [
+          "Does the closing reflect the journey shown above?",
+          "Is the sign-in action correct for the release?",
+        ],
+      },
+      "c091f7ce-49db-4acc-89ed-91613e7e475a": {
+        designIntent:
+          "Access details sit after the main story so setup does not interrupt it. Teachers still get the sign-in requirement before reaching the footer.",
+        checks: [
+          "Is the access method correct?",
+          "Can a teacher tell which account to use?",
+        ],
+        decisionNeeded:
+          "Confirm the support route and final access wording before launch.",
+      },
+      "54fd7d5c-8c75-456e-abc7-5835ed93a3c1": {
+        designIntent:
+          "The footer ends with product ownership and a feedback route. It stays brief because the main decision has already been made above.",
+        checks: [
+          "Are the owner, year, and feedback route correct?",
+          "Does the footer avoid repeating the access section?",
+        ],
+      },
+    },
+  },
 } as const satisfies CmsVersionContract

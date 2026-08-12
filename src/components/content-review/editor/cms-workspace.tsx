@@ -10,6 +10,7 @@ import {
 import { ContentReviewPage } from "../content-review-page"
 import { PublicReviewMode } from "../public-review-mode"
 import { CmsVersionHistoryPanel } from "../version-history/cms-version-history-panel"
+import { CmsSectionContextPanel } from "../section-context/cms-section-context-panel"
 import { useReviewAnnotations } from "../review-annotations"
 import { FinishEditingDialog, PublishVersionDialog } from "./cms-editor-dialogs"
 import {
@@ -19,6 +20,7 @@ import {
   moveCmsSection,
   replaceCmsValue,
   setCmsSectionState,
+  updateCmsReviewContext,
 } from "./cms-editor-model"
 import { readCmsHistory, readCmsVersion, writeCms } from "./cms-client"
 import type {
@@ -36,6 +38,7 @@ import {
   isCmsVersionContract,
   projectCmsPageDocumentForEditor,
 } from "@/cms/validation"
+import { buildCmsReviewPresentation } from "@/cms/review-presentation"
 
 type WorkspaceStatus = {
   readonly kind: "idle" | "busy" | "success" | "error"
@@ -46,6 +49,10 @@ type RetriableAttempt = {
   readonly fingerprint: string
   readonly attemptId: string
 }
+
+type CmsReviewContext = NonNullable<
+  CmsVersionContract["reviewDocument"]["targets"][string]
+>
 
 function sameHead(left: CmsHead | null, right: CmsHead | null): boolean {
   if (!left || !right) return left === right
@@ -78,7 +85,8 @@ export function CmsWorkspace({
     cmsEditorReducer,
     createCmsEditorState(snapshot, publishedHead)
   )
-  const { panelOpen, setPanelOpen, setPinsVisible } = useReviewAnnotations()
+  const { panelOpen, replaceAnnotations, setPanelOpen, setPinsVisible } =
+    useReviewAnnotations()
   const [displayName, setDisplayName] = useState("")
   const [status, setStatus] = useState<WorkspaceStatus>({
     kind: "idle",
@@ -219,9 +227,19 @@ export function CmsWorkspace({
   }, [apply, editing, previewVersion, state.present])
 
   const displayContract = previewVersion ?? state.present
+  const reviewPresentation = useMemo(
+    () => buildCmsReviewPresentation(displayContract),
+    [displayContract]
+  )
+  const reviewVersionId =
+    previewVersion?.head.versionId ?? state.baseline.head.versionId
   const previewDocument = projectCmsPageDocumentForEditor(
     displayContract.pageDocument
   )
+
+  useEffect(() => {
+    replaceAnnotations(reviewPresentation.annotations)
+  }, [replaceAnnotations, reviewPresentation.annotations])
 
   const loadHistory = useCallback(
     async (cursor: number | null = null, append = false) => {
@@ -721,6 +739,20 @@ export function CmsWorkspace({
             : status.message,
           onToggle: startOrFinishEditing,
         }}
+        externalReviewPanel={{
+          content: (
+            <CmsSectionContextPanel
+              pageId={state.baseline.pageId}
+              versionId={reviewVersionId}
+              csrfToken={csrfToken}
+              displayName={displayName}
+              onDisplayNameChange={setDisplayName}
+              onStatusMessage={(message) =>
+                setStatus({ kind: "success", message })
+              }
+            />
+          ),
+        }}
       />
 
       <div
@@ -789,7 +821,7 @@ export function CmsWorkspace({
         {editing && sectionsOpen ? (
           <SectionManager
             contract={state.present}
-            onChange={(contract) => apply(contract)}
+            onChange={apply}
             onNotice={(message) => setStatus({ kind: "success", message })}
           />
         ) : null}
@@ -823,6 +855,10 @@ export function CmsWorkspace({
           <ContentReviewPage
             data={{ kind: "ready", document: previewDocument }}
             editor={editor}
+            reviewTargets={{
+              sections: reviewPresentation.sectionTargets,
+              footerSectionId: reviewPresentation.footerTargetId,
+            }}
           />
         ) : (
           <main className="grid min-h-[50vh] place-items-center bg-muted px-6 font-body">
@@ -956,15 +992,100 @@ function PageSettings({
   )
 }
 
+function SectionContextSettings({
+  sectionLabel,
+  context,
+  onChange,
+}: {
+  readonly sectionLabel: string
+  readonly context: CmsReviewContext
+  readonly onChange: (
+    context: CmsReviewContext,
+    field: "designIntent" | "checks" | "decisionNeeded"
+  ) => void
+}) {
+  return (
+    <div className="mt-4 border-l-2 border-foreground/30 bg-muted px-4 py-4">
+      <p className="font-semibold">{sectionLabel} context</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Reviewers see this context. Teachers do not.
+      </p>
+      <label className="mt-4 block text-sm font-medium">
+        Design intent
+        <textarea
+          data-cms-native-undo
+          value={context.designIntent}
+          maxLength={4_000}
+          rows={4}
+          onChange={(event) =>
+            onChange(
+              { ...context, designIntent: event.target.value },
+              "designIntent"
+            )
+          }
+          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        />
+      </label>
+      <label className="mt-4 block text-sm font-medium">
+        What to check
+        <textarea
+          data-cms-native-undo
+          value={context.checks.join("\n")}
+          rows={4}
+          onChange={(event) =>
+            onChange(
+              {
+                ...context,
+                checks: event.target.value
+                  .split("\n")
+                  .map((check) => check.trim())
+                  .filter(Boolean),
+              },
+              "checks"
+            )
+          }
+          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        />
+        <span className="mt-1 block text-xs font-normal text-muted-foreground">
+          Write one check per line.
+        </span>
+      </label>
+      <label className="mt-4 block text-sm font-medium">
+        Decision needed
+        <textarea
+          data-cms-native-undo
+          value={context.decisionNeeded ?? ""}
+          maxLength={1_000}
+          rows={3}
+          onChange={(event) => {
+            const decisionNeeded = event.target.value
+            if (decisionNeeded.length > 0) {
+              onChange({ ...context, decisionNeeded }, "decisionNeeded")
+              return
+            }
+            const { decisionNeeded: _removed, ...withoutDecision } = context
+            onChange(withoutDecision, "decisionNeeded")
+          }}
+          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        />
+      </label>
+    </div>
+  )
+}
+
 function SectionManager({
   contract,
   onChange,
   onNotice,
 }: {
   readonly contract: CmsVersionContract
-  readonly onChange: (contract: CmsVersionContract) => void
+  readonly onChange: (
+    contract: CmsVersionContract,
+    historyGroup?: string
+  ) => void
   readonly onNotice: (message: string) => void
 }) {
+  const [contextSectionId, setContextSectionId] = useState<string | null>(null)
   const sections = contract.pageDocument.sections
   return (
     <section
@@ -987,107 +1108,145 @@ function SectionManager({
           {sections.map((section, index) => {
             const rule = cmsSectionRegistry[section.type]
             const fixed = !rule.canArchive
+            const context = contract.reviewDocument.targets[section.id]
             return (
-              <li
-                key={section.id}
-                className="flex flex-col gap-3 py-3 lg:flex-row lg:items-center lg:justify-between"
-              >
-                <div>
-                  <p className="font-medium">{rule.label}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {section.state === "visible"
-                      ? "Shown"
-                      : section.state === "hidden"
-                        ? "Hidden"
-                        : "Archived"}
-                  </p>
-                </div>
-                <div
-                  className="flex flex-wrap gap-2"
-                  role="group"
-                  aria-label={`${rule.label} section actions`}
-                >
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    className="min-h-11"
-                    disabled={fixed || index <= 1}
-                    onClick={() =>
-                      onChange(moveCmsSection(contract, section.id, -1))
-                    }
+              <li key={section.id} className="py-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <p className="font-medium">{rule.label}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {section.state === "visible"
+                        ? "Shown"
+                        : section.state === "hidden"
+                          ? "Hidden"
+                          : "Archived"}
+                    </p>
+                  </div>
+                  <div
+                    className="flex flex-wrap gap-2"
+                    role="group"
+                    aria-label={`${rule.label} section actions`}
                   >
-                    Move up
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    className="min-h-11"
-                    disabled={fixed || index >= sections.length - 2}
-                    onClick={() =>
-                      onChange(moveCmsSection(contract, section.id, 1))
-                    }
-                  >
-                    Move down
-                  </Button>
-                  {section.state === "archived" ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="lg"
-                      className="min-h-11"
-                      onClick={() => {
-                        onChange(
-                          setCmsSectionState(contract, section.id, "visible")
-                        )
-                        onNotice(
-                          `${rule.label} restored. Use Undo to put it back.`
-                        )
-                      }}
-                    >
-                      Restore
-                    </Button>
-                  ) : (
-                    <>
+                    {context ? (
                       <Button
                         type="button"
                         variant="outline"
                         size="lg"
                         className="min-h-11"
-                        disabled={fixed}
+                        aria-expanded={contextSectionId === section.id}
                         onClick={() =>
-                          onChange(
-                            setCmsSectionState(
-                              contract,
-                              section.id,
-                              section.state === "hidden" ? "visible" : "hidden"
-                            )
+                          setContextSectionId((current) =>
+                            current === section.id ? null : section.id
                           )
                         }
                       >
-                        {section.state === "hidden" ? "Show" : "Hide"}
+                        Edit context
                       </Button>
+                    ) : null}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      className="min-h-11"
+                      disabled={fixed || index <= 1}
+                      onClick={() =>
+                        onChange(moveCmsSection(contract, section.id, -1))
+                      }
+                    >
+                      Move up
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      className="min-h-11"
+                      disabled={fixed || index >= sections.length - 2}
+                      onClick={() =>
+                        onChange(moveCmsSection(contract, section.id, 1))
+                      }
+                    >
+                      Move down
+                    </Button>
+                    {section.state === "archived" ? (
                       <Button
                         type="button"
-                        variant="destructive"
+                        variant="outline"
                         size="lg"
                         className="min-h-11"
-                        disabled={fixed}
                         onClick={() => {
                           onChange(
-                            setCmsSectionState(contract, section.id, "archived")
+                            setCmsSectionState(contract, section.id, "visible")
                           )
                           onNotice(
-                            `${rule.label} archived. Use Undo to restore it.`
+                            `${rule.label} restored. Use Undo to put it back.`
                           )
                         }}
                       >
-                        Archive
+                        Restore
                       </Button>
-                    </>
-                  )}
+                    ) : (
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="lg"
+                          className="min-h-11"
+                          disabled={fixed}
+                          onClick={() =>
+                            onChange(
+                              setCmsSectionState(
+                                contract,
+                                section.id,
+                                section.state === "hidden"
+                                  ? "visible"
+                                  : "hidden"
+                              )
+                            )
+                          }
+                        >
+                          {section.state === "hidden" ? "Show" : "Hide"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="lg"
+                          className="min-h-11"
+                          disabled={fixed}
+                          onClick={() => {
+                            onChange(
+                              setCmsSectionState(
+                                contract,
+                                section.id,
+                                "archived"
+                              )
+                            )
+                            onNotice(
+                              `${rule.label} archived. Use Undo to restore it.`
+                            )
+                          }}
+                        >
+                          Archive
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
+                {contextSectionId === section.id && context ? (
+                  <SectionContextSettings
+                    sectionLabel={rule.label}
+                    context={context}
+                    onChange={(nextContext, field) =>
+                      onChange(
+                        updateCmsReviewContext(
+                          contract,
+                          section.id,
+                          nextContext
+                        ),
+                        `context.${section.id}.${field}`
+                      )
+                    }
+                  />
+                ) : null}
               </li>
             )
           })}

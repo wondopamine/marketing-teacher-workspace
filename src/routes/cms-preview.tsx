@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { CmsWorkspace } from "@/components/content-review/editor/cms-workspace"
 import { ReviewAnnotationProvider } from "@/components/content-review/review-annotations"
 import { getCmsComparisonPageData } from "@/server/cms-comparison"
+import { buildCmsReviewPresentation } from "@/cms/review-presentation"
 
 export const Route = createFileRoute("/cms-preview")({
   loader: () => getCmsComparisonPageData(),
@@ -38,7 +39,9 @@ function CmsPreviewRoute() {
     )
   }
   return (
-    <ReviewAnnotationProvider>
+    <ReviewAnnotationProvider
+      annotations={buildCmsReviewPresentation(data.snapshot).annotations}
+    >
       <CmsWorkspace
         snapshot={data.snapshot}
         publishedHead={data.publishedHead}

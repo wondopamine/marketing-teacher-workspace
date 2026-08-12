@@ -97,3 +97,116 @@ PASS
 - **Verification:** The current suite passes **30 files and 214 tests**. TypeScript passes cleanly. The supplied lint, production build and postbuild scans, route-isolation checks, token audit, accessibility static check, and content lint all pass. The Node 25 versus requested Node 24 engine warning did not affect results.
 
 **Remaining blockers or actionable flags: none.**
+
+## CMS rationale and feedback follow-up
+
+Implemented and independently verified on 2026-08-12:
+
+- The CMS now builds review pins from stable section and screen IDs. Hidden and archived targets keep their IDs but leave the visible pin sequence.
+- Design intent is versioned with the page. Reviewer comments remain separate durable records and distinguish Page content from Design intent.
+- Comments support Open, Resolved, and Withdrawn states. A withdrawn or resolved comment can be reopened.
+- The selected rationale panel explains section purpose, position, safety choices, review checks, and unresolved decisions. It does not show a rationale directory.
+- Direct content editing and section-context review remain separate tasks. The reviewer can edit Design intent, What to check, and Decision needed from Section Manager, with Undo before saving.
+- Loading, saving, resolving, withdrawing, reopening, and retry states are visible and announced. A failed add keeps both the note and focus on the acting control.
+- The design-intent and review-check prose measure is capped at 66 characters. Dark mode is not applicable because this product has no visible dark-mode control or supported rendered dark layer.
+
+Responsive evidence:
+
+- `/private/tmp/cms-phase6-full-1280.png`
+- `/private/tmp/cms-phase6-context-1280.png`
+- `/private/tmp/cms-phase6-full-360-fresh.png`
+- `/private/tmp/cms-phase6-context-360.png`
+- `/private/tmp/cms-phase6-context-768-fixed.png`
+- `/private/tmp/cms-phase6-error-768-fixed-alert.png`
+- `/private/tmp/cms-phase6-loading-768.png`
+- `/private/tmp/cms-phase6-public-home-1280.png`
+
+Verification completed after the final accessibility fix:
+
+- 44 test files and 274 tests passed; the database-only file was skipped in the regular suite.
+- All 13 PostgreSQL integration tests passed against the local test database.
+- TypeScript, ESLint, the production build, public-output leakage scan, and built-route isolation passed.
+- The token audit and static accessibility check passed.
+- The content scanner reported only internal response-code comparison strings such as `STALE_DRAFT` and `UNAVAILABLE`; these are not visible copy.
+- The type scanner's only line-height warning referred to the numeric review-pin pseudo-element, not body copy.
+- `CMP-1: asserted, no manifest — manifest absent for marketing-teacher-workspace`
+
+### Verbatim independent evaluator report
+
+PASS
+
+VERDICT: pass
+
+#### Contract compliance
+
+- **Teacher/reviewer separation — met.** Reviewer rationale, checks, decisions, feedback fields, and comments remain outside the teacher-facing subtree. The only approved review chrome inside the preview is the numbered pin control. The panel states: “Reviewer-only. Teachers will not see this panel or its feedback.”
+- **Rationale quality and story order — met.** Each section explains why it exists and why it appears in that position. The Connected story rationale explains the immersive single-student thread, the synthetic bursary example, the exclusion of sensitive groups including SWaN students, and why the story comes before the capability list.
+- **Stable pin mapping — met.** `buildCmsReviewPresentation()` derives pins from stable section and screen IDs in current visual order. Hidden and archived targets are omitted without replacing their IDs. The rendered sequence is contiguous from 1 to 13.
+- **Durable feedback semantics — met.** Feedback records Page content or Design intent, author, version, status, and stable target. Browser evidence proved persistence after reload and subject-specific change notices. PostgreSQL integration tests cover reorder, archive, restore, idempotent creation, and status changes.
+- **Full-width and side-panel behavior — met.** The preview uses the full width by default. The 1280px context frame shows the approved 22rem rail; the 768px and 360px frames stack the panel without covering the preview. A direct 320px check measured `scrollWidth === clientWidth === 320` with the panel both closed and open.
+- **Editing separation — met.** Show/Hide section context and Edit content remain distinct actions. Editing closes reviewer context, preserves the full-width preview, and exposes separately editable Design intent, What to check, and Decision needed fields with Undo support.
+- **Async and recovery behavior — met.** Loading feedback and add/resolve/withdraw/reopen operations expose named `role="status"` states. Failed Add retains the note, keeps focus on Add feedback, announces one alert, and offers Try adding again. The refreshed error evidence is `/private/tmp/cms-phase6-error-768-fixed-alert.png`.
+- **Public boundary — met.** `/` still renders the released visual homepage. Production build, route isolation, and leakage scans passed; public projection excludes review documents, comments, IDs, drafts, and operational metadata.
+
+#### Plan fidelity
+
+The implementation matches the approved direction: selected-only context instead of a rationale directory, separate review and edit controls, stable annotation targets, versioned design intent, durable comments, actual product screenshots with breadcrumbs, and no early change to public `/`.
+
+No unapproved structural drift was found.
+
+#### BLOCKING
+
+None.
+
+#### ADVISORY
+
+None.
+
+#### Quality grades
+
+- **Design quality — strong.** The teacher preview remains the primary focal region, while review context appears only when requested.
+- **Originality — acceptable and appropriate.** The workspace uses familiar controls and restrained annotation patterns without decorative novelty or generic AI-dashboard treatment.
+- **Craft — strong.** Alignment, spacing, responsive reflow, 66ch prose measures, focus continuity, loading states, recovery, and edge cases are deliberately handled.
+- **Functionality — strong.** Review, comment, retry, resolve, edit context, undo, save, reload, archive, restore, and history semantics connect without dead ends.
+- **Dark mode — N/A.** The product has no visible dark-mode control or supported rendered dark layer.
+
+#### Judgment control notes
+
+- **A11Y-1 — pass.** Foreground, muted, primary, and destructive states use the established accessible token palette; token checks and visual evidence found no contrast failure.
+- **A11Y-2 — pass.** Interactive elements are native keyboard controls with visible focus. Toolbar controls and pins meet the 44px mobile target.
+- **A11Y-3 — pass.** Name, feedback, subject, and context fields have visible programmatic labels; no placeholder acts as the only label.
+- **A11Y-7 — pass.** The panel uses labelled regions, logical H2/H3 structure, lists, fieldset/legend semantics, and descriptive screenshot links.
+- **A11Y-8 — pass.** Pins and disclosures expose `aria-expanded`; busy controls use truthful `aria-disabled` state with guarded activation; the empty Add feedback state uses native `disabled`.
+- **A11Y-11 — pass.** Pending states use live status regions. Success is announced through the toolbar. Failed Add uses one alert channel while focus remains on the retry-capable acting control.
+- **CMP-1 — pass.** Existing Button, Input, native textarea, fieldset, aside, and dialog elements cover the needs. **CMP-1: asserted, no manifest — manifest absent for marketing-teacher-workspace.** Evidence source: direct product-codebase review.
+- **CMP-2 — pass.** Feedback is never hard-deleted. Withdraw is reversible through Reopen; section archive has a visible Undo path; discard and publication consequences are explicit.
+- **CMP-3 — pass.** Comment loading, creation, and status updates each have visible loading, success, and error behavior. Focused regression tests cover these states.
+- **CNT-1 — pass.** “We could not add this feedback. Your note is still here. Try again.” states the failure, confirms retained work, and gives the next action.
+- **CNT-2 — pass.** Section context, Design intent, What to check, Decision needed, and feedback status labels use plain functional language.
+- **CNT-3 — pass.** Instructions are active, direct, and short; rationale sentences stay within the required length.
+- **CNT-4 — pass.** Product captures are labelled illustrative, the student is explicitly synthetic, and checks call out potentially sensitive or misleading details.
+- **CNT-5 — pass.** Instructions use device-independent verbs such as use, choose, open, and review.
+- **CNT-6 — pass.** No removable empty openers or filler weaken the reviewed copy.
+- **CNT-7 — pass.** Each rationale starts with the section’s purpose before explaining the layout or mechanism.
+- **SLP-9 — pass.** The copy contains no buzzwords, em-dash chains, forced triads, significance inflation, chatbot phrasing, or redundant rationale scaffolding.
+- **IDN-3 — pass.** The writing stays neutral, steady, plain, and quietly confident—the Teacher Workspace register.
+- **LAY-2 — pass, verified manually.** No horizontal overflow occurred at 320px; reading order and controls remain usable at 360, 768, and 1280px.
+- **LAY-3 — pass.** The surface follows a review-workspace template: persistent tools, primary preview, and optional contextual rail.
+- **LAY-4 — pass.** Design intent, checks, and pending-decision prose now cap at 66ch.
+- **LAY-5 — pass.** Density fits a review task: compact controls, readable rationale, and sufficient separation between feedback records.
+- **LAY-6 — pass.** Shared edges, field labels, toolbar controls, panel sections, and preview boundaries align consistently.
+- **LAY-7 — pass.** The teacher preview leads by default; when context is requested, the panel gains appropriate task priority without competing with or obscuring the preview.
+
+#### UNCOVERED
+
+None.
+
+#### Verification evidence
+
+- Current focused regression suite: 3 files and 9 tests passed.
+- Full suite reported: 44 files and 273 tests passed.
+- PostgreSQL integration: 13 of 13 passed.
+- TypeScript, ESLint, production build, postbuild leakage checks, route isolation, token audit, and static accessibility checks passed.
+- Responsive evidence reviewed at 360, 768, and 1280px, plus an independent live 320px reflow measurement.
+
+Independent-review limitation: this evaluation was performed by a separate evaluator subagent, but it shares the same model family and repository context as the implementation agent. It provides process independence, not independent-model diversity.

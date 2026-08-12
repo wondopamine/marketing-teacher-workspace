@@ -484,6 +484,179 @@ databaseSuite("CMS PostgreSQL repository", () => {
     })
   })
 
+  it("keeps feedback on stable targets through edits, reorder, archive, and restore", async () => {
+    const story = homepageV1Contract.pageDocument.sections.find(
+      (section) => section.type === "connected-story"
+    )
+    if (!story) throw new Error("Expected the connected story fixture")
+    const contentCommentId = randomUUID()
+    const intentCommentId = randomUUID()
+    const contentComment = await repository.createComment({
+      id: contentCommentId,
+      pageId: cmsHomepagePageId,
+      targetId: story.id,
+      targetVersionId: imported.snapshot.head.versionId,
+      subject: "page-content",
+      body: "Keep the student journey concrete.",
+      displayName: "Alex Tan",
+    })
+    const retry = await repository.createComment({
+      id: contentCommentId,
+      pageId: cmsHomepagePageId,
+      targetId: story.id,
+      targetVersionId: imported.snapshot.head.versionId,
+      subject: "page-content",
+      body: "Keep the student journey concrete.",
+      displayName: "Alex Tan",
+    })
+    await repository.createComment({
+      id: intentCommentId,
+      pageId: cmsHomepagePageId,
+      targetId: story.id,
+      targetVersionId: imported.snapshot.head.versionId,
+      subject: "design-intent",
+      body: "Explain why this story comes before the capability list.",
+      displayName: "Jamie Lim",
+    })
+    expect(retry).toEqual(contentComment)
+
+    const reorderedContract: CmsVersionContract = {
+      ...homepageV1Contract,
+      pageDocument: {
+        ...homepageV1Contract.pageDocument,
+        sections: [
+          homepageV1Contract.pageDocument.sections[0],
+          homepageV1Contract.pageDocument.sections[2],
+          story,
+          ...homepageV1Contract.pageDocument.sections.slice(3),
+        ],
+      },
+    }
+    const reordered = await repository.saveVersion({
+      pageId: cmsHomepagePageId,
+      expectedHead: imported.snapshot.head,
+      contract: reorderedContract,
+      displayName: "Alex Tan",
+      attemptId: randomUUID(),
+    })
+    expect(
+      (
+        await repository.listComments(
+          cmsHomepagePageId,
+          reordered.committed.head.versionId
+        )
+      ).map((comment) => ({
+        id: comment.id,
+        targetId: comment.targetId,
+        changed: comment.targetChanged,
+      }))
+    ).toEqual([
+      { id: contentCommentId, targetId: story.id, changed: false },
+      { id: intentCommentId, targetId: story.id, changed: false },
+    ])
+
+    const editedContract = structuredClone({
+      pageSchemaVersion: reordered.committed.pageSchemaVersion,
+      reviewSchemaVersion: reordered.committed.reviewSchemaVersion,
+      sectionLibraryVersion: reordered.committed.sectionLibraryVersion,
+      pageDocument: reordered.committed.pageDocument,
+      reviewDocument: reordered.committed.reviewDocument,
+    }) as CmsVersionContract
+    const editedStory = editedContract.pageDocument.sections.find(
+      (section) => section.id === story.id
+    )
+    if (!editedStory || editedStory.type !== "connected-story") {
+      throw new Error("Expected the reordered story")
+    }
+    ;(editedStory.fields as { heading: string }).heading =
+      "One synthetic student, followed from signal to support"
+    ;(
+      editedContract.reviewDocument.targets[story.id] as {
+        designIntent: string
+      }
+    ).designIntent = "The story makes the product journey easier to follow."
+    const edited = await repository.saveVersion({
+      pageId: cmsHomepagePageId,
+      expectedHead: reordered.committed.head,
+      contract: editedContract,
+      displayName: "Jamie Lim",
+      attemptId: randomUUID(),
+    })
+    const changed = await repository.listComments(
+      cmsHomepagePageId,
+      edited.committed.head.versionId
+    )
+    expect(changed.map((comment) => comment.targetChanged)).toEqual([
+      true,
+      true,
+    ])
+
+    const archivedContract = structuredClone({
+      pageSchemaVersion: edited.committed.pageSchemaVersion,
+      reviewSchemaVersion: edited.committed.reviewSchemaVersion,
+      sectionLibraryVersion: edited.committed.sectionLibraryVersion,
+      pageDocument: edited.committed.pageDocument,
+      reviewDocument: edited.committed.reviewDocument,
+    }) as CmsVersionContract
+    const archivedStory = archivedContract.pageDocument.sections.find(
+      (section) => section.id === story.id
+    )
+    if (!archivedStory) throw new Error("Expected the edited story")
+    ;(archivedStory as { state: string }).state = "archived"
+    const archived = await repository.saveVersion({
+      pageId: cmsHomepagePageId,
+      expectedHead: edited.committed.head,
+      contract: archivedContract,
+      displayName: "Alex Tan",
+      attemptId: randomUUID(),
+    })
+    expect(
+      (
+        await repository.listComments(
+          cmsHomepagePageId,
+          archived.committed.head.versionId
+        )
+      ).every((comment) => comment.targetState === "archived")
+    ).toBe(true)
+    await expect(
+      repository.createComment({
+        id: randomUUID(),
+        pageId: cmsHomepagePageId,
+        targetId: story.id,
+        targetVersionId: archived.committed.head.versionId,
+        subject: "page-content",
+        body: "This should not be added.",
+        displayName: "Alex Tan",
+      })
+    ).rejects.toMatchObject({ code: "TARGET_ARCHIVED" })
+
+    const restored = await repository.restoreVersion({
+      pageId: cmsHomepagePageId,
+      sourceVersionId: imported.snapshot.head.versionId,
+      expectedHead: archived.committed.head,
+      displayName: "Jamie Lim",
+      attemptId: randomUUID(),
+    })
+    const afterRestore = await repository.listComments(
+      cmsHomepagePageId,
+      restored.committed.head.versionId
+    )
+    expect(afterRestore.map((comment) => comment.targetChanged)).toEqual([
+      false,
+      false,
+    ])
+    expect(
+      afterRestore.every((comment) => comment.targetState === "active")
+    ).toBe(true)
+
+    const resolved = await repository.updateCommentStatus({
+      pageId: cmsHomepagePageId,
+      commentId: contentCommentId,
+      status: "resolved",
+    })
+    expect(resolved.status).toBe("resolved")
+  })
+
   it("publishes only the exact saved draft and retries without a second event", async () => {
     const saved = await repository.saveVersion({
       pageId: cmsHomepagePageId,
