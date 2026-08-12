@@ -103,6 +103,11 @@ function changeEditable(label: string, value: string): HTMLElement {
   return editable
 }
 
+function enterAdminMode(): void {
+  fireEvent.keyDown(window, { key: "k", metaKey: true })
+  fireEvent.click(screen.getByRole("button", { name: "Enter Admin mode" }))
+}
+
 describe("CMS workspace", () => {
   beforeEach(() => {
     window.sessionStorage.clear()
@@ -155,15 +160,25 @@ describe("CMS workspace", () => {
     expect(screen.queryByText("A clearer opening")).toBeNull()
   })
 
-  it("uses Cmd+K for admin tools without hiding content editing", () => {
+  it("opens Admin commands with Cmd+K and keeps content editing active", async () => {
     renderWorkspace()
 
     fireEvent.keyDown(window, { key: "k", metaKey: true })
+    expect(
+      screen.getByRole("dialog", { name: "Admin commands" })
+    ).not.toBeNull()
+    expect(
+      screen.queryByRole("button", { name: "Page settings" })
+    ).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "Enter Admin mode" }))
     expect(screen.getByText("Admin mode")).not.toBeNull()
     expect(
       screen.getByRole("button", { name: "Page settings" })
     ).not.toBeNull()
-    expect(screen.getByRole("button", { name: "Sections" })).not.toBeNull()
+    const sections = screen.getByRole("button", { name: "Sections" })
+    await waitFor(() => {
+      expect(document.activeElement).toBe(sections)
+    })
     expect(
       screen.getByRole("button", { name: "Finish editing" })
     ).not.toBeNull()
@@ -171,7 +186,11 @@ describe("CMS workspace", () => {
       name: "Finish editing",
     })
 
-    fireEvent.keyDown(window, { key: "Escape" })
+    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    expect(
+      screen.getByRole("button", { name: "Exit Admin mode" })
+    ).not.toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "Exit Admin mode" }))
     expect(screen.getByText("Review tools")).not.toBeNull()
     expect(
       screen.queryByRole("button", { name: "Page settings" })
@@ -180,7 +199,46 @@ describe("CMS workspace", () => {
     expect(screen.getByRole("button", { name: "Finish editing" })).toBe(
       finishEditing
     )
-    expect(document.activeElement).toBe(finishEditing)
+    await waitFor(() => {
+      expect(document.activeElement).toBe(finishEditing)
+    })
+  })
+
+  it("keeps the active editable mounted while text changes", async () => {
+    renderWorkspace()
+    fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
+
+    const editable = screen.getByRole("textbox", {
+      name: "Edit story step 2 heading",
+    })
+    editable.focus()
+    editable.textContent = "X"
+    fireEvent.input(editable)
+
+    const afterFirstInput = screen.getByRole("textbox", {
+      name: "Edit story step 2 heading",
+    })
+    expect(afterFirstInput).toBe(editable)
+    expect(document.activeElement).toBe(editable)
+
+    editable.textContent = "Xiao"
+    fireEvent.input(editable)
+    expect(
+      screen.getByRole("textbox", { name: "Edit story step 2 heading" })
+    ).toBe(editable)
+    expect(document.activeElement).toBe(editable)
+
+    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    expect(
+      screen.getByRole("dialog", { name: "Admin commands" })
+    ).not.toBeNull()
+    fireEvent.keyDown(document, { key: "Escape" })
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("dialog", { name: "Admin commands" })
+      ).toBeNull()
+      expect(document.activeElement).toBe(editable)
+    })
   })
 
   it("saves a named draft, opens history, previews, and restores an old version", async () => {
@@ -550,7 +608,7 @@ describe("CMS workspace", () => {
     ).toBeNull()
     expect(screen.queryByRole("button", { name: "Sections" })).toBeNull()
 
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    enterAdminMode()
     expect(screen.getByText("Admin mode")).not.toBeNull()
     expect(
       screen.getByRole("button", { name: "Page settings" })
@@ -586,7 +644,7 @@ describe("CMS workspace", () => {
   it("adds a bounded section and includes the structural change in undo", () => {
     const { container } = renderWorkspace()
     fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    enterAdminMode()
     fireEvent.click(screen.getByRole("button", { name: "Sections" }))
 
     expect(
@@ -616,7 +674,7 @@ describe("CMS workspace", () => {
   it("keeps focus on the replacement section lifecycle action", async () => {
     renderWorkspace()
     fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
-    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    enterAdminMode()
     fireEvent.click(screen.getByRole("button", { name: "Sections" }))
 
     const sectionActions = screen.getByRole("group", {

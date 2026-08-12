@@ -298,7 +298,7 @@ function ConnectedStorySection({
         {section.steps.map((step, index) => (
           <li
             className="grid gap-8 border-b border-border py-10 2xl:grid-cols-[4rem_minmax(0,1fr)_minmax(18rem,0.9fr)] 2xl:items-start"
-            key={step.heading ?? step.label ?? `story-${index}`}
+            key={`story-${index}`}
           >
             <p className="text-[32px] font-normal text-muted-foreground tabular-nums">
               {String(index + 1).padStart(2, "0")}
@@ -417,7 +417,7 @@ function RevealSection({
         {section.asides.map((aside, index) => (
           <div
             className="border border-background/30 p-5"
-            key={aside.body[0] ?? `reveal-aside-${index}`}
+            key={`reveal-aside-${index}`}
           >
             {aside.body.map((paragraph, paragraphIndex) => (
               <EditableCopy
@@ -479,7 +479,7 @@ function CapabilitiesSection({
         {section.items.map((item, index) => (
           <li
             className="grid gap-5 border-b border-border py-8 md:grid-cols-[3rem_minmax(10rem,0.55fr)_minmax(0,1.45fr)]"
-            key={item.label ?? item.heading ?? `capability-${index}`}
+            key={`capability-${index}`}
           >
             <p className="text-sm text-muted-foreground tabular-nums">
               {String(index + 1).padStart(2, "0")}

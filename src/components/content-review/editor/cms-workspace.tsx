@@ -18,6 +18,7 @@ import {
   PublishVersionDialog,
   UnpublishPageDialog,
 } from "./cms-editor-dialogs"
+import { CmsAdminCommandMenu } from "./cms-admin-command-menu"
 import {
   addCmsSection,
   canAddCmsSection,
@@ -120,6 +121,7 @@ export function CmsWorkspace({
     message: "Review a section or edit the teacher copy.",
   })
   const [adminMode, setAdminMode] = useState(false)
+  const [adminCommandMenuOpen, setAdminCommandMenuOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [sectionsOpen, setSectionsOpen] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
@@ -145,8 +147,12 @@ export function CmsWorkspace({
   const publishButtonRef = useRef<HTMLButtonElement | null>(null)
   const publishedLinkRef = useRef<HTMLAnchorElement | null>(null)
   const unpublishButtonRef = useRef<HTMLButtonElement | null>(null)
+  const sectionsButtonRef = useRef<HTMLButtonElement | null>(null)
   const finishEditingButtonRef = useRef<HTMLButtonElement | null>(null)
-  const focusAfterAdminExitRef = useRef(false)
+  const adminCommandFocusTargetRef = useRef<
+    "sections" | "finish" | null
+  >(null)
+  const adminCommandOpenerRef = useRef<HTMLElement | null>(null)
   const publicationFocusTargetRef = useRef<PublicationFocusTarget | null>(null)
   const restoreAttemptRef = useRef<RetriableAttempt | null>(null)
   const historyOpenerRef = useRef<HTMLButtonElement | null>(null)
@@ -172,10 +178,24 @@ export function CmsWorkspace({
   }, [busy, publishDialogOpen, state.publishedHead, unpublishDialogOpen])
 
   useEffect(() => {
-    if (adminMode || !focusAfterAdminExitRef.current) return
-    finishEditingButtonRef.current?.focus()
-    focusAfterAdminExitRef.current = false
-  }, [adminMode])
+    if (adminCommandMenuOpen) return
+    const requested = adminCommandFocusTargetRef.current
+    const opener = adminCommandOpenerRef.current
+    if (!requested && !opener) return
+    adminCommandFocusTargetRef.current = null
+    adminCommandOpenerRef.current = null
+    window.requestAnimationFrame(() => {
+      const target =
+        requested === "sections"
+          ? sectionsButtonRef.current
+          : requested === "finish"
+            ? finishEditingButtonRef.current
+            : opener?.isConnected
+              ? opener
+              : null
+      target?.focus()
+    })
+  }, [adminCommandMenuOpen])
 
   useEffect(() => {
     const remembered = window.sessionStorage.getItem("tw-cms-display-name")
@@ -234,6 +254,7 @@ export function CmsWorkspace({
   useEffect(() => {
     if (editing) return
     setAdminMode(false)
+    setAdminCommandMenuOpen(false)
     setSettingsOpen(false)
     setSectionsOpen(false)
   }, [editing])
@@ -384,23 +405,42 @@ export function CmsWorkspace({
     dispatch({ type: "start-editing" })
   }, [editing])
 
-  const toggleAdminMode = useCallback(() => {
-    const next = !adminMode
-    if (!next) focusAfterAdminExitRef.current = true
-    setAdminMode(next)
-    setSettingsOpen(false)
-    setSectionsOpen(false)
-    setHistoryOpen(false)
-    setPreviewVersion(null)
-    setPanelOpen(false)
-    if (next && !editing) dispatch({ type: "start-editing" })
-    setStatus({
-      kind: "idle",
-      message: next
-        ? "Admin mode is on. You can use Page settings and Sections."
-        : "Admin mode is off. You can keep editing content.",
-    })
-  }, [adminMode, editing, setPanelOpen])
+  const setAdminModeFromCommand = useCallback(
+    (next: boolean) => {
+      adminCommandFocusTargetRef.current = next ? "sections" : "finish"
+      setAdminMode(next)
+      setAdminCommandMenuOpen(false)
+      setSettingsOpen(false)
+      setSectionsOpen(false)
+      setHistoryOpen(false)
+      setPreviewVersion(null)
+      setPanelOpen(false)
+      if (next && !editing) {
+        dispatch({ type: "start-editing" })
+        setStatus({
+          kind: "idle",
+          message: "Editing is on. Select any outlined teacher-facing text.",
+        })
+      }
+    },
+    [editing, setPanelOpen]
+  )
+
+  const toggleAdminCommandMenu = useCallback(() => {
+    const next = !adminCommandMenuOpen
+    if (next) {
+      adminCommandOpenerRef.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null
+      setSettingsOpen(false)
+      setSectionsOpen(false)
+      setHistoryOpen(false)
+      setPreviewVersion(null)
+      setPanelOpen(false)
+    }
+    setAdminCommandMenuOpen(next)
+  }, [adminCommandMenuOpen, setPanelOpen])
 
   const saveDraft = useCallback(
     async (finish: boolean) => {
@@ -857,6 +897,7 @@ export function CmsWorkspace({
             Page settings
           </Button>
           <Button
+            ref={sectionsButtonRef}
             type="button"
             variant="outline"
             size="lg"
@@ -1002,12 +1043,13 @@ export function CmsWorkspace({
         externalEditor={{
           active: editing,
           adminActive: adminMode,
+          adminCommandOpen: adminCommandMenuOpen,
           busy,
           controls,
           statusMessage: state.conflict
             ? "A newer draft was saved. Your changes are still here."
             : status.message,
-          onAdminToggle: toggleAdminMode,
+          onAdminCommand: toggleAdminCommandMenu,
           onToggle: startOrFinishEditing,
         }}
         externalReviewPanel={{
@@ -1137,7 +1179,8 @@ export function CmsWorkspace({
           <main className="grid min-h-[50vh] place-items-center bg-muted px-6 font-body">
             <p className="max-w-md border border-border bg-background p-6 text-center">
               Some content needs attention before this preview can be shown. Use
-              Undo, or open Admin mode with Command-K and check Sections.
+              Undo, or press Command-K, choose Enter Admin mode, and check
+              Sections.
             </p>
           </main>
         )}
@@ -1181,6 +1224,14 @@ export function CmsWorkspace({
           setStatus({ kind: "success", message: "Unsaved changes discarded." })
         }}
         onKeepEditing={() => dispatch({ type: "keep-editing" })}
+      />
+
+      <CmsAdminCommandMenu
+        open={adminCommandMenuOpen}
+        adminActive={adminMode}
+        onOpenChange={setAdminCommandMenuOpen}
+        onEnterAdmin={() => setAdminModeFromCommand(true)}
+        onExitAdmin={() => setAdminModeFromCommand(false)}
       />
 
       <PublishVersionDialog

@@ -461,3 +461,78 @@ manifest; the change reuses the existing Button component and Lucide icon set.
 The final hosted Preview was deployed after that report. The exact advisory
 path was checked again: after opening Page settings, Escape closed Admin mode,
 kept content editing active, and moved focus to **Finish editing**.
+
+## Scoped amendment: stable inline editing and Admin commands
+
+Approved by the product owner on 2026-08-12.
+
+### Sprint contract
+
+1. Typing in any inline text field keeps the same field focused. A content edit
+   must not replace its row or move the caret to another control.
+2. Command-K or Control-K opens a short **Admin commands** popup. It does not
+   change modes by itself.
+3. The popup shows **Enter Admin mode** while Admin mode is off and **Exit Admin
+   mode** while it is on.
+4. Entering Admin mode reveals **Page settings** and **Sections**, then moves
+   focus to **Sections**. Exiting returns focus to **Finish editing**.
+5. Closing the popup without choosing a command returns focus to the control the
+   reviewer was using. Their unsaved text remains in place.
+
+### Plan and tradeoff
+
+The typing defect came from React keys derived from editable copy. Changing a
+heading or label changed its parent row's key, so React removed the focused row
+and created another one. Repeated story, reveal, and capability rows now use
+stable position keys. This preserves the current document model and avoids a
+larger identity migration.
+
+The Admin popup is a single-decision Base UI dialog composed with the existing
+Button component. It keeps the structural tools hidden until requested without
+turning page settings into a multi-step modal. Command-K toggles the popup;
+choosing the visible command changes the mode. Escape only closes the popup.
+
+In-scope controls: A11Y-1, A11Y-2, A11Y-4, A11Y-7, A11Y-8, A11Y-11, CMP-1,
+CMP-5, CMP-7, CNT-2, CNT-3, SLP-9, SLP-10, LAY-2, LAY-5, LAY-6, and LAY-7.
+CMP-1: asserted, no manifest — manifest absent for
+marketing-teacher-workspace. Evidence source: direct review of the product
+codebase and the installed Base UI package.
+
+### Verification
+
+- Fresh unaliased Preview:
+  `https://marketing-teacher-workspace-czxeydpp6-wondopamines-projects.vercel.app`
+- Desktop command-menu evidence: `/private/tmp/cms-admin-commands-1280.png`
+- 320px command-menu evidence: `/private/tmp/cms-admin-commands-320.png`
+- A live two-keystroke edit kept the same story-heading DOM node focused after
+  both inputs. Command-K moved focus to **Enter Admin mode**; Escape closed only
+  the popup and returned focus to the same editable field with its draft intact.
+- Choosing **Enter Admin mode** revealed **Page settings** and **Sections** and
+  focused **Sections**. Choosing **Exit Admin mode** hid those tools, kept the
+  editable fields active, and focused **Finish editing**.
+- At 320px, the hosted page measured `scrollWidth === clientWidth === 320`. The
+  close target measured 44px high and the command target measured 56px high.
+- The regular suite passed 54 files and 324 tests. TypeScript, scoped ESLint,
+  the production build, output leakage scans, and built-route checks passed.
+- Production remains unchanged.
+
+### Independent evaluator report
+
+> VERDICT: pass
+>
+> BLOCKING: None. No L0 or L1 failures found.
+>
+> ADVISORY: None material for this scoped amendment.
+>
+> The inspected code, captures, regression tests, and supplied live evidence
+> cover stable inline focus, mode-neutral Admin command opening, correct command
+> labels, Enter/Exit focus paths, exact-opener restoration, draft preservation,
+> semantic dialog behavior, visible focus, 44/56px targets, and 320px reflow
+> without overflow.
+>
+> Dark mode: N/A — product has no dark mode.
+>
+> CMP-1: asserted, no manifest — manifest absent for
+> marketing-teacher-workspace. Evidence source: direct product-codebase read and
+> installed Base UI package; the implementation reuses Base UI Dialog, the
+> existing Button component, and Lucide icons.

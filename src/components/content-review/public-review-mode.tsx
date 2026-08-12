@@ -169,10 +169,11 @@ function locationOf(element: HTMLElement): string {
 export type ExternalReviewEditor = {
   readonly active: boolean
   readonly adminActive?: boolean
+  readonly adminCommandOpen?: boolean
   readonly busy: boolean
   readonly controls: React.ReactNode
   readonly statusMessage: string
-  readonly onAdminToggle?: () => void
+  readonly onAdminCommand?: () => void
   readonly onToggle: () => void
 }
 
@@ -406,18 +407,13 @@ export function PublicReviewMode({
         (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k"
       if (toggle) {
         event.preventDefault()
-        if (externalEditor?.onAdminToggle) externalEditor.onAdminToggle()
+        if (externalEditor?.onAdminCommand) externalEditor.onAdminCommand()
         else if (externalEditor) externalEditor.onToggle()
         else if (active) deactivate()
         else if (!editLoading) void activate()
       }
-      if (
-        event.key === "Escape" &&
-        externalEditor?.adminActive &&
-        externalEditor.onAdminToggle
-      ) {
-        externalEditor.onAdminToggle()
-      } else if (event.key === "Escape" && externalEditor?.active) {
+      if (event.key === "Escape" && externalEditor?.adminCommandOpen) return
+      if (event.key === "Escape" && externalEditor?.active) {
         externalEditor.onToggle()
       } else if (event.key === "Escape" && active) deactivate()
       else if (event.key === "Escape" && panelOpen) {
