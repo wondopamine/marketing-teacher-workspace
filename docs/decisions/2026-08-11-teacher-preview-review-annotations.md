@@ -536,3 +536,184 @@ codebase and the installed Base UI package.
 > marketing-teacher-workspace. Evidence source: direct product-codebase read and
 > installed Base UI package; the implementation reuses Base UI Dialog, the
 > existing Button component, and Lucide icons.
+
+## Scoped amendment: focused editing and section order
+
+Approved by the product owner on 2026-08-12.
+
+### Sprint contract
+
+1. Editor mode does not show **Version history**, **View published**, or
+   **Unpublish**. It keeps editing, undo, save, publish, and finish actions.
+2. Admin mode does not show **Page settings**. Its only structural tool is
+   **Section order**.
+3. Section order opens beside the page on wide screens, so the reviewer can see
+   the content move. At 320px it stacks before the page without horizontal
+   scrolling.
+4. The panel provides only **Move up** and **Move down**. It does not provide a
+   section type, Add section, Duplicate, Hide, Archive, Restore, or Edit context.
+5. The opening and footer stay fixed. Reordering remains part of the draft and
+   can be undone before or after the panel closes.
+
+### Plan and tradeoff
+
+Editor mode becomes the short content-writing path. Version history and the
+private published comparison remain available after editing ends. The underlying
+version, publication, page-setting, and section-lifecycle models stay intact, but
+their extra controls are not exposed in this release.
+
+Entering Admin mode opens the Section order panel. A toolbar button can hide or
+show it without leaving Admin mode. The panel uses a semantic ordered list and
+the existing Button component. Reordering changes the page immediately, preserves
+button focus, and uses the existing draft Undo and Save actions.
+
+The tradeoff is less structural flexibility. Reviewers cannot create, copy, hide,
+archive, or restore sections from this interface. This is acceptable for the
+release because the current task is ordering the approved sections, not building
+new page layouts.
+
+No new async or destructive action is added. Reordering is local, reversible, and
+saved through the existing draft transaction. Panel transitions use focus movement;
+save and publish keep their existing live status messages.
+
+In-scope controls: A11Y-1, A11Y-2, A11Y-4, A11Y-7, A11Y-8, A11Y-11, CMP-1,
+CMP-5, CMP-7, CNT-2, CNT-3, SLP-9, LAY-2, LAY-5, LAY-6, and LAY-7. No waiver is
+requested. CMP-1: asserted, no manifest — manifest absent for
+marketing-teacher-workspace. Evidence source: direct product-codebase review;
+the plan reuses the existing Button and page-side-panel patterns.
+
+### Component inventory
+
+- `/cms-preview`: `CmsWorkspace`, `PublicReviewMode`, `ContentReviewPage`,
+  `SectionOrderPanel`, `CmsAdminCommandMenu`, `FinishEditingDialog`, and the
+  existing review-context and version-history panels outside Editor mode.
+- Editor controls: Show section context, Undo, Redo, Publish/Published, Save
+  draft, and Finish editing.
+- Admin controls: Section order, Undo, Redo, Publish/Published, Save draft, and
+  Finish editing.
+- Section panel controls: Close section order, Move up, and Move down. Verify
+  visible focus, accessible names, truthful disabled states, and focus after a
+  move or panel close.
+
+### Plan summary
+
+| Dimension | Plan |
+|---|---|
+| Structure | Page plus a 22rem Section order side panel on wide screens; one column at 320px |
+| Components | Existing Button, ordered list, aside, and CMS draft model |
+| Interaction and motion | Open/close without decorative motion; move one section per action |
+| Async and A11Y-11 | No new async state; panel change uses focus, existing save/publish use live status |
+| Controls | A11Y-1/2/4/7/8/11, CMP-1/5/7, CNT-2/3, SLP-9, LAY-2/5/6/7 |
+| Waivers | None |
+| Tradeoff | Only ordering is exposed; advanced section and page controls remain hidden |
+| Evidence | 320, 768, and 1280 frames; keyboard reorder, Undo, close, and Admin exit |
+
+### Verification
+
+- Exact unaliased Preview:
+  `https://marketing-teacher-workspace-4w889tg8c-wondopamines-projects.vercel.app`
+- Desktop evidence: `/private/tmp/cms-section-order-1280-signoff.png`
+- 768px evidence: `/private/tmp/cms-section-order-768.png`
+- 320px evidence: `/private/tmp/cms-section-order-320.png`
+- The hosted Editor showed no Version history, View published, Unpublish, Page
+  settings, Add section, or Duplicate action. Command-K opened Admin commands;
+  Enter Admin mode opened Section order beside the page at 1280px.
+- Moving Reveal down changed the rendered section sequence and retained focus on
+  its move control. Undo restored the original sequence, disabled Save draft,
+  and announced **Last change undone.** No draft was saved during verification.
+- While scrolled, the sticky panel began below the 147px editor toolbar and its
+  44px Close section order control remained reachable. Closing the panel focused
+  Section order. Exiting Admin mode kept 49 editable fields active and focused
+  Finish editing.
+- At 1280px and 320px, `scrollWidth === clientWidth`. Every visible toolbar,
+  close, and reorder target at 320px measured at least 44px high. The 768px and
+  320px layouts stack the panel before the content to preserve usable widths.
+- The regular suite passed 54 files and 324 tests, with the database integration
+  file skipped when no test database is configured. TypeScript, scoped ESLint,
+  production build, token audit, static accessibility, contrast, typography,
+  and output-boundary checks passed.
+- Production remains unchanged.
+
+### Independent evaluator report
+
+> VERDICT: PASS
+>
+> BLOCKING: None. L0: 0; L1: 0.
+>
+> ADVISORY: None. L2: 0.
+>
+> Contract compliance:
+>
+> 1. PASS — Editor mode omits Version history, View published, and Unpublish
+>    while retaining 49 inline editables, Undo/Redo, publication status/action,
+>    Save draft, and Finish editing.
+> 2. PASS — Admin mode exposes Section order only; Page settings and advanced
+>    section controls are absent.
+> 3. PASS — live 1280 measurement is exactly 352px/22rem beside 928px of visible
+>    content. The 768px and 320px captures show the panel stacked before content
+>    without horizontal overflow.
+> 4. PASS — only labelled Move up/down buttons are exposed. No section type,
+>    Add, Duplicate, Hide, Archive, Restore, or Edit context control appears.
+> 5. PASS — opening/footer controls are disabled; live reorder changed DOM order
+>    and retained focus; Undo restored the original order and announced “Last
+>    change undone.” The focused tests cover retained archived sections being
+>    skipped in one visible move.
+> 6. PASS — Cmd/Ctrl+K uses the Admin commands dialog to enter/exit Admin without
+>    ending editing. Entry focuses Section order; panel close returns there; exit
+>    preserves all 49 editables and focuses Finish editing.
+>
+> Plan fidelity: PASS. The implementation matches the approved scoped
+> amendment: simplified Editor chrome, a reversible local ordering surface,
+> retained underlying lifecycle/version models, no added async or destructive
+> flow, and no production switch.
+>
+> Quality grades:
+>
+> - Accessibility and semantics: A
+> - Keyboard/focus behavior: A
+> - Responsive composition: A
+> - Visual hierarchy and density: A
+> - Content and naming: A
+> - Component consistency: A
+>
+> Judgment-control notes:
+>
+> - A11Y-7/8/11 pass: labelled `<aside>`, heading, semantic `<ol>`, native
+>   button groups, accurate `aria-expanded`, polite status updates, and
+>   deliberate focus movement.
+> - CMP-5/7 pass: one filled action per toolbar region; secondary actions use
+>   existing outline/ghost Button variants consistently.
+> - CNT-2/3 and SLP-9 pass: “Section order,” “Move up/down,” and dialog copy are
+>   plain, short, active, and free of generated-writing tells.
+> - LAY-2/4/5/6/7 pass: usable narrow reading order, bounded text measure,
+>   task-appropriate density, aligned edges, and content remains the primary
+>   wide-screen region while the ordering task leads when stacked.
+> - A11Y-1/2/4 pass on supplied scanner/live evidence, including visible focus
+>   and mobile targets of at least 44px.
+>
+> CMP-1: asserted, no manifest — manifest absent for
+> marketing-teacher-workspace
+>
+> Evidence source: direct product-codebase review; existing Button, Base UI
+> Dialog, and page-side-panel patterns are reused.
+>
+> Uncovered:
+>
+> - Database integration remained skipped because no database configuration was
+>   available.
+> - The archived-section case is covered by source and automated test rather than
+>   the deployed document's live state.
+> - No separate 360px capture was supplied; 320px passed and uses the same
+>   responsive tier, with 768px also inspected.
+> - Dark mode: N/A; the product does not support it.
+>
+> Evidence reviewed: current diff and decision record, component/control
+> inventory, four supplied captures, focused test assertions, supplied
+> 54-file/324-test/typecheck/ESLint/build results, and an independent live
+> capability-link spot-check of mode controls, exact 22rem layout, DOM reorder,
+> focus, Undo announcement, panel dismissal, and Admin exit.
+>
+> Independent-review limitation: the live journey and source were checked
+> independently, but the full suite/build and production-unchanged claims were
+> accepted from the supplied evidence rather than rerun; database integration
+> and dark mode were not available.

@@ -6,36 +6,23 @@ import {
   useRef,
   useState,
 } from "react"
-import { DoorOpenIcon } from "lucide-react"
+import { DoorOpenIcon, XIcon } from "lucide-react"
 
 import { ContentReviewPage } from "../content-review-page"
 import { PublicReviewMode } from "../public-review-mode"
 import { CmsVersionHistoryPanel } from "../version-history/cms-version-history-panel"
 import { CmsSectionContextPanel } from "../section-context/cms-section-context-panel"
 import { useReviewAnnotations } from "../review-annotations"
-import {
-  FinishEditingDialog,
-  PublishVersionDialog,
-  UnpublishPageDialog,
-} from "./cms-editor-dialogs"
+import { FinishEditingDialog, PublishVersionDialog } from "./cms-editor-dialogs"
 import { CmsAdminCommandMenu } from "./cms-admin-command-menu"
 import {
-  addCmsSection,
-  canAddCmsSection,
   cmsEditorReducer,
   createCmsEditorState,
-  duplicateCmsSection,
   isCmsEditorDirty,
   moveCmsSection,
   replaceCmsValue,
-  setCmsSectionState,
-  updateCmsReviewContext,
 } from "./cms-editor-model"
-import {
-  readCmsHistory,
-  readCmsVersion,
-  writeCms,
-} from "./cms-client"
+import { readCmsHistory, readCmsVersion, writeCms } from "./cms-client"
 import type {
   CmsHead,
   CmsVersionHistoryItem,
@@ -44,13 +31,11 @@ import type {
 import type { ContentReviewEditAdapter } from "./content-review-edit-adapter"
 import type { CmsWriteRequest } from "@/cms/api"
 import type { CmsVersionContract } from "@/cms/document"
-import { cmsSectionTypes } from "@/cms/document"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cmsSectionRegistry } from "@/cms/section-registry"
 import {
   isCmsVersionContract,
-  isReservedCmsPath,
   projectCmsPageDocumentForEditor,
 } from "@/cms/validation"
 import { buildCmsReviewPresentation } from "@/cms/review-presentation"
@@ -76,11 +61,7 @@ type RetriableAttempt = {
   readonly attemptId: string
 }
 
-type PublicationFocusTarget = "publish" | "published" | "unpublish"
-
-type CmsReviewContext = NonNullable<
-  CmsVersionContract["reviewDocument"]["targets"][string]
->
+type PublicationFocusTarget = "publish" | "finish"
 
 function sameHead(left: CmsHead | null, right: CmsHead | null): boolean {
   if (!left || !right) return left === right
@@ -122,7 +103,6 @@ export function CmsWorkspace({
   })
   const [adminMode, setAdminMode] = useState(false)
   const [adminCommandMenuOpen, setAdminCommandMenuOpen] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [sectionsOpen, setSectionsOpen] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [historyLoading, setHistoryLoading] = useState(false)
@@ -140,18 +120,12 @@ export function CmsWorkspace({
     null
   )
   const [publishDialogOpen, setPublishDialogOpen] = useState(false)
-  const [unpublishDialogOpen, setUnpublishDialogOpen] = useState(false)
   const saveAttemptRef = useRef<RetriableAttempt | null>(null)
   const publishAttemptRef = useRef<RetriableAttempt | null>(null)
-  const unpublishAttemptRef = useRef<RetriableAttempt | null>(null)
   const publishButtonRef = useRef<HTMLButtonElement | null>(null)
-  const publishedLinkRef = useRef<HTMLAnchorElement | null>(null)
-  const unpublishButtonRef = useRef<HTMLButtonElement | null>(null)
   const sectionsButtonRef = useRef<HTMLButtonElement | null>(null)
   const finishEditingButtonRef = useRef<HTMLButtonElement | null>(null)
-  const adminCommandFocusTargetRef = useRef<
-    "sections" | "finish" | null
-  >(null)
+  const adminCommandFocusTargetRef = useRef<"sections" | "finish" | null>(null)
   const adminCommandOpenerRef = useRef<HTMLElement | null>(null)
   const publicationFocusTargetRef = useRef<PublicationFocusTarget | null>(null)
   const restoreAttemptRef = useRef<RetriableAttempt | null>(null)
@@ -162,20 +136,30 @@ export function CmsWorkspace({
   const editing = state.mode === "editing"
   const currentPublished = sameHead(state.publishedHead, state.baseline.head)
 
+  const undo = useCallback(() => {
+    if (busy || state.past.length === 0) return
+    dispatch({ type: "undo" })
+    setStatus({ kind: "success", message: "Last change undone." })
+  }, [busy, state.past.length])
+
+  const redo = useCallback(() => {
+    if (busy || state.future.length === 0) return
+    dispatch({ type: "redo" })
+    setStatus({ kind: "success", message: "Change restored." })
+  }, [busy, state.future.length])
+
   useEffect(() => {
-    if (publishDialogOpen || unpublishDialogOpen || busy) return
+    if (publishDialogOpen || busy) return
     const target = publicationFocusTargetRef.current
     if (!target) return
     const element =
       target === "publish"
         ? publishButtonRef.current
-        : target === "published"
-          ? publishedLinkRef.current
-          : unpublishButtonRef.current
+        : finishEditingButtonRef.current
     if (!element) return
     element.focus()
     publicationFocusTargetRef.current = null
-  }, [busy, publishDialogOpen, state.publishedHead, unpublishDialogOpen])
+  }, [busy, publishDialogOpen, state.publishedHead])
 
   useEffect(() => {
     if (adminCommandMenuOpen) return
@@ -234,11 +218,12 @@ export function CmsWorkspace({
         return
       }
       event.preventDefault()
-      dispatch({ type: event.shiftKey ? "redo" : "undo" })
+      if (event.shiftKey) redo()
+      else undo()
     }
     window.addEventListener("keydown", handleUndo)
     return () => window.removeEventListener("keydown", handleUndo)
-  }, [editing])
+  }, [editing, redo, undo])
 
   useEffect(() => {
     if (panelOpen) {
@@ -255,7 +240,6 @@ export function CmsWorkspace({
     if (editing) return
     setAdminMode(false)
     setAdminCommandMenuOpen(false)
-    setSettingsOpen(false)
     setSectionsOpen(false)
   }, [editing])
 
@@ -371,7 +355,6 @@ export function CmsWorkspace({
       if (opener) historyOpenerRef.current = opener
       setPanelOpen(false)
       setHistoryOpen(true)
-      setSettingsOpen(false)
       setSectionsOpen(false)
       if (history.length === 0 && !historyLoading) void loadHistory()
     },
@@ -410,8 +393,7 @@ export function CmsWorkspace({
       adminCommandFocusTargetRef.current = next ? "sections" : "finish"
       setAdminMode(next)
       setAdminCommandMenuOpen(false)
-      setSettingsOpen(false)
-      setSectionsOpen(false)
+      setSectionsOpen(next)
       setHistoryOpen(false)
       setPreviewVersion(null)
       setPanelOpen(false)
@@ -433,8 +415,6 @@ export function CmsWorkspace({
         document.activeElement instanceof HTMLElement
           ? document.activeElement
           : null
-      setSettingsOpen(false)
-      setSectionsOpen(false)
       setHistoryOpen(false)
       setPreviewVersion(null)
       setPanelOpen(false)
@@ -699,7 +679,7 @@ export function CmsWorkspace({
           })
         }
         publicationFocusTargetRef.current = response.latest
-          ? "published"
+          ? "finish"
           : "publish"
         setPublishDialogOpen(false)
         setStatus({ kind: "error", message: response.message })
@@ -718,7 +698,7 @@ export function CmsWorkspace({
       publishAttemptRef.current = null
       const liveHead =
         response.result.live?.head ?? response.result.committed.head
-      publicationFocusTargetRef.current = "published"
+      publicationFocusTargetRef.current = "finish"
       dispatch({ type: "publish-succeeded", publishedHead: liveHead })
       setPublishDialogOpen(false)
       setStatus({
@@ -747,111 +727,6 @@ export function CmsWorkspace({
     state.publishedHead,
   ])
 
-  const unpublishPage = useCallback(async () => {
-    const expectedPublished = state.publishedHead
-    if (!expectedPublished) {
-      publicationFocusTargetRef.current = "publish"
-      setUnpublishDialogOpen(false)
-      return
-    }
-    const name = displayName.trim()
-    if (!name) {
-      publicationFocusTargetRef.current = "unpublish"
-      setUnpublishDialogOpen(false)
-      setStatus({
-        kind: "error",
-        message: "Enter your name before unpublishing.",
-      })
-      return
-    }
-    const fingerprint = JSON.stringify({
-      published: expectedPublished,
-      name,
-    })
-    const attempt = attemptFor(unpublishAttemptRef.current, fingerprint)
-    unpublishAttemptRef.current = attempt
-    setStatus({ kind: "busy", message: "Unpublishing this version…" })
-    try {
-      const response = await writeCms(
-        {
-          operation: "unpublish",
-          pageId: state.baseline.pageId,
-          expectedPublished,
-          displayName: name,
-          attemptId: attempt.attemptId,
-        },
-        csrfToken
-      )
-      if (!response.ok) {
-        if (response.code !== "UNAVAILABLE") unpublishAttemptRef.current = null
-        if (response.code === "STALE_PUBLICATION") {
-          if (response.latest) {
-            dispatch({
-              type: "publish-succeeded",
-              publishedHead: response.latest.head,
-            })
-          } else {
-            dispatch({ type: "unpublish-succeeded" })
-          }
-        }
-        publicationFocusTargetRef.current = response.latest
-          ? "unpublish"
-          : "publish"
-        setUnpublishDialogOpen(false)
-        setStatus({ kind: "error", message: response.message })
-        return
-      }
-      if (response.operation !== "unpublish") {
-        publicationFocusTargetRef.current = "unpublish"
-        setUnpublishDialogOpen(false)
-        setStatus({
-          kind: "error",
-          message:
-            "The editor returned an unexpected response. The private comparison has not changed.",
-        })
-        return
-      }
-      unpublishAttemptRef.current = null
-      if (response.result.live) {
-        publicationFocusTargetRef.current = "unpublish"
-        dispatch({
-          type: "publish-succeeded",
-          publishedHead: response.result.live.head,
-        })
-        setStatus({
-          kind: "error",
-          message:
-            "The private publication changed again. Refresh before unpublishing.",
-        })
-      } else {
-        publicationFocusTargetRef.current = "publish"
-        dispatch({ type: "unpublish-succeeded" })
-        setStatus({
-          kind: "success",
-          message:
-            "This version is unpublished. Its draft and history are still available.",
-        })
-      }
-      setUnpublishDialogOpen(false)
-      if (historyOpen) void loadHistory()
-    } catch {
-      publicationFocusTargetRef.current = "unpublish"
-      setUnpublishDialogOpen(false)
-      setStatus({
-        kind: "error",
-        message:
-          "We could not unpublish this version. The private comparison is unchanged. Try again.",
-      })
-    }
-  }, [
-    csrfToken,
-    displayName,
-    historyOpen,
-    loadHistory,
-    state.baseline.pageId,
-    state.publishedHead,
-  ])
-
   const publishedComparisonHref = `/cms-compare?page=${encodeURIComponent(
     state.baseline.pageId
   )}`
@@ -864,7 +739,7 @@ export function CmsWorkspace({
         size="lg"
         className="min-h-11"
         disabled={state.past.length === 0 || busy}
-        onClick={() => dispatch({ type: "undo" })}
+        onClick={undo}
       >
         Undo
       </Button>
@@ -874,60 +749,29 @@ export function CmsWorkspace({
         size="lg"
         className="min-h-11"
         disabled={state.future.length === 0 || busy}
-        onClick={() => dispatch({ type: "redo" })}
+        onClick={redo}
       >
         Redo
       </Button>
       {adminMode ? (
-        <>
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            className="min-h-11"
-            aria-controls="cms-page-settings-panel"
-            aria-expanded={settingsOpen}
-            disabled={busy}
-            onClick={() => {
-              setSettingsOpen((open) => !open)
-              setSectionsOpen(false)
-              setHistoryOpen(false)
-            }}
-          >
-            Page settings
-          </Button>
-          <Button
-            ref={sectionsButtonRef}
-            type="button"
-            variant="outline"
-            size="lg"
-            className="min-h-11"
-            aria-controls="cms-sections-panel"
-            aria-expanded={sectionsOpen}
-            disabled={busy}
-            onClick={() => {
-              setSectionsOpen((open) => !open)
-              setSettingsOpen(false)
-              setHistoryOpen(false)
-            }}
-          >
-            Sections
-          </Button>
-        </>
+        <Button
+          ref={sectionsButtonRef}
+          type="button"
+          variant="outline"
+          size="lg"
+          className="min-h-11"
+          aria-controls="cms-sections-panel"
+          aria-expanded={sectionsOpen}
+          disabled={busy}
+          onClick={() => {
+            setSectionsOpen((open) => !open)
+            setHistoryOpen(false)
+            setPanelOpen(false)
+          }}
+        >
+          Section order
+        </Button>
       ) : null}
-      <Button
-        type="button"
-        variant="outline"
-        size="lg"
-        className="min-h-11"
-        data-cms-history-trigger
-        aria-controls="cms-version-history-panel"
-        aria-expanded={historyOpen}
-        disabled={busy}
-        onClick={(event) => openHistory(event.currentTarget)}
-      >
-        Version history
-      </Button>
       <Button
         ref={publishButtonRef}
         type="button"
@@ -942,36 +786,6 @@ export function CmsWorkspace({
       >
         {currentPublished ? "Published" : "Publish"}
       </Button>
-      {state.publishedHead ? (
-        <>
-          <Button asChild variant="outline" size="lg" className="min-h-11">
-            <a
-              ref={publishedLinkRef}
-              href={publishedComparisonHref}
-              target="_blank"
-              rel="noreferrer"
-            >
-              View published
-            </a>
-          </Button>
-          <Button
-            ref={unpublishButtonRef}
-            type="button"
-            variant="destructive"
-            size="lg"
-            className="min-h-11"
-            disabled={busy || dirty}
-            title={
-              dirty
-                ? "Save or discard your changes before unpublishing."
-                : undefined
-            }
-            onClick={() => setUnpublishDialogOpen(true)}
-          >
-            Unpublish
-          </Button>
-        </>
-      ) : null}
       <Button
         type="button"
         size="lg"
@@ -1028,7 +842,7 @@ export function CmsWorkspace({
     </>
   )
 
-  const sidePanelOpen = panelOpen || historyOpen
+  const sidePanelOpen = panelOpen || historyOpen || sectionsOpen
   const previewing = previewVersion !== null
 
   return (
@@ -1115,32 +929,6 @@ export function CmsWorkspace({
           </div>
         ) : null}
 
-        {editing && adminMode && settingsOpen ? (
-          <PageSettings
-            title={state.present.pageDocument.page.title}
-            path={state.present.pageDocument.page.path}
-            description={state.present.pageDocument.page.description}
-            onChange={(field, value) =>
-              apply(
-                replaceCmsValue(
-                  state.present,
-                  ["pageDocument", "page", field],
-                  value
-                ),
-                `page.${field}`
-              )
-            }
-          />
-        ) : null}
-
-        {editing && adminMode && sectionsOpen ? (
-          <SectionManager
-            contract={state.present}
-            onChange={apply}
-            onNotice={(message) => setStatus({ kind: "success", message })}
-          />
-        ) : null}
-
         {state.conflict ? (
           <div
             data-review-chrome
@@ -1180,11 +968,30 @@ export function CmsWorkspace({
             <p className="max-w-md border border-border bg-background p-6 text-center">
               Some content needs attention before this preview can be shown. Use
               Undo, or press Command-K, choose Enter Admin mode, and check
-              Sections.
+              Section order.
             </p>
           </main>
         )}
       </div>
+
+      {editing && adminMode && sectionsOpen ? (
+        <SectionOrderPanel
+          contract={state.present}
+          onChange={(contract) => {
+            apply(contract)
+            setStatus({
+              kind: "success",
+              message: "Section order updated. Use Undo to restore it.",
+            })
+          }}
+          onClose={() => {
+            setSectionsOpen(false)
+            window.requestAnimationFrame(() =>
+              sectionsButtonRef.current?.focus()
+            )
+          }}
+        />
+      ) : null}
 
       <CmsVersionHistoryPanel
         open={historyOpen}
@@ -1219,7 +1026,6 @@ export function CmsWorkspace({
         onSave={() => void saveDraft(true)}
         onDiscard={() => {
           dispatch({ type: "discard-and-finish" })
-          setSettingsOpen(false)
           setSectionsOpen(false)
           setStatus({ kind: "success", message: "Unsaved changes discarded." })
         }}
@@ -1249,445 +1055,139 @@ export function CmsWorkspace({
           setPublishDialogOpen(false)
         }}
       />
-      <UnpublishPageDialog
-        open={unpublishDialogOpen}
-        unpublishing={
-          status.kind === "busy" && status.message.startsWith("Unpublishing")
-        }
-        pageTitle={state.baseline.pageDocument.page.title}
-        onUnpublish={() => void unpublishPage()}
-        onCancel={() => {
-          publicationFocusTargetRef.current = "unpublish"
-          setUnpublishDialogOpen(false)
-        }}
-      />
     </div>
   )
 }
 
-function PageSettings({
-  title,
-  path,
-  description,
-  onChange,
-}: {
-  readonly title: string
-  readonly path: string
-  readonly description: string
-  readonly onChange: (
-    field: "title" | "path" | "description",
-    value: string
-  ) => void
-}) {
-  const pathValid =
-    /^\/(?:[a-z0-9]+(?:-[a-z0-9]+)*)?$/.test(path) && !isReservedCmsPath(path)
-  return (
-    <section
-      id="cms-page-settings-panel"
-      data-review-chrome
-      aria-labelledby="cms-page-settings-heading"
-      className="border-b border-border bg-background px-4 py-5 font-body sm:px-6"
-    >
-      <div className="mx-auto max-w-[90rem]">
-        <h2
-          id="cms-page-settings-heading"
-          className="font-heading text-xl font-semibold"
-        >
-          Page settings
-        </h2>
-        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,0.45fr)]">
-          <label className="text-sm font-medium">
-            Page title
-            <Input
-              data-cms-native-undo
-              value={title}
-              onChange={(event) => onChange("title", event.target.value)}
-              className="mt-1 min-h-11"
-            />
-          </label>
-          <label className="text-sm font-medium">
-            Page address
-            <Input
-              data-cms-native-undo
-              value={path}
-              aria-invalid={!pathValid}
-              onChange={(event) => onChange("path", event.target.value)}
-              className="mt-1 min-h-11"
-            />
-            <span className="mt-1 block text-xs font-normal text-muted-foreground">
-              Use / or one lower-case path, such as /family-support. App
-              addresses are reserved.
-            </span>
-          </label>
-          <label className="text-sm font-medium lg:col-span-2">
-            Search description
-            <textarea
-              data-cms-native-undo
-              value={description}
-              onChange={(event) => onChange("description", event.target.value)}
-              rows={3}
-              className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-            />
-          </label>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function SectionContextSettings({
-  sectionLabel,
-  context,
-  onChange,
-}: {
-  readonly sectionLabel: string
-  readonly context: CmsReviewContext
-  readonly onChange: (
-    context: CmsReviewContext,
-    field: "designIntent" | "checks" | "decisionNeeded"
-  ) => void
-}) {
-  return (
-    <div className="mt-4 border-l-2 border-foreground/30 bg-muted px-4 py-4">
-      <p className="font-semibold">{sectionLabel} context</p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Reviewers see this context. Teachers do not.
-      </p>
-      <label className="mt-4 block text-sm font-medium">
-        Design intent
-        <textarea
-          data-cms-native-undo
-          value={context.designIntent}
-          maxLength={4_000}
-          rows={4}
-          onChange={(event) =>
-            onChange(
-              { ...context, designIntent: event.target.value },
-              "designIntent"
-            )
-          }
-          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-        />
-      </label>
-      <label className="mt-4 block text-sm font-medium">
-        What to check
-        <textarea
-          data-cms-native-undo
-          value={context.checks.join("\n")}
-          rows={4}
-          onChange={(event) =>
-            onChange(
-              {
-                ...context,
-                checks: event.target.value
-                  .split("\n")
-                  .map((check) => check.trim())
-                  .filter(Boolean),
-              },
-              "checks"
-            )
-          }
-          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-        />
-        <span className="mt-1 block text-xs font-normal text-muted-foreground">
-          Write one check per line.
-        </span>
-      </label>
-      <label className="mt-4 block text-sm font-medium">
-        Decision needed
-        <textarea
-          data-cms-native-undo
-          value={context.decisionNeeded ?? ""}
-          maxLength={1_000}
-          rows={3}
-          onChange={(event) => {
-            const decisionNeeded = event.target.value
-            if (decisionNeeded.length > 0) {
-              onChange({ ...context, decisionNeeded }, "decisionNeeded")
-              return
-            }
-            const { decisionNeeded: _removed, ...withoutDecision } = context
-            onChange(withoutDecision, "decisionNeeded")
-          }}
-          className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-        />
-      </label>
-    </div>
-  )
-}
-
-function SectionManager({
+function SectionOrderPanel({
   contract,
   onChange,
-  onNotice,
+  onClose,
 }: {
   readonly contract: CmsVersionContract
-  readonly onChange: (
-    contract: CmsVersionContract,
-    historyGroup?: string
-  ) => void
-  readonly onNotice: (message: string) => void
+  readonly onChange: (contract: CmsVersionContract) => void
+  readonly onClose: () => void
 }) {
-  const [contextSectionId, setContextSectionId] = useState<string | null>(null)
-  const [focusLifecycleSectionId, setFocusLifecycleSectionId] = useState<
-    string | null
-  >(null)
-  const lifecycleActionRefs = useRef(new Map<string, HTMLButtonElement>())
-  const [sectionType, setSectionType] = useState(
-    () => cmsSectionTypes.find((type) => cmsSectionRegistry[type].canArchive)!
+  const sections = contract.pageDocument.sections.filter(
+    (section) => section.state !== "archived"
   )
-  const sections = contract.pageDocument.sections
-  const addableTypes = cmsSectionTypes.filter(
-    (type) => cmsSectionRegistry[type].canArchive
-  )
-  useEffect(() => {
-    if (!focusLifecycleSectionId) return
-    lifecycleActionRefs.current.get(focusLifecycleSectionId)?.focus()
-    setFocusLifecycleSectionId(null)
-  }, [contract, focusLifecycleSectionId])
+
   return (
-    <section
+    <aside
       id="cms-sections-panel"
       data-review-chrome
       aria-labelledby="cms-sections-heading"
-      className="border-b border-border bg-background px-4 py-5 font-body sm:px-6"
+      className="order-1 min-w-0 border-b border-foreground/20 bg-background font-body text-sm lg:order-none lg:col-start-2 lg:row-start-2 lg:min-h-screen lg:border-b-0 lg:border-l"
     >
-      <div className="mx-auto max-w-[90rem]">
-        <h2
-          id="cms-sections-heading"
-          className="font-heading text-xl font-semibold"
-        >
-          Sections
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Hide keeps a section in this page. Archive removes it from use but
-          keeps its content, context, and feedback. Undo stays available until
-          you save.
-        </p>
-        <div className="mt-4 flex flex-col gap-3 border-y border-border py-4 sm:flex-row sm:items-end">
-          <label className="min-w-0 flex-1 text-sm font-medium">
-            Section type
-            <select
-              data-cms-native-undo
-              value={sectionType}
-              onChange={(event) =>
-                setSectionType(event.target.value as typeof sectionType)
-              }
-              className="mt-1 min-h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+      <div className="lg:sticky lg:top-[calc(var(--masthead-h)+8.5rem)] lg:max-h-[calc(100vh-var(--masthead-h)-8.5rem)] lg:overflow-y-auto">
+        <header className="flex items-start justify-between gap-4 border-b border-border px-4 py-4">
+          <div>
+            <h2
+              id="cms-sections-heading"
+              className="font-heading text-lg font-semibold"
             >
-              {addableTypes.map((type) => (
-                <option key={type} value={type}>
-                  {cmsSectionRegistry[type].label}
-                </option>
-              ))}
-            </select>
-          </label>
+              Section order
+            </h2>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Move sections into the order they should appear on the page.
+            </p>
+          </div>
           <Button
             type="button"
-            variant="outline"
-            size="lg"
-            className="min-h-11"
-            disabled={!canAddCmsSection(contract, sectionType)}
-            onClick={() => {
-              onChange(addCmsSection(contract, sectionType))
-              onNotice(`${cmsSectionRegistry[sectionType].label} added.`)
-            }}
+            variant="ghost"
+            size="icon"
+            className="min-h-11 min-w-11"
+            aria-label="Close section order"
+            onClick={onClose}
           >
-            Add section
+            <XIcon aria-hidden="true" />
           </Button>
-        </div>
-        <ol className="divide-y divide-border border-b border-border">
+        </header>
+
+        <ol className="divide-y divide-border px-4">
           {sections.map((section, index) => {
             const rule = cmsSectionRegistry[section.type]
             const fixed = !rule.canArchive
-            const context = contract.reviewDocument.targets[section.id]
             return (
-              <li key={section.id} className="py-3">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
+              <li key={section.id} className="py-4">
+                <div className="flex items-start gap-3">
+                  <p className="pt-0.5 text-xs text-muted-foreground tabular-nums">
+                    {String(index + 1).padStart(2, "0")}
+                  </p>
+                  <div className="min-w-0 flex-1">
                     <p className="font-medium">{rule.label}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {section.state === "visible"
-                        ? "Shown"
+                      {fixed
+                        ? "Fixed position"
                         : section.state === "hidden"
-                          ? "Hidden"
-                          : "Archived"}
+                          ? "Hidden from the page"
+                          : "Shown on the page"}
                     </p>
                   </div>
-                  <div
-                    className="flex flex-wrap gap-2"
-                    role="group"
-                    aria-label={`${rule.label} section actions`}
-                  >
-                    {context ? (
-                      <Button
-                        ref={(element) => {
-                          if (element)
-                            lifecycleActionRefs.current.set(section.id, element)
-                          else lifecycleActionRefs.current.delete(section.id)
-                        }}
-                        type="button"
-                        variant="outline"
-                        size="lg"
-                        className="min-h-11"
-                        aria-expanded={contextSectionId === section.id}
-                        onClick={() =>
-                          setContextSectionId((current) =>
-                            current === section.id ? null : section.id
-                          )
-                        }
-                      >
-                        Edit context
-                      </Button>
-                    ) : null}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="lg"
-                      className="min-h-11"
-                      disabled={
-                        fixed || section.state === "archived" || index <= 1
-                      }
-                      onClick={() =>
-                        onChange(moveCmsSection(contract, section.id, -1))
-                      }
-                    >
-                      Move up
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="lg"
-                      className="min-h-11"
-                      disabled={
-                        fixed ||
-                        section.state === "archived" ||
-                        index >= sections.length - 2
-                      }
-                      onClick={() =>
-                        onChange(moveCmsSection(contract, section.id, 1))
-                      }
-                    >
-                      Move down
-                    </Button>
-                    {section.state === "archived" ? (
-                      <Button
-                        ref={(element) => {
-                          if (element)
-                            lifecycleActionRefs.current.set(section.id, element)
-                          else lifecycleActionRefs.current.delete(section.id)
-                        }}
-                        type="button"
-                        variant="outline"
-                        size="lg"
-                        className="min-h-11"
-                        disabled={!canAddCmsSection(contract, section.type)}
-                        onClick={() => {
-                          setFocusLifecycleSectionId(section.id)
-                          onChange(
-                            setCmsSectionState(contract, section.id, "visible")
-                          )
-                          onNotice(
-                            `${rule.label} restored. Use Undo to put it back.`
-                          )
-                        }}
-                      >
-                        Restore
-                      </Button>
-                    ) : (
-                      <>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="lg"
-                          className="min-h-11"
-                          disabled={
-                            fixed || !canAddCmsSection(contract, section.type)
-                          }
-                          onClick={() => {
-                            onChange(duplicateCmsSection(contract, section.id))
-                            onNotice(
-                              `${rule.label} duplicated. New feedback will stay with the copy.`
-                            )
-                          }}
-                        >
-                          Duplicate
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="lg"
-                          className="min-h-11"
-                          disabled={fixed}
-                          onClick={() =>
-                            onChange(
-                              setCmsSectionState(
-                                contract,
-                                section.id,
-                                section.state === "hidden"
-                                  ? "visible"
-                                  : "hidden"
-                              )
-                            )
-                          }
-                        >
-                          {section.state === "hidden" ? "Show" : "Hide"}
-                        </Button>
-                        <Button
-                          ref={(element) => {
-                            if (element)
-                              lifecycleActionRefs.current.set(
-                                section.id,
-                                element
-                              )
-                            else lifecycleActionRefs.current.delete(section.id)
-                          }}
-                          type="button"
-                          variant="destructive"
-                          size="lg"
-                          className="min-h-11"
-                          disabled={fixed}
-                          onClick={() => {
-                            setFocusLifecycleSectionId(section.id)
-                            onChange(
-                              setCmsSectionState(
-                                contract,
-                                section.id,
-                                "archived"
-                              )
-                            )
-                            onNotice(
-                              `${rule.label} archived. Use Undo to restore it.`
-                            )
-                          }}
-                        >
-                          Archive
-                        </Button>
-                      </>
-                    )}
-                  </div>
                 </div>
-                {contextSectionId === section.id && context ? (
-                  <SectionContextSettings
-                    sectionLabel={rule.label}
-                    context={context}
-                    onChange={(nextContext, field) =>
+                <div
+                  className="mt-3 flex gap-2 pl-7"
+                  role="group"
+                  aria-label={`${rule.label} order`}
+                >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="min-h-11 flex-1"
+                    aria-label={`Move ${rule.label} up`}
+                    disabled={fixed || index <= 1}
+                    onClick={() =>
                       onChange(
-                        updateCmsReviewContext(
-                          contract,
-                          section.id,
-                          nextContext
-                        ),
-                        `context.${section.id}.${field}`
+                        moveCmsSectionInPanelOrder(contract, section.id, -1)
                       )
                     }
-                  />
-                ) : null}
+                  >
+                    Move up
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="min-h-11 flex-1"
+                    aria-label={`Move ${rule.label} down`}
+                    disabled={fixed || index >= sections.length - 2}
+                    onClick={() =>
+                      onChange(
+                        moveCmsSectionInPanelOrder(contract, section.id, 1)
+                      )
+                    }
+                  >
+                    Move down
+                  </Button>
+                </div>
               </li>
             )
           })}
         </ol>
       </div>
-    </section>
+    </aside>
   )
+}
+
+function moveCmsSectionInPanelOrder(
+  contract: CmsVersionContract,
+  sectionId: string,
+  direction: -1 | 1
+): CmsVersionContract {
+  const sections = contract.pageDocument.sections
+  const index = sections.findIndex((section) => section.id === sectionId)
+  if (index < 0) return contract
+
+  let destination = index + direction
+  while (sections[destination]?.state === "archived") {
+    destination += direction
+  }
+  if (destination < 0 || destination >= sections.length) return contract
+
+  let next = contract
+  for (let step = 0; step < Math.abs(destination - index); step += 1) {
+    next = moveCmsSection(next, sectionId, direction)
+  }
+  return next
 }

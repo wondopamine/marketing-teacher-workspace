@@ -167,15 +167,15 @@ describe("CMS workspace", () => {
     expect(
       screen.getByRole("dialog", { name: "Admin commands" })
     ).not.toBeNull()
-    expect(
-      screen.queryByRole("button", { name: "Page settings" })
-    ).toBeNull()
+    expect(screen.queryByRole("button", { name: "Page settings" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Section order" })).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "Enter Admin mode" }))
     expect(screen.getByText("Admin mode")).not.toBeNull()
+    expect(screen.queryByRole("button", { name: "Page settings" })).toBeNull()
+    const sections = screen.getByRole("button", { name: "Section order" })
     expect(
-      screen.getByRole("button", { name: "Page settings" })
+      screen.getByRole("complementary", { name: "Section order" })
     ).not.toBeNull()
-    const sections = screen.getByRole("button", { name: "Sections" })
     await waitFor(() => {
       expect(document.activeElement).toBe(sections)
     })
@@ -192,10 +192,11 @@ describe("CMS workspace", () => {
     ).not.toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "Exit Admin mode" }))
     expect(screen.getByText("Review tools")).not.toBeNull()
+    expect(screen.queryByRole("button", { name: "Page settings" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Section order" })).toBeNull()
     expect(
-      screen.queryByRole("button", { name: "Page settings" })
+      screen.queryByRole("complementary", { name: "Section order" })
     ).toBeNull()
-    expect(screen.queryByRole("button", { name: "Sections" })).toBeNull()
     expect(screen.getByRole("button", { name: "Finish editing" })).toBe(
       finishEditing
     )
@@ -301,6 +302,9 @@ describe("CMS workspace", () => {
       "csrf-token"
     )
 
+    expect(screen.queryByRole("button", { name: "Version history" })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "Finish editing" }))
+    await screen.findByRole("button", { name: "Edit content" })
     const historyButton = screen.getByRole("button", {
       name: "Version history",
     })
@@ -357,7 +361,7 @@ describe("CMS workspace", () => {
     })
   })
 
-  it("publishes to the private comparison and can unpublish without losing history", async () => {
+  it("publishes without adding comparison controls to Editor mode", async () => {
     const version1 = snapshot()
     mockedWrite.mockImplementation((request) => {
       if (request.operation === "publish") {
@@ -368,17 +372,6 @@ describe("CMS workspace", () => {
             outcome: "committed",
             committed: version1,
             live: version1,
-          },
-        })
-      }
-      if (request.operation === "unpublish") {
-        return Promise.resolve({
-          ok: true,
-          operation: "unpublish",
-          result: {
-            outcome: "committed",
-            unpublished: version1,
-            live: null,
           },
         })
       }
@@ -402,43 +395,21 @@ describe("CMS workspace", () => {
         "Version 1 is ready in the private comparison. The released website has not changed."
       )
     ).not.toBeNull()
-    const comparisonLink = screen.getByRole("link", {
+    expect(screen.queryByRole("link", { name: "View published" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Unpublish" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Version history" })).toBeNull()
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Finish editing" })
+      )
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "Finish editing" }))
+    const comparisonLink = await screen.findByRole("link", {
       name: "View published",
     })
     expect(comparisonLink.getAttribute("href")).toBe(
       `/cms-compare?page=${version1.pageId}`
-    )
-    await waitFor(() => {
-      expect(document.activeElement).toBe(comparisonLink)
-    })
-
-    fireEvent.click(screen.getByRole("button", { name: "Unpublish" }))
-    const dialog = screen.getByRole("dialog", {
-      name: "Unpublish this version?",
-    })
-    expect(dialog.textContent).toContain(
-      "draft and version history stay available"
-    )
-    fireEvent.click(within(dialog).getByRole("button", { name: "Unpublish" }))
-
-    expect(
-      await screen.findByText(
-        "This version is unpublished. Its draft and history are still available."
-      )
-    ).not.toBeNull()
-    await waitFor(() => {
-      expect(document.activeElement).toBe(
-        screen.getByRole("button", { name: "Publish" })
-      )
-    })
-    expect(screen.queryByRole("link", { name: "View published" })).toBeNull()
-    expect(mockedWrite).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        operation: "unpublish",
-        expectedPublished: version1.head,
-        displayName: "Alex Tan",
-      }),
-      "csrf-token"
     )
   })
 
@@ -466,37 +437,6 @@ describe("CMS workspace", () => {
     await waitFor(() => {
       expect(document.activeElement).toBe(
         screen.getByRole("button", { name: "Publish" })
-      )
-    })
-  })
-
-  it("closes a failed unpublish dialog and returns focus to Unpublish", async () => {
-    const version1 = snapshot()
-    mockedWrite.mockRejectedValueOnce(new Error("network unavailable"))
-    renderWorkspace(version1, version1.head)
-
-    fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
-    fireEvent.change(screen.getByRole("textbox", { name: "Your name" }), {
-      target: { value: "Alex Tan" },
-    })
-    fireEvent.click(screen.getByRole("button", { name: "Unpublish" }))
-    const dialog = screen.getByRole("dialog", {
-      name: "Unpublish this version?",
-    })
-    const confirm = within(dialog).getByRole("button", { name: "Unpublish" })
-    fireEvent.click(confirm)
-
-    expect(
-      await screen.findByText(
-        "We could not unpublish this version. The private comparison is unchanged. Try again."
-      )
-    ).not.toBeNull()
-    expect(
-      screen.queryByRole("dialog", { name: "Unpublish this version?" })
-    ).toBeNull()
-    await waitFor(() => {
-      expect(document.activeElement).toBe(
-        screen.getByRole("button", { name: "Unpublish" })
       )
     })
   })
@@ -599,104 +539,132 @@ describe("CMS workspace", () => {
     ).not.toBeNull()
   })
 
-  it("edits reviewer context separately from teacher-facing content", () => {
+  it("keeps advanced section and page controls out of Admin mode", () => {
     renderWorkspace()
     expect(screen.queryByRole("button", { name: "Pages" })).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
-    expect(
-      screen.queryByRole("button", { name: "Page settings" })
-    ).toBeNull()
-    expect(screen.queryByRole("button", { name: "Sections" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Page settings" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Section order" })).toBeNull()
 
     enterAdminMode()
     expect(screen.getByText("Admin mode")).not.toBeNull()
+    expect(screen.queryByRole("button", { name: "Page settings" })).toBeNull()
     expect(
-      screen.getByRole("button", { name: "Page settings" })
+      screen.getByRole("complementary", { name: "Section order" })
     ).not.toBeNull()
-    fireEvent.click(screen.getByRole("button", { name: "Sections" }))
-    fireEvent.click(screen.getAllByRole("button", { name: "Edit context" })[0])
-
-    const intent = screen.getByRole<HTMLTextAreaElement>("textbox", {
-      name: "Design intent",
-    })
-    const original = intent.value
-    fireEvent.change(intent, {
-      target: {
-        value:
-          "The opening states the teacher outcome before showing the product.",
-      },
-    })
-    expect(intent.value).toContain("teacher outcome")
-
-    fireEvent.click(screen.getByRole("button", { name: "Undo" }))
-    expect(
-      screen.getByRole<HTMLTextAreaElement>("textbox", {
-        name: "Design intent",
-      }).value
-    ).toBe(original)
-    expect(
-      screen.queryByText(
-        "The opening states the teacher outcome before showing the product."
-      )
-    ).toBeNull()
+    for (const name of [
+      "Add section",
+      "Duplicate",
+      "Hide",
+      "Archive",
+      "Restore",
+      "Edit context",
+    ]) {
+      expect(screen.queryByRole("button", { name })).toBeNull()
+    }
+    expect(screen.queryByRole("combobox", { name: "Section type" })).toBeNull()
   })
 
-  it("adds a bounded section and includes the structural change in undo", () => {
+  it("reorders the page from the side panel and includes the change in undo", () => {
     const { container } = renderWorkspace()
     fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
     enterAdminMode()
-    fireEvent.click(screen.getByRole("button", { name: "Sections" }))
 
-    expect(
-      container.querySelectorAll(
-        '[data-teacher-preview] [data-wireframe-section="connected-story"]'
-      )
-    ).toHaveLength(1)
-    fireEvent.click(screen.getByRole("button", { name: "Add section" }))
-    expect(
-      container.querySelectorAll(
-        '[data-teacher-preview] [data-wireframe-section="connected-story"]'
-      )
-    ).toHaveLength(2)
+    const order = () =>
+      Array.from(
+        container.querySelectorAll<HTMLElement>(
+          "[data-teacher-preview] [data-wireframe-section]"
+        )
+      ).map((section) => section.dataset.wireframeSection)
+    const original = order()
+    fireEvent.click(screen.getByRole("button", { name: "Move Reveal down" }))
+    const reordered = [...original]
+    const revealIndex = reordered.indexOf("reveal")
+    const next = reordered[revealIndex + 1]
+    reordered[revealIndex + 1] = "reveal"
+    reordered[revealIndex] = next
+    expect(order()).toEqual(reordered)
     expect(
       screen.getByRole<HTMLButtonElement>("button", { name: "Save draft" })
         .disabled
     ).toBe(false)
 
     fireEvent.click(screen.getByRole("button", { name: "Undo" }))
-    expect(
-      container.querySelectorAll(
-        '[data-teacher-preview] [data-wireframe-section="connected-story"]'
-      )
-    ).toHaveLength(1)
+    expect(order()).toEqual(original)
   })
 
-  it("keeps focus on the replacement section lifecycle action", async () => {
+  it("moves across retained archived sections in one visible step", () => {
+    const contract: CmsVersionContract = {
+      ...homepageV1Contract,
+      pageDocument: {
+        ...homepageV1Contract.pageDocument,
+        sections: homepageV1Contract.pageDocument.sections.map((section) =>
+          section.type === "capabilities"
+            ? { ...section, state: "archived" as const }
+            : section
+        ),
+      },
+    }
+    const { container } = renderWorkspace(snapshot(1, contract))
+    fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
+    enterAdminMode()
+
+    const order = () =>
+      Array.from(
+        container.querySelectorAll<HTMLElement>(
+          "[data-teacher-preview] [data-wireframe-section]"
+        )
+      ).map((section) => section.dataset.wireframeSection)
+    expect(order()).toEqual([
+      "promise",
+      "connected-story",
+      "reveal",
+      "close",
+      "access-support",
+      "footer-feedback",
+    ])
+
+    fireEvent.click(screen.getByRole("button", { name: "Move Reveal down" }))
+    expect(order()).toEqual([
+      "promise",
+      "connected-story",
+      "close",
+      "reveal",
+      "access-support",
+      "footer-feedback",
+    ])
+  })
+
+  it("keeps focus while reordering and returns it when the panel closes", async () => {
     renderWorkspace()
     fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
     enterAdminMode()
-    fireEvent.click(screen.getByRole("button", { name: "Sections" }))
 
-    const sectionActions = screen.getByRole("group", {
-      name: "Connected story section actions",
-    })
-    fireEvent.click(
-      within(sectionActions).getByRole("button", { name: "Archive" })
-    )
     await waitFor(() => {
       expect(document.activeElement).toBe(
-        within(sectionActions).getByRole("button", { name: "Restore" })
+        screen.getByRole("button", { name: "Section order" })
       )
     })
 
-    fireEvent.click(
-      within(sectionActions).getByRole("button", { name: "Restore" })
-    )
+    const moveReveal = screen.getByRole("button", {
+      name: "Move Reveal down",
+    })
+    moveReveal.focus()
+    fireEvent.click(moveReveal)
     await waitFor(() => {
       expect(document.activeElement).toBe(
-        within(sectionActions).getByRole("button", { name: "Archive" })
+        screen.getByRole("button", { name: "Move Reveal down" })
       )
     })
+
+    fireEvent.click(screen.getByRole("button", { name: "Close section order" }))
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Section order" })
+      )
+    })
+    expect(
+      screen.queryByRole("complementary", { name: "Section order" })
+    ).toBeNull()
   })
-
 })

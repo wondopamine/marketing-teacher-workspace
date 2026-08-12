@@ -37,9 +37,8 @@ export function CmsAdminCommandMenu({
                 </Dialog.Title>
                 <Dialog.Description className="mt-1 text-sm leading-5 text-muted-foreground">
                   {adminActive
-                    ? "Hide page settings and section controls."
-                    : "Change page settings and section order."
-                  }
+                    ? "Hide section-order controls."
+                    : "Change section order."}
                 </Dialog.Description>
               </div>
               <Dialog.Close
