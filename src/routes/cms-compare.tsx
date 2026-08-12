@@ -93,16 +93,9 @@ function CmsPublishedComparisonRoute() {
               . The released website has not changed.
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button asChild variant="outline" size="lg" className="min-h-11">
-              <a href={editorHref}>Return to editor</a>
-            </Button>
-            <Button asChild size="lg" className="min-h-11">
-              <a href="/" target="_blank" rel="noreferrer">
-                Open released homepage
-              </a>
-            </Button>
-          </div>
+          <Button asChild variant="outline" size="lg" className="min-h-11">
+            <a href={editorHref}>Return to editor</a>
+          </Button>
         </div>
       </header>
       <ContentReviewPage

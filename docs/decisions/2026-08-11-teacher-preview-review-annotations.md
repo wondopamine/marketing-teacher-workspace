@@ -401,3 +401,63 @@ checked again in the final hosted Preview. No L0 or L1 blocker remains.
 Independent-review limitation: this used a separate reviewer context and live
 and code re-grade, but the same model family and shared worktree—not an external
 human or independent black-box audit.
+
+## Scoped amendment: content editing and Admin mode
+
+Approved by the product owner on 2026-08-12.
+
+### Sprint contract
+
+1. Anyone with the shared edit link can start content editing from the visible
+   **Edit content** button.
+2. Command-K or Control-K opens Admin mode and reveals only **Page settings**
+   and **Sections**. Escape closes Admin mode without ending content editing.
+3. The **Pages** control and panel are absent from the CMS workspace. The
+   underlying single-page data model is unchanged.
+4. The private comparison keeps **Return to editor** and removes **Open released
+   homepage**.
+5. **Finish editing** is the final toolbar action and includes a decorative exit
+   door icon. Its existing save, discard, and keep-editing choices are unchanged.
+
+### Plan and tradeoff
+
+This is a scoped change to the existing workspace. It keeps direct content
+editing, version history, publishing, rationale, feedback, and section editing
+behaviour. Admin mode adds progressive disclosure for structural controls. It is
+an interface mode, not a separate permission level. Anyone who knows the shortcut
+and holds the edit link can use it.
+
+The page-management UI is removed rather than redesigned. Its server model and
+repository operations remain available, which keeps the change reversible and
+avoids a database migration during the release rehearsal.
+
+In-scope controls: A11Y-1, A11Y-2, A11Y-4, A11Y-6, A11Y-7, A11Y-8, A11Y-11,
+CMP-1, CMP-5, CMP-7, CNT-2, CNT-3, SLP-9, LAY-2, LAY-5, LAY-6, and LAY-7.
+There are no new async or destructive actions. CMP-1 is asserted with no
+manifest; the change reuses the existing Button component and Lucide icon set.
+
+### Verification
+
+- Fresh unaliased Preview:
+  `https://marketing-teacher-workspace-eddv77i3c-wondopamines-projects.vercel.app`
+- Desktop Admin evidence: `/private/tmp/cms-admin-mode-1280-fixed.png`
+- 320px Admin evidence: `/private/tmp/cms-admin-mode-320.png`
+- The hosted 320px workspace measured `scrollWidth === clientWidth === 320`;
+  every visible toolbar action measured 44px high.
+- The full regular suite passed 54 files and 323 tests. TypeScript, ESLint, CMS
+  and static builds, output leakage scans, and built-route checks passed.
+- Production remains unchanged.
+
+### Independent evaluator report
+
+> VERDICT: pass
+>
+> No L0 or L1 blockers remain. All five contract items are met, and the
+> Admin-mode focus issue is fixed with regression coverage.
+>
+> CMP-1: asserted, no manifest — manifest absent for
+> marketing-teacher-workspace.
+
+The final hosted Preview was deployed after that report. The exact advisory
+path was checked again: after opening Page settings, Escape closed Admin mode,
+kept content editing active, and moved focus to **Finish editing**.

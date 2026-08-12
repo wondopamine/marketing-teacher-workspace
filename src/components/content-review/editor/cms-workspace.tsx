@@ -6,12 +6,12 @@ import {
   useRef,
   useState,
 } from "react"
+import { DoorOpenIcon } from "lucide-react"
 
 import { ContentReviewPage } from "../content-review-page"
 import { PublicReviewMode } from "../public-review-mode"
 import { CmsVersionHistoryPanel } from "../version-history/cms-version-history-panel"
 import { CmsSectionContextPanel } from "../section-context/cms-section-context-panel"
-import { CmsPagesPanel } from "../pages/cms-pages-panel"
 import { useReviewAnnotations } from "../review-annotations"
 import {
   FinishEditingDialog,
@@ -32,19 +32,15 @@ import {
 } from "./cms-editor-model"
 import {
   readCmsHistory,
-  readCmsPages,
   readCmsVersion,
   writeCms,
-  writeCmsPage,
 } from "./cms-client"
 import type {
   CmsHead,
-  CmsPageState,
   CmsVersionHistoryItem,
   CmsVersionSnapshot,
 } from "@/db/content-repository.server"
 import type { ContentReviewEditAdapter } from "./content-review-edit-adapter"
-import type { CmsPageForm } from "../pages/cms-pages-panel"
 import type { CmsWriteRequest } from "@/cms/api"
 import type { CmsVersionContract } from "@/cms/document"
 import { cmsSectionTypes } from "@/cms/document"
@@ -79,10 +75,6 @@ type RetriableAttempt = {
   readonly attemptId: string
 }
 
-type RetriablePageAttempt = RetriableAttempt & {
-  readonly pageId: string
-}
-
 type PublicationFocusTarget = "publish" | "published" | "unpublish"
 
 type CmsReviewContext = NonNullable<
@@ -107,27 +99,12 @@ function attemptFor(
     : { fingerprint, attemptId: crypto.randomUUID() }
 }
 
-function pageAttemptFor(
-  current: RetriablePageAttempt | null,
-  fingerprint: string
-): RetriablePageAttempt {
-  return current?.fingerprint === fingerprint
-    ? current
-    : {
-        fingerprint,
-        attemptId: crypto.randomUUID(),
-        pageId: crypto.randomUUID(),
-      }
-}
-
 export function CmsWorkspace({
   snapshot,
-  pageState,
   publishedHead,
   csrfToken,
 }: {
   readonly snapshot: CmsVersionSnapshot
-  readonly pageState: CmsPageState
   readonly publishedHead: CmsHead | null
   readonly csrfToken: string
 }) {
@@ -142,13 +119,9 @@ export function CmsWorkspace({
     kind: "idle",
     message: "Review a section or edit the teacher copy.",
   })
+  const [adminMode, setAdminMode] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [sectionsOpen, setSectionsOpen] = useState(false)
-  const [pagesOpen, setPagesOpen] = useState(false)
-  const [pagesLoading, setPagesLoading] = useState(false)
-  const [pagesError, setPagesError] = useState<string | null>(null)
-  const [pages, setPages] = useState<ReadonlyArray<CmsPageState>>([pageState])
-  const [pageBusyAction, setPageBusyAction] = useState<string | null>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyLoadingMore, setHistoryLoadingMore] = useState(false)
@@ -172,11 +145,11 @@ export function CmsWorkspace({
   const publishButtonRef = useRef<HTMLButtonElement | null>(null)
   const publishedLinkRef = useRef<HTMLAnchorElement | null>(null)
   const unpublishButtonRef = useRef<HTMLButtonElement | null>(null)
+  const finishEditingButtonRef = useRef<HTMLButtonElement | null>(null)
+  const focusAfterAdminExitRef = useRef(false)
   const publicationFocusTargetRef = useRef<PublicationFocusTarget | null>(null)
   const restoreAttemptRef = useRef<RetriableAttempt | null>(null)
-  const pageAttemptRef = useRef<RetriablePageAttempt | null>(null)
   const historyOpenerRef = useRef<HTMLButtonElement | null>(null)
-  const pagesOpenerRef = useRef<HTMLButtonElement | null>(null)
 
   const dirty = isCmsEditorDirty(state)
   const busy = status.kind === "busy"
@@ -197,6 +170,12 @@ export function CmsWorkspace({
     element.focus()
     publicationFocusTargetRef.current = null
   }, [busy, publishDialogOpen, state.publishedHead, unpublishDialogOpen])
+
+  useEffect(() => {
+    if (adminMode || !focusAfterAdminExitRef.current) return
+    finishEditingButtonRef.current?.focus()
+    focusAfterAdminExitRef.current = false
+  }, [adminMode])
 
   useEffect(() => {
     const remembered = window.sessionStorage.getItem("tw-cms-display-name")
@@ -244,7 +223,6 @@ export function CmsWorkspace({
   useEffect(() => {
     if (panelOpen) {
       setHistoryOpen(false)
-      setPagesOpen(false)
     }
   }, [panelOpen])
 
@@ -252,6 +230,13 @@ export function CmsWorkspace({
     setPinsVisible(!editing)
     if (editing) setPanelOpen(false)
   }, [editing, setPanelOpen, setPinsVisible])
+
+  useEffect(() => {
+    if (editing) return
+    setAdminMode(false)
+    setSettingsOpen(false)
+    setSectionsOpen(false)
+  }, [editing])
 
   const apply = useCallback(
     (contract: typeof state.present, historyGroup?: string) => {
@@ -365,7 +350,6 @@ export function CmsWorkspace({
       if (opener) historyOpenerRef.current = opener
       setPanelOpen(false)
       setHistoryOpen(true)
-      setPagesOpen(false)
       setSettingsOpen(false)
       setSectionsOpen(false)
       if (history.length === 0 && !historyLoading) void loadHistory()
@@ -375,7 +359,6 @@ export function CmsWorkspace({
 
   const closeHistory = useCallback(() => {
     setHistoryOpen(false)
-    setPagesOpen(false)
     setPreviewVersion(null)
     window.requestAnimationFrame(() => {
       const remembered = historyOpenerRef.current
@@ -387,193 +370,12 @@ export function CmsWorkspace({
     })
   }, [])
 
-  const loadPages = useCallback(async () => {
-    setPagesLoading(true)
-    setPagesError(null)
-    try {
-      const response = await readCmsPages()
-      if (!response.ok) {
-        setPagesError(response.message)
-        return
-      }
-      setPages(response.pages)
-    } catch {
-      setPagesError("We could not load the page list. Try again.")
-    } finally {
-      setPagesLoading(false)
-    }
-  }, [])
-
-  const openPages = useCallback(
-    (opener?: HTMLButtonElement) => {
-      if (opener) pagesOpenerRef.current = opener
-      setPanelOpen(false)
-      setHistoryOpen(false)
-      setPagesOpen(true)
-      setSettingsOpen(false)
-      setSectionsOpen(false)
-      void loadPages()
-    },
-    [loadPages, setPanelOpen]
-  )
-
-  const closePages = useCallback(() => {
-    setPagesOpen(false)
-    window.requestAnimationFrame(() => {
-      const remembered = pagesOpenerRef.current
-      const fallback = document.querySelector<HTMLButtonElement>(
-        "[data-cms-pages-trigger]"
-      )
-      const target = remembered?.isConnected ? remembered : fallback
-      target?.focus()
-    })
-  }, [])
-
-  const openPage = useCallback((pageId: string) => {
-    const query = new URLSearchParams({ page: pageId })
-    window.location.assign(`/cms-preview?${query}`)
-  }, [])
-
-  const submitPageForm = useCallback(
-    async (form: CmsPageForm) => {
-      const name = displayName.trim()
-      if (!name) {
-        setPagesError("Enter your name before creating a page.")
-        return
-      }
-      const fingerprint = JSON.stringify({ form, name })
-      const attempt = pageAttemptFor(pageAttemptRef.current, fingerprint)
-      pageAttemptRef.current = attempt
-      setPageBusyAction("page-form")
-      setPagesError(null)
-      try {
-        const response = await writeCmsPage(
-          form.mode === "create"
-            ? {
-                operation: "create",
-                pageId: attempt.pageId,
-                attemptId: attempt.attemptId,
-                templateId: "homepage-v1",
-                title: form.title,
-                path: form.path,
-                displayName: name,
-              }
-            : {
-                operation: "duplicate",
-                pageId: attempt.pageId,
-                sourcePageId: form.sourcePageId ?? "",
-                attemptId: attempt.attemptId,
-                title: form.title,
-                path: form.path,
-                displayName: name,
-              },
-          csrfToken
-        )
-        if (!response.ok) {
-          if (response.code !== "UNAVAILABLE") pageAttemptRef.current = null
-          setPagesError(response.message)
-          return
-        }
-        pageAttemptRef.current = null
-        setStatus({
-          kind: "success",
-          message:
-            response.operation === "create"
-              ? "Page created as an unpublished draft."
-              : "Page duplicated as an unpublished draft.",
-        })
-        openPage(response.result.page.pageId)
-      } catch {
-        setPagesError(
-          form.mode === "create"
-            ? "We could not create this page. Nothing was published. Try again."
-            : "We could not duplicate this page. Nothing was published. Try again."
-        )
-      } finally {
-        setPageBusyAction(null)
-      }
-    },
-    [csrfToken, displayName, openPage]
-  )
-
-  const changePageLifecycle = useCallback(
-    async (page: CmsPageState, operation: "archive" | "restore-archived") => {
-      const name = displayName.trim()
-      if (!name) {
-        setPagesError(
-          `Enter your name before ${operation === "archive" ? "archiving" : "restoring"} a page.`
-        )
-        return
-      }
-      const fingerprint = JSON.stringify({
-        operation,
-        pageId: page.pageId,
-        lifecycle: page.lifecycle,
-        lifecycleVersion: page.lifecycleVersion,
-        name,
-      })
-      const attempt = pageAttemptFor(pageAttemptRef.current, fingerprint)
-      pageAttemptRef.current = attempt
-      setPageBusyAction(page.pageId)
-      setPagesError(null)
-      try {
-        const response = await writeCmsPage(
-          {
-            operation,
-            pageId: page.pageId,
-            expectedLifecycle: {
-              lifecycle: page.lifecycle,
-              lifecycleVersion: page.lifecycleVersion,
-            },
-            attemptId: attempt.attemptId,
-            displayName: name,
-          },
-          csrfToken
-        )
-        if (!response.ok) {
-          if (response.code !== "UNAVAILABLE") pageAttemptRef.current = null
-          setPagesError(response.message)
-          return
-        }
-        pageAttemptRef.current = null
-        setPages((current) =>
-          current.map((candidate) =>
-            candidate.pageId === page.pageId ? response.result.page : candidate
-          )
-        )
-        const archived = operation === "archive"
-        setStatus({
-          kind: "success",
-          message: archived ? "Page archived." : "Page restored.",
-        })
-        if (archived && page.pageId === state.baseline.pageId) {
-          const fallback = pages.find(
-            (candidate) =>
-              candidate.pageId !== page.pageId &&
-              candidate.lifecycle === "active"
-          )
-          if (fallback) openPage(fallback.pageId)
-        }
-      } catch {
-        setPagesError(
-          operation === "archive"
-            ? "We could not archive this page. The page is still available. Try again."
-            : "We could not restore this page. The page remains archived. Try again."
-        )
-      } finally {
-        setPageBusyAction(null)
-      }
-    },
-    [csrfToken, displayName, openPage, pages, state.baseline.pageId]
-  )
-
   const startOrFinishEditing = useCallback(() => {
     if (editing) {
       dispatch({ type: "request-finish" })
       return
     }
     setHistoryOpen(false)
-    setPagesOpen(false)
     setPreviewVersion(null)
     setStatus({
       kind: "idle",
@@ -581,6 +383,24 @@ export function CmsWorkspace({
     })
     dispatch({ type: "start-editing" })
   }, [editing])
+
+  const toggleAdminMode = useCallback(() => {
+    const next = !adminMode
+    if (!next) focusAfterAdminExitRef.current = true
+    setAdminMode(next)
+    setSettingsOpen(false)
+    setSectionsOpen(false)
+    setHistoryOpen(false)
+    setPreviewVersion(null)
+    setPanelOpen(false)
+    if (next && !editing) dispatch({ type: "start-editing" })
+    setStatus({
+      kind: "idle",
+      message: next
+        ? "Admin mode is on. You can use Page settings and Sections."
+        : "Admin mode is off. You can keep editing content.",
+    })
+  }, [adminMode, editing, setPanelOpen])
 
   const saveDraft = useCallback(
     async (finish: boolean) => {
@@ -1000,19 +820,6 @@ export function CmsWorkspace({
     <>
       <Button
         type="button"
-        variant="outline"
-        size="lg"
-        className="min-h-11"
-        data-cms-pages-trigger
-        aria-controls="cms-pages-panel"
-        aria-expanded={pagesOpen}
-        disabled={busy}
-        onClick={(event) => openPages(event.currentTarget)}
-      >
-        Pages
-      </Button>
-      <Button
-        type="button"
         variant="ghost"
         size="lg"
         className="min-h-11"
@@ -1031,40 +838,42 @@ export function CmsWorkspace({
       >
         Redo
       </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="lg"
-        className="min-h-11"
-        aria-controls="cms-page-settings-panel"
-        aria-expanded={settingsOpen}
-        disabled={busy}
-        onClick={() => {
-          setSettingsOpen((open) => !open)
-          setSectionsOpen(false)
-          setPagesOpen(false)
-          setHistoryOpen(false)
-        }}
-      >
-        Page settings
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="lg"
-        className="min-h-11"
-        aria-controls="cms-sections-panel"
-        aria-expanded={sectionsOpen}
-        disabled={busy}
-        onClick={() => {
-          setSectionsOpen((open) => !open)
-          setSettingsOpen(false)
-          setPagesOpen(false)
-          setHistoryOpen(false)
-        }}
-      >
-        Sections
-      </Button>
+      {adminMode ? (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="min-h-11"
+            aria-controls="cms-page-settings-panel"
+            aria-expanded={settingsOpen}
+            disabled={busy}
+            onClick={() => {
+              setSettingsOpen((open) => !open)
+              setSectionsOpen(false)
+              setHistoryOpen(false)
+            }}
+          >
+            Page settings
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="min-h-11"
+            aria-controls="cms-sections-panel"
+            aria-expanded={sectionsOpen}
+            disabled={busy}
+            onClick={() => {
+              setSectionsOpen((open) => !open)
+              setSettingsOpen(false)
+              setHistoryOpen(false)
+            }}
+          >
+            Sections
+          </Button>
+        </>
+      ) : null}
       <Button
         type="button"
         variant="outline"
@@ -1077,16 +886,6 @@ export function CmsWorkspace({
         onClick={(event) => openHistory(event.currentTarget)}
       >
         Version history
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="lg"
-        className="min-h-11"
-        disabled={busy}
-        onClick={startOrFinishEditing}
-      >
-        Finish editing
       </Button>
       <Button
         ref={publishButtonRef}
@@ -1143,21 +942,21 @@ export function CmsWorkspace({
           ? "Saving draft…"
           : "Save draft"}
       </Button>
-    </>
-  ) : (
-    <>
       <Button
+        ref={finishEditingButtonRef}
         type="button"
         variant="outline"
         size="lg"
         className="min-h-11"
-        data-cms-pages-trigger
-        aria-controls="cms-pages-panel"
-        aria-expanded={pagesOpen}
-        onClick={(event) => openPages(event.currentTarget)}
+        disabled={busy}
+        onClick={startOrFinishEditing}
       >
-        Pages
+        <DoorOpenIcon data-icon="inline-start" aria-hidden="true" />
+        Finish editing
       </Button>
+    </>
+  ) : (
+    <>
       <Button
         type="button"
         variant="outline"
@@ -1188,7 +987,7 @@ export function CmsWorkspace({
     </>
   )
 
-  const sidePanelOpen = panelOpen || historyOpen || pagesOpen
+  const sidePanelOpen = panelOpen || historyOpen
   const previewing = previewVersion !== null
 
   return (
@@ -1202,11 +1001,13 @@ export function CmsWorkspace({
       <PublicReviewMode
         externalEditor={{
           active: editing,
+          adminActive: adminMode,
           busy,
           controls,
           statusMessage: state.conflict
             ? "A newer draft was saved. Your changes are still here."
             : status.message,
+          onAdminToggle: toggleAdminMode,
           onToggle: startOrFinishEditing,
         }}
         externalReviewPanel={{
@@ -1272,7 +1073,7 @@ export function CmsWorkspace({
           </div>
         ) : null}
 
-        {editing && settingsOpen ? (
+        {editing && adminMode && settingsOpen ? (
           <PageSettings
             title={state.present.pageDocument.page.title}
             path={state.present.pageDocument.page.path}
@@ -1290,7 +1091,7 @@ export function CmsWorkspace({
           />
         ) : null}
 
-        {editing && sectionsOpen ? (
+        {editing && adminMode && sectionsOpen ? (
           <SectionManager
             contract={state.present}
             onChange={apply}
@@ -1336,7 +1137,7 @@ export function CmsWorkspace({
           <main className="grid min-h-[50vh] place-items-center bg-muted px-6 font-body">
             <p className="max-w-md border border-border bg-background p-6 text-center">
               Some content needs attention before this preview can be shown. Use
-              Undo or open Sections.
+              Undo, or open Admin mode with Command-K and check Sections.
             </p>
           </main>
         )}
@@ -1362,24 +1163,6 @@ export function CmsWorkspace({
         onLoadMore={() => void loadHistory(historyCursor, history.length > 0)}
         onRetry={retryHistory}
         onReturnToDraft={() => setPreviewVersion(null)}
-      />
-
-      <CmsPagesPanel
-        open={pagesOpen}
-        loading={pagesLoading}
-        error={pagesError}
-        pages={pages}
-        currentPageId={state.baseline.pageId}
-        dirty={dirty}
-        busyAction={pageBusyAction}
-        displayName={displayName}
-        onDisplayNameChange={setDisplayName}
-        onClose={closePages}
-        onReload={() => void loadPages()}
-        onSubmit={(form) => void submitPageForm(form)}
-        onArchive={(page) => void changePageLifecycle(page, "archive")}
-        onRestore={(page) => void changePageLifecycle(page, "restore-archived")}
-        onOpenPage={openPage}
       />
 
       <FinishEditingDialog

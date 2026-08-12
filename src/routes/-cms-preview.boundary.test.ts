@@ -48,6 +48,7 @@ describe("protected CMS preview boundary", () => {
     expect(comparisonRouteSource).not.toContain("CmsWorkspace")
     expect(comparisonRouteSource).not.toContain("ReviewAnnotationProvider")
     expect(comparisonRouteSource).not.toContain("buildCmsReviewPresentation")
+    expect(comparisonRouteSource).not.toContain("Open released homepage")
   })
 
   it("dynamically imports the exchange handler from the API route", () => {

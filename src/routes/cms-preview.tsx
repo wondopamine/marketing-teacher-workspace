@@ -49,7 +49,6 @@ function CmsPreviewRoute() {
     >
       <CmsWorkspace
         snapshot={data.snapshot}
-        pageState={data.page}
         publishedHead={data.publishedHead}
         csrfToken={data.csrfToken}
       />

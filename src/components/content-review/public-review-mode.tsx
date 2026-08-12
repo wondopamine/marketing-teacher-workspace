@@ -168,9 +168,11 @@ function locationOf(element: HTMLElement): string {
 
 export type ExternalReviewEditor = {
   readonly active: boolean
+  readonly adminActive?: boolean
   readonly busy: boolean
   readonly controls: React.ReactNode
   readonly statusMessage: string
+  readonly onAdminToggle?: () => void
   readonly onToggle: () => void
 }
 
@@ -404,11 +406,18 @@ export function PublicReviewMode({
         (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k"
       if (toggle) {
         event.preventDefault()
-        if (externalEditor) externalEditor.onToggle()
+        if (externalEditor?.onAdminToggle) externalEditor.onAdminToggle()
+        else if (externalEditor) externalEditor.onToggle()
         else if (active) deactivate()
         else if (!editLoading) void activate()
       }
-      if (event.key === "Escape" && externalEditor?.active) {
+      if (
+        event.key === "Escape" &&
+        externalEditor?.adminActive &&
+        externalEditor.onAdminToggle
+      ) {
+        externalEditor.onAdminToggle()
+      } else if (event.key === "Escape" && externalEditor?.active) {
         externalEditor.onToggle()
       } else if (event.key === "Escape" && active) deactivate()
       else if (event.key === "Escape" && panelOpen) {
@@ -597,9 +606,11 @@ export function PublicReviewMode({
         data-review-chrome
         className="sticky top-0 z-50 border-b border-foreground/20 bg-background pt-[var(--masthead-h)] font-body text-sm lg:col-span-full lg:row-start-1"
       >
-        <div className="mx-auto flex min-h-16 max-w-[90rem] flex-col justify-center gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="mx-auto flex min-h-16 max-w-[90rem] flex-col justify-center gap-3 px-3 py-3 sm:px-6">
           <div className="min-w-0">
-            <p className="font-semibold">Review tools</p>
+            <p className="font-semibold">
+              {externalEditor?.adminActive ? "Admin mode" : "Review tools"}
+            </p>
             <p
               aria-live="polite"
               className="mt-0.5 max-w-[62ch] text-xs text-muted-foreground"
@@ -608,9 +619,11 @@ export function PublicReviewMode({
             </p>
           </div>
           <div
-            className="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto sm:justify-end"
+            className="flex w-full flex-wrap gap-2 [&>*:last-child]:ml-auto"
             role="group"
-            aria-label="Review tools"
+            aria-label={
+              externalEditor?.adminActive ? "Admin tools" : "Review tools"
+            }
           >
             <Button
               type="button"

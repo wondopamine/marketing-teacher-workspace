@@ -12,15 +12,12 @@ import { CmsWorkspace } from "./cms-workspace"
 import {
   readCmsComments,
   readCmsHistory,
-  readCmsPages,
   readCmsVersion,
   writeCms,
   writeCmsComment,
-  writeCmsPage,
 } from "./cms-client"
 import type { CmsVersionContract } from "@/cms/document"
 import type {
-  CmsPageState,
   CmsVersionHistoryItem,
   CmsVersionSnapshot,
 } from "@/db/content-repository.server"
@@ -35,37 +32,16 @@ vi.mock("@/server/review-feedback", () => ({
 vi.mock("./cms-client", () => ({
   readCmsComments: vi.fn(),
   readCmsHistory: vi.fn(),
-  readCmsPages: vi.fn(),
   readCmsVersion: vi.fn(),
   writeCms: vi.fn(),
   writeCmsComment: vi.fn(),
-  writeCmsPage: vi.fn(),
 }))
 
 const mockedReadComments = vi.mocked(readCmsComments)
 const mockedReadHistory = vi.mocked(readCmsHistory)
-const mockedReadPages = vi.mocked(readCmsPages)
 const mockedReadVersion = vi.mocked(readCmsVersion)
 const mockedWrite = vi.mocked(writeCms)
 const mockedWriteComment = vi.mocked(writeCmsComment)
-const mockedWritePage = vi.mocked(writeCmsPage)
-
-function pageState(
-  initial: CmsVersionSnapshot,
-  overrides: Partial<CmsPageState> = {}
-): CmsPageState {
-  return {
-    pageId: initial.pageId,
-    title: initial.pageDocument.page.title,
-    path: initial.pageDocument.page.path,
-    lifecycle: "active" as const,
-    lifecycleVersion: 1,
-    draftHead: initial.head,
-    publishedHead: initial.head,
-    updatedAt: initial.createdAt,
-    ...overrides,
-  }
-}
 
 function snapshot(
   versionNumber = 1,
@@ -113,7 +89,6 @@ function renderWorkspace(
     <ReviewAnnotationProvider>
       <CmsWorkspace
         snapshot={initial}
-        pageState={pageState(initial, { publishedHead })}
         publishedHead={publishedHead}
         csrfToken="csrf-token"
       />
@@ -135,20 +110,22 @@ describe("CMS workspace", () => {
     mockedReadComments.mockResolvedValue({ ok: true, comments: [] })
     mockedReadHistory.mockReset()
     mockedReadVersion.mockReset()
-    mockedReadPages.mockReset()
-    mockedReadPages.mockResolvedValue({
-      ok: true,
-      pages: [pageState(snapshot())],
-    })
     mockedWrite.mockReset()
     mockedWriteComment.mockReset()
-    mockedWritePage.mockReset()
   })
 
   it("supports direct editing, keyboard undo, and every finish choice", async () => {
     renderWorkspace()
 
     fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
+    const reviewTools = screen.getByRole("group", { name: "Review tools" })
+    const finishEditing = within(reviewTools).getByRole("button", {
+      name: "Finish editing",
+    })
+    expect(within(reviewTools).getAllByRole("button").at(-1)).toBe(
+      finishEditing
+    )
+    expect(finishEditing.querySelector("svg")).not.toBeNull()
     changeEditable("Edit opening heading", "A clearer opening")
     expect(screen.getByText("A clearer opening")).not.toBeNull()
 
@@ -176,6 +153,34 @@ describe("CMS workspace", () => {
       ).not.toBeNull()
     })
     expect(screen.queryByText("A clearer opening")).toBeNull()
+  })
+
+  it("uses Cmd+K for admin tools without hiding content editing", () => {
+    renderWorkspace()
+
+    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    expect(screen.getByText("Admin mode")).not.toBeNull()
+    expect(
+      screen.getByRole("button", { name: "Page settings" })
+    ).not.toBeNull()
+    expect(screen.getByRole("button", { name: "Sections" })).not.toBeNull()
+    expect(
+      screen.getByRole("button", { name: "Finish editing" })
+    ).not.toBeNull()
+    const finishEditing = screen.getByRole("button", {
+      name: "Finish editing",
+    })
+
+    fireEvent.keyDown(window, { key: "Escape" })
+    expect(screen.getByText("Review tools")).not.toBeNull()
+    expect(
+      screen.queryByRole("button", { name: "Page settings" })
+    ).toBeNull()
+    expect(screen.queryByRole("button", { name: "Sections" })).toBeNull()
+    expect(screen.getByRole("button", { name: "Finish editing" })).toBe(
+      finishEditing
+    )
+    expect(document.activeElement).toBe(finishEditing)
   })
 
   it("saves a named draft, opens history, previews, and restores an old version", async () => {
@@ -538,7 +543,18 @@ describe("CMS workspace", () => {
 
   it("edits reviewer context separately from teacher-facing content", () => {
     renderWorkspace()
+    expect(screen.queryByRole("button", { name: "Pages" })).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
+    expect(
+      screen.queryByRole("button", { name: "Page settings" })
+    ).toBeNull()
+    expect(screen.queryByRole("button", { name: "Sections" })).toBeNull()
+
+    fireEvent.keyDown(window, { key: "k", metaKey: true })
+    expect(screen.getByText("Admin mode")).not.toBeNull()
+    expect(
+      screen.getByRole("button", { name: "Page settings" })
+    ).not.toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "Sections" }))
     fireEvent.click(screen.getAllByRole("button", { name: "Edit context" })[0])
 
@@ -570,6 +586,7 @@ describe("CMS workspace", () => {
   it("adds a bounded section and includes the structural change in undo", () => {
     const { container } = renderWorkspace()
     fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
+    fireEvent.keyDown(window, { key: "k", metaKey: true })
     fireEvent.click(screen.getByRole("button", { name: "Sections" }))
 
     expect(
@@ -599,6 +616,7 @@ describe("CMS workspace", () => {
   it("keeps focus on the replacement section lifecycle action", async () => {
     renderWorkspace()
     fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
+    fireEvent.keyDown(window, { key: "k", metaKey: true })
     fireEvent.click(screen.getByRole("button", { name: "Sections" }))
 
     const sectionActions = screen.getByRole("group", {
@@ -623,133 +641,4 @@ describe("CMS workspace", () => {
     })
   })
 
-  it("manages page creation and restore without exposing public content", async () => {
-    const current = snapshot()
-    const archived = pageState(current, {
-      pageId: "44444444-4444-4444-8444-444444444444",
-      title: "Archived guide",
-      path: "/archived-guide",
-      lifecycle: "archived",
-      lifecycleVersion: 2,
-      publishedHead: null,
-    })
-    const another = pageState(current, {
-      pageId: "55555555-5555-4555-8555-555555555555",
-      title: "Another draft",
-      path: "/another-draft",
-      publishedHead: null,
-    })
-    mockedReadPages.mockResolvedValue({
-      ok: true,
-      pages: [pageState(current), another, archived],
-    })
-    mockedWritePage.mockImplementation((request) => {
-      if (request.operation === "create") {
-        return Promise.resolve({
-          ok: false,
-          code: "PATH_TAKEN",
-          message:
-            "That page address is already in use. Choose another address.",
-        })
-      }
-      if (request.operation === "restore-archived") {
-        return Promise.resolve({
-          ok: true,
-          operation: "restore-archived",
-          result: {
-            outcome: "committed",
-            page: {
-              ...archived,
-              lifecycle: "active",
-              lifecycleVersion: 3,
-            },
-          },
-        })
-      }
-      return Promise.reject(new Error("Unexpected page request"))
-    })
-    renderWorkspace(current)
-
-    fireEvent.click(screen.getByRole("button", { name: "Pages" }))
-    expect(await screen.findByText("Archived guide")).not.toBeNull()
-    expect(
-      screen.getByText(/Archive removes an unpublished page from active use/)
-    ).not.toBeNull()
-    fireEvent.change(screen.getByRole("textbox", { name: "Your name" }), {
-      target: { value: "Alex Tan" },
-    })
-    const newPageButton = screen.getByRole("button", { name: "New page" })
-    fireEvent.click(newPageButton)
-    expect(newPageButton.getAttribute("aria-expanded")).toBe("true")
-    expect(newPageButton.getAttribute("aria-controls")).toBe("cms-page-form")
-    await waitFor(() => {
-      expect(document.activeElement).toBe(
-        screen.getByRole("textbox", { name: "Page title" })
-      )
-    })
-    fireEvent.change(screen.getByRole("textbox", { name: "Page title" }), {
-      target: { value: "Family support" },
-    })
-    fireEvent.change(screen.getByRole("textbox", { name: /^Page address/ }), {
-      target: { value: "/family-support" },
-    })
-    fireEvent.click(screen.getByRole("button", { name: "Create page" }))
-
-    expect(
-      await screen.findByText(
-        "That page address is already in use. Choose another address."
-      )
-    ).not.toBeNull()
-    expect(mockedWritePage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        operation: "create",
-        title: "Family support",
-        path: "/family-support",
-      }),
-      "csrf-token"
-    )
-
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
-    await waitFor(() => {
-      expect(document.activeElement).toBe(newPageButton)
-    })
-    expect(newPageButton.getAttribute("aria-expanded")).toBe("false")
-
-    const duplicateButtons = screen.getAllByRole("button", {
-      name: "Duplicate",
-    })
-    fireEvent.click(duplicateButtons[0])
-    expect(duplicateButtons[0].getAttribute("aria-expanded")).toBe("true")
-    expect(duplicateButtons[1].getAttribute("aria-expanded")).toBe("false")
-    await waitFor(() => {
-      expect(document.activeElement).toBe(
-        screen.getByRole("textbox", { name: "Page title" })
-      )
-    })
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
-    await waitFor(() => {
-      expect(document.activeElement).toBe(duplicateButtons[0])
-    })
-
-    fireEvent.click(screen.getByRole("button", { name: "Restore" }))
-    await waitFor(() => {
-      expect(screen.queryByRole("button", { name: "Restore" })).toBeNull()
-    })
-    await waitFor(() => {
-      expect(document.activeElement).toBe(
-        within(
-          screen.getByRole("group", {
-            name: "Archived guide page actions",
-          })
-        ).getByRole("button", { name: "Archive" })
-      )
-    })
-    expect(mockedWritePage).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        operation: "restore-archived",
-        pageId: archived.pageId,
-      }),
-      "csrf-token"
-    )
-  })
 })
