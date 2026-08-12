@@ -13,10 +13,12 @@ export function ContentReviewPage({
   data,
   editor,
   reviewTargets,
+  showReviewPins = true,
 }: {
   data: TeacherPreviewPageDataDto
   editor?: ContentReviewEditAdapter
   reviewTargets?: ContentReviewReviewTargets
+  showReviewPins?: boolean
 }) {
   if (data.kind === "error") return <ContentReviewError />
 
@@ -51,6 +53,7 @@ export function ContentReviewPage({
             sections={document.sections}
             editor={editor}
             reviewTargets={reviewTargets?.sections}
+            showReviewPins={showReviewPins}
           />
         </div>
       </main>
@@ -74,7 +77,7 @@ export function ContentReviewPage({
                     : undefined
                 }
               />
-              {reviewTargets?.footerSectionId ? (
+              {showReviewPins && reviewTargets?.footerSectionId ? (
                 <ReviewPin id={reviewTargets.footerSectionId} />
               ) : null}
             </div>

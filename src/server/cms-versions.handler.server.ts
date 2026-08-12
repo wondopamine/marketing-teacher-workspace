@@ -108,6 +108,17 @@ function isWriteRequest(value: unknown): value is CmsWriteRequest {
       (value.expectedPublished === null || isHead(value.expectedPublished))
     )
   }
+  if (value.operation === "unpublish") {
+    return (
+      hasExactKeys(value, [
+        "operation",
+        "pageId",
+        "expectedPublished",
+        "displayName",
+        "attemptId",
+      ]) && isHead(value.expectedPublished)
+    )
+  }
   return false
 }
 
@@ -277,10 +288,17 @@ export async function handleCmsVersionsWrite(
         result: await repository.restoreVersion(input),
       })
     }
+    if (input.operation === "publish") {
+      return json(200, {
+        ok: true,
+        operation: "publish",
+        result: await repository.publishVersion(input),
+      })
+    }
     return json(200, {
       ok: true,
-      operation: "publish",
-      result: await repository.publishVersion(input),
+      operation: "unpublish",
+      result: await repository.unpublishPage(input),
     })
   } catch (error) {
     return repositoryFailure(error)

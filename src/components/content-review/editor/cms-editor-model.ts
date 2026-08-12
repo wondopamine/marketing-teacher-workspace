@@ -49,6 +49,7 @@ export type CmsEditorAction =
       readonly snapshot: CmsVersionSnapshot
     }
   | { readonly type: "publish-succeeded"; readonly publishedHead: CmsHead }
+  | { readonly type: "unpublish-succeeded" }
 
 const maximumUndoSteps = 100
 
@@ -194,6 +195,8 @@ export function cmsEditorReducer(
       }
     case "publish-succeeded":
       return { ...state, publishedHead: action.publishedHead }
+    case "unpublish-succeeded":
+      return { ...state, publishedHead: null }
   }
 }
 

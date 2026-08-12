@@ -261,3 +261,66 @@ L2 advisories (non-blocking):
 Independent-review limitation: this was a separate evaluator pass, but it used the same model family and shared worktree.
 
 All three non-blocking advisories were applied after this report. The final focused workspace suite passed 8 tests, bringing the full suite to 289 tests.
+
+## Phase 8: private publishing comparison
+
+Publishing now moves an immutable CMS published pointer without changing the
+released website. Reviewers with the shared edit link can open a private,
+no-store comparison of the exact published version, unpublish it without
+losing its draft or history, and publish it again. `/` remains on the released
+static source.
+
+The comparison receives a strict public projection containing only metadata
+and teacher-facing page content. Stable IDs, hidden and archived sections,
+reviewer context, comments, editor attribution, draft state, version metadata,
+and history are excluded. The built-output verifier checks the comparison's
+SSR and hydration data as well as its client dependency closure.
+
+Responsive evidence:
+
+- `/private/tmp/cms-phase8-comparison-1280.png`
+- `/private/tmp/cms-phase8-comparison-320-fixed.png`
+
+Verification completed after the independent review fixes:
+
+- 48 regular test files and 305 tests passed; the database-only file was
+  skipped in the regular suite.
+- All 20 PostgreSQL integration tests passed against the local test database.
+- TypeScript, ESLint, the production build, public-output leakage scans, route
+  isolation, and the built capability-protected comparison check passed.
+- The independent evaluator's focused re-grade passed 4 files and 20 tests.
+- `CMP-1: asserted, no manifest — manifest absent for marketing-teacher-workspace`
+
+### Independent evaluator report
+
+PASS
+
+No L0 or L1 blockers remain in Phase 8.
+
+- The strict `CmsPublicPageDto` removes stable IDs, reviewer/editor data,
+  hidden or archived sections, and version/history metadata.
+- `/cms-compare` requires the edit-link capability, loads the exact published
+  snapshot, uses private/no-store/noindex protections, and contains no review
+  pins or editable regions.
+- Publish and unpublish dialogs explain consequences, support idempotent
+  recovery, announce failures, and preserve predictable focus through pending,
+  success, and error states.
+- Ready and non-ready routes have descriptive H1s and semantic main regions.
+- The 1280px and 320px evidence shows clean reflow without horizontal overflow.
+- `/` remains on the released static source.
+- Focused re-grade: 4 files / 20 tests passed. Full suite: 48 files / 305 tests.
+  Supplied PostgreSQL integration evidence: 20/20. TypeScript, ESLint, build,
+  scanners, and protected-route verification pass.
+- CMP-1: asserted, no manifest. Existing shared `Button` and native elements
+  were reused.
+
+The evaluator first found two blocking failure-state issues: an aborted
+publish or unpublish could strand focus inside its dialog, and non-ready
+comparison views lacked an H1. Both were fixed and covered by regression tests
+before the PASS. Its two non-blocking copy advisories were also applied: the
+interface now avoids internal release language and the comparison header names
+the page and path being reviewed.
+
+Independent-review limitation: this used a separate reviewer context and live
+and code re-grade, but the same model family and shared worktree—not an external
+human or independent black-box audit.

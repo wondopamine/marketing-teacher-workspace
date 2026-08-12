@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CmsCompareRouteImport } from './routes/cms-compare'
 import { Route as CmsPreviewRouteImport } from './routes/cms-preview'
 import { Route as ContentReviewRouteImport } from './routes/content-review'
 import { Route as ApiCmsCommentsRouteImport } from './routes/api/cms/comments'
@@ -20,6 +21,11 @@ import { Route as ApiCmsVersionsRouteImport } from './routes/api/cms/versions'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CmsCompareRoute = CmsCompareRouteImport.update({
+  id: '/cms-compare',
+  path: '/cms-compare',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CmsPreviewRoute = CmsPreviewRouteImport.update({
@@ -55,6 +61,7 @@ const ApiCmsVersionsRoute = ApiCmsVersionsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cms-compare': typeof CmsCompareRoute
   '/cms-preview': typeof CmsPreviewRoute
   '/content-review': typeof ContentReviewRoute
   '/api/cms/comments': typeof ApiCmsCommentsRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cms-compare': typeof CmsCompareRoute
   '/cms-preview': typeof CmsPreviewRoute
   '/content-review': typeof ContentReviewRoute
   '/api/cms/comments': typeof ApiCmsCommentsRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cms-compare': typeof CmsCompareRoute
   '/cms-preview': typeof CmsPreviewRoute
   '/content-review': typeof ContentReviewRoute
   '/api/cms/comments': typeof ApiCmsCommentsRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/cms-compare'
     | '/cms-preview'
     | '/content-review'
     | '/api/cms/comments'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/cms-compare'
     | '/cms-preview'
     | '/content-review'
     | '/api/cms/comments'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/cms-compare'
     | '/cms-preview'
     | '/content-review'
     | '/api/cms/comments'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CmsCompareRoute: typeof CmsCompareRoute
   CmsPreviewRoute: typeof CmsPreviewRoute
   ContentReviewRoute: typeof ContentReviewRoute
   ApiCmsCommentsRoute: typeof ApiCmsCommentsRoute
@@ -128,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cms-compare': {
+      id: '/cms-compare'
+      path: '/cms-compare'
+      fullPath: '/cms-compare'
+      preLoaderRoute: typeof CmsCompareRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cms-preview': {
@@ -177,6 +197,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CmsCompareRoute: CmsCompareRoute,
   CmsPreviewRoute: CmsPreviewRoute,
   ContentReviewRoute: ContentReviewRoute,
   ApiCmsCommentsRoute: ApiCmsCommentsRoute,

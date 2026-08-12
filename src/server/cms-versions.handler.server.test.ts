@@ -87,6 +87,19 @@ describe("CMS version API boundary", () => {
       code: "INVALID_DOCUMENT",
     })
 
+    const invalidUnpublish = await handleCmsVersionsWrite(
+      mutationRequest(
+        JSON.stringify({
+          operation: "unpublish",
+          pageId: "b7a1e972-1758-4815-87b9-9697a324a667",
+          expectedPublished: null,
+          displayName: "Alex Tan",
+          attemptId: "11111111-1111-4111-8111-111111111111",
+        })
+      )
+    )
+    expect(invalidUnpublish.status).toBe(400)
+
     const oversized = await handleCmsVersionsWrite(
       mutationRequest("{}", { contentLength: "1000001" })
     )

@@ -10,6 +10,7 @@ import type {
   CmsPageState,
   CmsPublicationResult,
   CmsRepositoryErrorCode,
+  CmsUnpublicationResult,
   CmsVersionHistoryPage,
   CmsVersionSnapshot,
 } from "@/db/content-repository.server"
@@ -43,10 +44,19 @@ export type CmsPublishRequest = {
   readonly attemptId: string
 }
 
+export type CmsUnpublishRequest = {
+  readonly operation: "unpublish"
+  readonly pageId: string
+  readonly expectedPublished: CmsHead
+  readonly displayName: string
+  readonly attemptId: string
+}
+
 export type CmsWriteRequest =
   | CmsSaveRequest
   | CmsRestoreRequest
   | CmsPublishRequest
+  | CmsUnpublishRequest
 
 export type CmsWriteResponse =
   | {
@@ -58,6 +68,11 @@ export type CmsWriteResponse =
       readonly ok: true
       readonly operation: "publish"
       readonly result: CmsPublicationResult
+    }
+  | {
+      readonly ok: true
+      readonly operation: "unpublish"
+      readonly result: CmsUnpublicationResult
     }
   | {
       readonly ok: false

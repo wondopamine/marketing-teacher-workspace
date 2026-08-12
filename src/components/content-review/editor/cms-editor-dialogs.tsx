@@ -127,6 +127,7 @@ export function PublishVersionDialog({
     <dialog
       ref={ref}
       aria-labelledby="publish-version-title"
+      aria-busy={publishing}
       className={dialogClass}
       onCancel={(event) => {
         event.preventDefault()
@@ -144,8 +145,8 @@ export function PublishVersionDialog({
           This publishes{" "}
           <strong className="text-foreground">{pageTitle}</strong> at{" "}
           <strong className="text-foreground">{path}</strong> under{" "}
-          {displayName || "your name"}. The released homepage stays unchanged
-          until the final CMS cutover.
+          {displayName || "your name"}. The released website stays unchanged
+          until you approve the switch.
         </p>
         <div className="mt-6 flex justify-end gap-2">
           <Button
@@ -153,8 +154,10 @@ export function PublishVersionDialog({
             variant="ghost"
             size="lg"
             className="min-h-11"
-            disabled={publishing}
-            onClick={onCancel}
+            aria-disabled={publishing}
+            onClick={() => {
+              if (!publishing) onCancel()
+            }}
           >
             Cancel
           </Button>
@@ -162,11 +165,82 @@ export function PublishVersionDialog({
             type="button"
             size="lg"
             className="min-h-11"
-            disabled={publishing}
-            onClick={onPublish}
+            aria-disabled={publishing}
+            onClick={() => {
+              if (!publishing) onPublish()
+            }}
             autoFocus
           >
             {publishing ? "Publishing…" : "Publish"}
+          </Button>
+        </div>
+      </div>
+    </dialog>
+  )
+}
+
+export function UnpublishPageDialog({
+  open,
+  unpublishing,
+  pageTitle,
+  onUnpublish,
+  onCancel,
+}: {
+  readonly open: boolean
+  readonly unpublishing: boolean
+  readonly pageTitle: string
+  readonly onUnpublish: () => void
+  readonly onCancel: () => void
+}) {
+  const ref = useModalDialog(open)
+  return (
+    <dialog
+      ref={ref}
+      aria-labelledby="unpublish-page-title"
+      aria-busy={unpublishing}
+      className={dialogClass}
+      onCancel={(event) => {
+        event.preventDefault()
+        if (!unpublishing) onCancel()
+      }}
+    >
+      <div className="p-6">
+        <h2
+          id="unpublish-page-title"
+          className="font-heading text-2xl font-semibold"
+        >
+          Unpublish this version?
+        </h2>
+        <p className="mt-3 leading-6 text-muted-foreground">
+          This removes <strong className="text-foreground">{pageTitle}</strong>{" "}
+          from the private published comparison. Its draft and version history
+          stay available. The released website will not change.
+        </p>
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            size="lg"
+            className="min-h-11"
+            aria-disabled={unpublishing}
+            onClick={() => {
+              if (!unpublishing) onCancel()
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            size="lg"
+            className="min-h-11"
+            aria-disabled={unpublishing}
+            onClick={() => {
+              if (!unpublishing) onUnpublish()
+            }}
+            autoFocus
+          >
+            {unpublishing ? "Unpublishing…" : "Unpublish"}
           </Button>
         </div>
       </div>

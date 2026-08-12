@@ -105,13 +105,16 @@ function historyItem(
   }
 }
 
-function renderWorkspace(initial = snapshot()) {
+function renderWorkspace(
+  initial = snapshot(),
+  publishedHead: CmsVersionSnapshot["head"] | null = initial.head
+) {
   return render(
     <ReviewAnnotationProvider>
       <CmsWorkspace
         snapshot={initial}
-        pageState={pageState(initial)}
-        publishedHead={initial.head}
+        pageState={pageState(initial, { publishedHead })}
+        publishedHead={publishedHead}
         csrfToken="csrf-token"
       />
     </ReviewAnnotationProvider>
@@ -287,6 +290,150 @@ describe("CMS workspace", () => {
     await waitFor(() => {
       expect(document.activeElement).toBe(
         screen.getByRole("button", { name: "Version history" })
+      )
+    })
+  })
+
+  it("publishes to the private comparison and can unpublish without losing history", async () => {
+    const version1 = snapshot()
+    mockedWrite.mockImplementation((request) => {
+      if (request.operation === "publish") {
+        return Promise.resolve({
+          ok: true,
+          operation: "publish",
+          result: {
+            outcome: "committed",
+            committed: version1,
+            live: version1,
+          },
+        })
+      }
+      if (request.operation === "unpublish") {
+        return Promise.resolve({
+          ok: true,
+          operation: "unpublish",
+          result: {
+            outcome: "committed",
+            unpublished: version1,
+            live: null,
+          },
+        })
+      }
+      return Promise.reject(new Error("Unexpected CMS write"))
+    })
+    renderWorkspace(version1, null)
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
+    fireEvent.change(screen.getByRole("textbox", { name: "Your name" }), {
+      target: { value: "Alex Tan" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Publish" }))
+    fireEvent.click(
+      within(
+        screen.getByRole("dialog", { name: "Publish version 1?" })
+      ).getByRole("button", { name: "Publish" })
+    )
+
+    expect(
+      await screen.findByText(
+        "Version 1 is ready in the private comparison. The released website has not changed."
+      )
+    ).not.toBeNull()
+    const comparisonLink = screen.getByRole("link", {
+      name: "View published",
+    })
+    expect(comparisonLink.getAttribute("href")).toBe(
+      `/cms-compare?page=${version1.pageId}`
+    )
+    await waitFor(() => {
+      expect(document.activeElement).toBe(comparisonLink)
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "Unpublish" }))
+    const dialog = screen.getByRole("dialog", {
+      name: "Unpublish this version?",
+    })
+    expect(dialog.textContent).toContain(
+      "draft and version history stay available"
+    )
+    fireEvent.click(within(dialog).getByRole("button", { name: "Unpublish" }))
+
+    expect(
+      await screen.findByText(
+        "This version is unpublished. Its draft and history are still available."
+      )
+    ).not.toBeNull()
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Publish" })
+      )
+    })
+    expect(screen.queryByRole("link", { name: "View published" })).toBeNull()
+    expect(mockedWrite).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        operation: "unpublish",
+        expectedPublished: version1.head,
+        displayName: "Alex Tan",
+      }),
+      "csrf-token"
+    )
+  })
+
+  it("closes a failed publish dialog and returns focus to Publish", async () => {
+    mockedWrite.mockRejectedValueOnce(new Error("network unavailable"))
+    renderWorkspace(snapshot(), null)
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
+    fireEvent.change(screen.getByRole("textbox", { name: "Your name" }), {
+      target: { value: "Alex Tan" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Publish" }))
+    const dialog = screen.getByRole("dialog", { name: "Publish version 1?" })
+    const confirm = within(dialog).getByRole("button", { name: "Publish" })
+    fireEvent.click(confirm)
+
+    expect(
+      await screen.findByText(
+        "We could not publish this version. The public page has not changed. Try again."
+      )
+    ).not.toBeNull()
+    expect(
+      screen.queryByRole("dialog", { name: "Publish version 1?" })
+    ).toBeNull()
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Publish" })
+      )
+    })
+  })
+
+  it("closes a failed unpublish dialog and returns focus to Unpublish", async () => {
+    const version1 = snapshot()
+    mockedWrite.mockRejectedValueOnce(new Error("network unavailable"))
+    renderWorkspace(version1, version1.head)
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
+    fireEvent.change(screen.getByRole("textbox", { name: "Your name" }), {
+      target: { value: "Alex Tan" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Unpublish" }))
+    const dialog = screen.getByRole("dialog", {
+      name: "Unpublish this version?",
+    })
+    const confirm = within(dialog).getByRole("button", { name: "Unpublish" })
+    fireEvent.click(confirm)
+
+    expect(
+      await screen.findByText(
+        "We could not unpublish this version. The private comparison is unchanged. Try again."
+      )
+    ).not.toBeNull()
+    expect(
+      screen.queryByRole("dialog", { name: "Unpublish this version?" })
+    ).toBeNull()
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Unpublish" })
       )
     })
   })

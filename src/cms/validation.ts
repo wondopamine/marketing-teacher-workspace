@@ -28,7 +28,12 @@ type UnknownRecord = Record<string, unknown>
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const pagePathPattern = /^\/(?:[a-z0-9]+(?:-[a-z0-9]+)*)?$/
-const reservedCmsPaths = new Set(["/api", "/cms-preview", "/content-review"])
+const reservedCmsPaths = new Set([
+  "/api",
+  "/cms-compare",
+  "/cms-preview",
+  "/content-review",
+])
 
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value)

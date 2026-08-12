@@ -212,6 +212,17 @@ describe("ContentReviewPage", () => {
     expect(reviewAnnotations).toHaveLength(11)
   })
 
+  it("renders the published public document without a review provider or pins", () => {
+    const data = buildReadyReviewPage()
+    const { container } = render(
+      <ContentReviewPage data={data} showReviewPins={false} />
+    )
+
+    expect(screen.getByRole("heading", { level: 1 })).not.toBeNull()
+    expect(container.querySelector("[data-review-annotation]")).toBeNull()
+    expect(screen.queryByRole("button")).toBeNull()
+  })
+
   it("keeps raw governance material and real-student identifiers out of the preview", () => {
     const { container } = renderReadyReviewPage()
     const html = container.innerHTML.toLowerCase()

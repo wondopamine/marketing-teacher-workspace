@@ -13,7 +13,11 @@ import { CmsVersionHistoryPanel } from "../version-history/cms-version-history-p
 import { CmsSectionContextPanel } from "../section-context/cms-section-context-panel"
 import { CmsPagesPanel } from "../pages/cms-pages-panel"
 import { useReviewAnnotations } from "../review-annotations"
-import { FinishEditingDialog, PublishVersionDialog } from "./cms-editor-dialogs"
+import {
+  FinishEditingDialog,
+  PublishVersionDialog,
+  UnpublishPageDialog,
+} from "./cms-editor-dialogs"
 import {
   addCmsSection,
   canAddCmsSection,
@@ -78,6 +82,8 @@ type RetriableAttempt = {
 type RetriablePageAttempt = RetriableAttempt & {
   readonly pageId: string
 }
+
+type PublicationFocusTarget = "publish" | "published" | "unpublish"
 
 type CmsReviewContext = NonNullable<
   CmsVersionContract["reviewDocument"]["targets"][string]
@@ -159,8 +165,14 @@ export function CmsWorkspace({
     null
   )
   const [publishDialogOpen, setPublishDialogOpen] = useState(false)
+  const [unpublishDialogOpen, setUnpublishDialogOpen] = useState(false)
   const saveAttemptRef = useRef<RetriableAttempt | null>(null)
   const publishAttemptRef = useRef<RetriableAttempt | null>(null)
+  const unpublishAttemptRef = useRef<RetriableAttempt | null>(null)
+  const publishButtonRef = useRef<HTMLButtonElement | null>(null)
+  const publishedLinkRef = useRef<HTMLAnchorElement | null>(null)
+  const unpublishButtonRef = useRef<HTMLButtonElement | null>(null)
+  const publicationFocusTargetRef = useRef<PublicationFocusTarget | null>(null)
   const restoreAttemptRef = useRef<RetriableAttempt | null>(null)
   const pageAttemptRef = useRef<RetriablePageAttempt | null>(null)
   const historyOpenerRef = useRef<HTMLButtonElement | null>(null)
@@ -170,6 +182,21 @@ export function CmsWorkspace({
   const busy = status.kind === "busy"
   const editing = state.mode === "editing"
   const currentPublished = sameHead(state.publishedHead, state.baseline.head)
+
+  useEffect(() => {
+    if (publishDialogOpen || unpublishDialogOpen || busy) return
+    const target = publicationFocusTargetRef.current
+    if (!target) return
+    const element =
+      target === "publish"
+        ? publishButtonRef.current
+        : target === "published"
+          ? publishedLinkRef.current
+          : unpublishButtonRef.current
+    if (!element) return
+    element.focus()
+    publicationFocusTargetRef.current = null
+  }, [busy, publishDialogOpen, state.publishedHead, unpublishDialogOpen])
 
   useEffect(() => {
     const remembered = window.sessionStorage.getItem("tw-cms-display-name")
@@ -771,6 +798,7 @@ export function CmsWorkspace({
   const publishVersion = useCallback(async () => {
     const name = displayName.trim()
     if (!name) {
+      publicationFocusTargetRef.current = "publish"
       setPublishDialogOpen(false)
       setStatus({
         kind: "error",
@@ -810,11 +838,16 @@ export function CmsWorkspace({
             publishedHead: response.latest.head,
           })
         }
+        publicationFocusTargetRef.current = response.latest
+          ? "published"
+          : "publish"
         setPublishDialogOpen(false)
         setStatus({ kind: "error", message: response.message })
         return
       }
       if (response.operation !== "publish") {
+        publicationFocusTargetRef.current = "publish"
+        setPublishDialogOpen(false)
         setStatus({
           kind: "error",
           message:
@@ -825,17 +858,20 @@ export function CmsWorkspace({
       publishAttemptRef.current = null
       const liveHead =
         response.result.live?.head ?? response.result.committed.head
+      publicationFocusTargetRef.current = "published"
       dispatch({ type: "publish-succeeded", publishedHead: liveHead })
       setPublishDialogOpen(false)
       setStatus({
         kind: "success",
         message:
           response.result.outcome === "committed"
-            ? `Version ${response.result.committed.head.versionNumber} published to the CMS. The released homepage has not changed.`
-            : `Version ${liveHead.versionNumber} is now the latest CMS publication.`,
+            ? `Version ${response.result.committed.head.versionNumber} is ready in the private comparison. The released website has not changed.`
+            : `Version ${liveHead.versionNumber} is the latest private publication.`,
       })
       if (historyOpen) void loadHistory()
     } catch {
+      publicationFocusTargetRef.current = "publish"
+      setPublishDialogOpen(false)
       setStatus({
         kind: "error",
         message:
@@ -850,6 +886,115 @@ export function CmsWorkspace({
     state.baseline,
     state.publishedHead,
   ])
+
+  const unpublishPage = useCallback(async () => {
+    const expectedPublished = state.publishedHead
+    if (!expectedPublished) {
+      publicationFocusTargetRef.current = "publish"
+      setUnpublishDialogOpen(false)
+      return
+    }
+    const name = displayName.trim()
+    if (!name) {
+      publicationFocusTargetRef.current = "unpublish"
+      setUnpublishDialogOpen(false)
+      setStatus({
+        kind: "error",
+        message: "Enter your name before unpublishing.",
+      })
+      return
+    }
+    const fingerprint = JSON.stringify({
+      published: expectedPublished,
+      name,
+    })
+    const attempt = attemptFor(unpublishAttemptRef.current, fingerprint)
+    unpublishAttemptRef.current = attempt
+    setStatus({ kind: "busy", message: "Unpublishing this version…" })
+    try {
+      const response = await writeCms(
+        {
+          operation: "unpublish",
+          pageId: state.baseline.pageId,
+          expectedPublished,
+          displayName: name,
+          attemptId: attempt.attemptId,
+        },
+        csrfToken
+      )
+      if (!response.ok) {
+        if (response.code !== "UNAVAILABLE") unpublishAttemptRef.current = null
+        if (response.code === "STALE_PUBLICATION") {
+          if (response.latest) {
+            dispatch({
+              type: "publish-succeeded",
+              publishedHead: response.latest.head,
+            })
+          } else {
+            dispatch({ type: "unpublish-succeeded" })
+          }
+        }
+        publicationFocusTargetRef.current = response.latest
+          ? "unpublish"
+          : "publish"
+        setUnpublishDialogOpen(false)
+        setStatus({ kind: "error", message: response.message })
+        return
+      }
+      if (response.operation !== "unpublish") {
+        publicationFocusTargetRef.current = "unpublish"
+        setUnpublishDialogOpen(false)
+        setStatus({
+          kind: "error",
+          message:
+            "The editor returned an unexpected response. The private comparison has not changed.",
+        })
+        return
+      }
+      unpublishAttemptRef.current = null
+      if (response.result.live) {
+        publicationFocusTargetRef.current = "unpublish"
+        dispatch({
+          type: "publish-succeeded",
+          publishedHead: response.result.live.head,
+        })
+        setStatus({
+          kind: "error",
+          message:
+            "The private publication changed again. Refresh before unpublishing.",
+        })
+      } else {
+        publicationFocusTargetRef.current = "publish"
+        dispatch({ type: "unpublish-succeeded" })
+        setStatus({
+          kind: "success",
+          message:
+            "This version is unpublished. Its draft and history are still available.",
+        })
+      }
+      setUnpublishDialogOpen(false)
+      if (historyOpen) void loadHistory()
+    } catch {
+      publicationFocusTargetRef.current = "unpublish"
+      setUnpublishDialogOpen(false)
+      setStatus({
+        kind: "error",
+        message:
+          "We could not unpublish this version. The private comparison is unchanged. Try again.",
+      })
+    }
+  }, [
+    csrfToken,
+    displayName,
+    historyOpen,
+    loadHistory,
+    state.baseline.pageId,
+    state.publishedHead,
+  ])
+
+  const publishedComparisonHref = `/cms-compare?page=${encodeURIComponent(
+    state.baseline.pageId
+  )}`
 
   const controls = editing ? (
     <>
@@ -944,6 +1089,7 @@ export function CmsWorkspace({
         Finish editing
       </Button>
       <Button
+        ref={publishButtonRef}
         type="button"
         variant="outline"
         size="lg"
@@ -954,8 +1100,38 @@ export function CmsWorkspace({
         }
         onClick={() => setPublishDialogOpen(true)}
       >
-        Publish
+        {currentPublished ? "Published" : "Publish"}
       </Button>
+      {state.publishedHead ? (
+        <>
+          <Button asChild variant="outline" size="lg" className="min-h-11">
+            <a
+              ref={publishedLinkRef}
+              href={publishedComparisonHref}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View published
+            </a>
+          </Button>
+          <Button
+            ref={unpublishButtonRef}
+            type="button"
+            variant="destructive"
+            size="lg"
+            className="min-h-11"
+            disabled={busy || dirty}
+            title={
+              dirty
+                ? "Save or discard your changes before unpublishing."
+                : undefined
+            }
+            onClick={() => setUnpublishDialogOpen(true)}
+          >
+            Unpublish
+          </Button>
+        </>
+      ) : null}
       <Button
         type="button"
         size="lg"
@@ -1002,6 +1178,13 @@ export function CmsWorkspace({
       >
         Edit content
       </Button>
+      {state.publishedHead ? (
+        <Button asChild variant="outline" size="lg" className="min-h-11">
+          <a href={publishedComparisonHref} target="_blank" rel="noreferrer">
+            View published
+          </a>
+        </Button>
+      ) : null}
     </>
   )
 
@@ -1176,9 +1359,7 @@ export function CmsWorkspace({
         onClose={closeHistory}
         onPreview={(version) => void previewHistoryVersion(version)}
         onRestore={() => void restoreVersion()}
-        onLoadMore={() =>
-          void loadHistory(historyCursor, history.length > 0)
-        }
+        onLoadMore={() => void loadHistory(historyCursor, history.length > 0)}
         onRetry={retryHistory}
         onReturnToDraft={() => setPreviewVersion(null)}
       />
@@ -1204,7 +1385,11 @@ export function CmsWorkspace({
       <FinishEditingDialog
         open={state.finishChoiceOpen}
         saving={status.kind === "busy" && status.message.startsWith("Saving")}
-        errorMessage={status.kind === "error" ? status.message : null}
+        errorMessage={
+          state.finishChoiceOpen && status.kind === "error"
+            ? status.message
+            : null
+        }
         onSave={() => void saveDraft(true)}
         onDiscard={() => {
           dispatch({ type: "discard-and-finish" })
@@ -1225,7 +1410,22 @@ export function CmsWorkspace({
         versionNumber={state.baseline.head.versionNumber}
         displayName={displayName.trim()}
         onPublish={() => void publishVersion()}
-        onCancel={() => setPublishDialogOpen(false)}
+        onCancel={() => {
+          publicationFocusTargetRef.current = "publish"
+          setPublishDialogOpen(false)
+        }}
+      />
+      <UnpublishPageDialog
+        open={unpublishDialogOpen}
+        unpublishing={
+          status.kind === "busy" && status.message.startsWith("Unpublishing")
+        }
+        pageTitle={state.baseline.pageDocument.page.title}
+        onUnpublish={() => void unpublishPage()}
+        onCancel={() => {
+          publicationFocusTargetRef.current = "unpublish"
+          setUnpublishDialogOpen(false)
+        }}
       />
     </div>
   )

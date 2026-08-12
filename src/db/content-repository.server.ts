@@ -72,6 +72,7 @@ type StoredLifecycleEventRow = Record<string, unknown> & {
 }
 
 type StoredPublicationRow = Record<string, unknown> & {
+  readonly fromPublishedVersionId: string | null
   readonly toPublishedVersionId: string | null
   readonly requestFingerprint: string
 }
@@ -134,6 +135,12 @@ export type CmsPublicationResult = {
   readonly live: CmsVersionSnapshot | null
 }
 
+export type CmsUnpublicationResult = {
+  readonly outcome: "committed" | "committed-but-superseded"
+  readonly unpublished: CmsVersionSnapshot
+  readonly live: CmsVersionSnapshot | null
+}
+
 export type SaveCmsVersionInput = {
   readonly pageId: string
   readonly expectedHead: CmsHead
@@ -155,6 +162,13 @@ export type PublishCmsVersionInput = {
   readonly versionId: string
   readonly expectedDraft: CmsHead
   readonly expectedPublished: CmsHead | null
+  readonly displayName: string
+  readonly attemptId: string
+}
+
+export type UnpublishCmsPageInput = {
+  readonly pageId: string
+  readonly expectedPublished: CmsHead
   readonly displayName: string
   readonly attemptId: string
 }
@@ -859,6 +873,7 @@ async function loadPublicationByAttempt(
 ): Promise<StoredPublicationRow | null> {
   const result = await executor.execute<StoredPublicationRow>(sql`
     select
+      events.from_published_version_id as "fromPublishedVersionId",
       events.to_published_version_id as "toPublishedVersionId",
       events.request_fingerprint as "requestFingerprint"
     from cms_publication_events as events
@@ -941,6 +956,17 @@ async function movePublishedPath(
   if (moved.rows[0]?.pageId !== pageId) {
     throw new CmsRepositoryError("PATH_TAKEN")
   }
+}
+
+async function clearPublishedPath(
+  transaction: CmsTransaction,
+  pageId: string
+): Promise<void> {
+  await transaction.execute(sql`
+    update cms_routes
+    set is_published_path = false, updated_at = now()
+    where page_id = ${pageId} and is_published_path = true
+  `)
 }
 
 function sameTargetLocation(
@@ -1477,6 +1503,31 @@ export function createCmsContentRepository(database: CmsDatabase) {
     }
   }
 
+  async function committedUnpublicationResult(
+    executor: CmsExecutor,
+    pageId: string,
+    publication: StoredPublicationRow
+  ): Promise<CmsUnpublicationResult> {
+    if (
+      publication.toPublishedVersionId !== null ||
+      !publication.fromPublishedVersionId
+    ) {
+      throw new CmsRepositoryError("ATTEMPT_REUSED")
+    }
+    const unpublishedRow = await loadVersionById(
+      executor,
+      pageId,
+      publication.fromPublishedVersionId
+    )
+    if (!unpublishedRow) throw new CmsRepositoryError("CORRUPT_STATE")
+    const live = await loadPublishedSnapshot(executor, pageId)
+    return {
+      outcome: live === null ? "committed" : "committed-but-superseded",
+      unpublished: snapshotFromRow(unpublishedRow),
+      live,
+    }
+  }
+
   async function appendDraftVersion(
     transaction: CmsTransaction,
     input: {
@@ -1928,10 +1979,130 @@ export function createCmsContentRepository(database: CmsDatabase) {
     }
   }
 
+  async function unpublishPage(
+    input: UnpublishCmsPageInput
+  ): Promise<CmsUnpublicationResult> {
+    assertRepositoryId(input.pageId)
+    assertRepositoryId(input.attemptId)
+    assertHead(input.expectedPublished)
+    const displayName = normaliseDisplayName(input.displayName)
+    const requestFingerprint = digestCmsValue({
+      operation: "unpublish-page",
+      pageId: input.pageId,
+      expectedPublished: input.expectedPublished,
+      displayName,
+    })
+
+    try {
+      return await database.transaction(async (transaction) => {
+        const beforeLock = await loadPublicationByAttempt(
+          transaction,
+          input.pageId,
+          input.attemptId
+        )
+        if (beforeLock) {
+          if (beforeLock.requestFingerprint !== requestFingerprint) {
+            throw new CmsRepositoryError("ATTEMPT_REUSED")
+          }
+          return committedUnpublicationResult(
+            transaction,
+            input.pageId,
+            beforeLock
+          )
+        }
+
+        const page = await lockPage(transaction, input.pageId)
+        const afterLock = await loadPublicationByAttempt(
+          transaction,
+          input.pageId,
+          input.attemptId
+        )
+        if (afterLock) {
+          if (afterLock.requestFingerprint !== requestFingerprint) {
+            throw new CmsRepositoryError("ATTEMPT_REUSED")
+          }
+          return committedUnpublicationResult(
+            transaction,
+            input.pageId,
+            afterLock
+          )
+        }
+        if (page.lifecycle === "archived") {
+          throw new CmsRepositoryError("PAGE_ARCHIVED")
+        }
+
+        const currentPublished = publishedHeadFromPage(page)
+        if (!sameHead(currentPublished, input.expectedPublished)) {
+          const latest = await loadPublishedSnapshot(transaction, input.pageId)
+          throw new CmsRepositoryError("STALE_PUBLICATION", latest)
+        }
+        if (!currentPublished) {
+          throw new CmsRepositoryError("STALE_PUBLICATION")
+        }
+        const published = await loadPublishedSnapshot(transaction, input.pageId)
+        if (!published) throw new CmsRepositoryError("CORRUPT_STATE")
+
+        await clearPublishedPath(transaction, input.pageId)
+        await transaction.insert(cmsPublicationEvents).values({
+          id: randomUUID(),
+          pageId: input.pageId,
+          eventKind: "unpublish",
+          fromPublishedVersionId: currentPublished.versionId,
+          toPublishedVersionId: null,
+          publishedPath: published.pageDocument.page.path,
+          attributionKind: "self-declared",
+          editorDisplayName: displayName,
+          attemptId: input.attemptId,
+          requestFingerprint,
+        })
+        const moved = await transaction.execute<
+          Record<string, unknown> & { pageId: string }
+        >(sql`
+          update cms_pages
+          set
+            published_version_id = null,
+            published_version_number = null,
+            published_digest = null,
+            updated_at = now()
+          where id = ${input.pageId}
+            and published_version_id = ${currentPublished.versionId}
+            and published_version_number = ${currentPublished.versionNumber}
+            and published_digest = ${currentPublished.digest}
+          returning id as "pageId"
+        `)
+        if (moved.rows[0]?.pageId !== input.pageId) {
+          throw new CmsRepositoryError("STALE_PUBLICATION")
+        }
+
+        const event = await loadPublicationByAttempt(
+          transaction,
+          input.pageId,
+          input.attemptId
+        )
+        if (!event) throw new CmsRepositoryError("PERSISTENCE_FAILED")
+        return committedUnpublicationResult(transaction, input.pageId, event)
+      })
+    } catch (error) {
+      translateDatabaseError(error)
+    }
+  }
+
   async function loadDraft(pageId: string): Promise<CmsVersionSnapshot> {
     assertRepositoryId(pageId)
     const snapshot = await loadDraftSnapshot(database, pageId)
     if (!snapshot) throw new CmsRepositoryError("PAGE_NOT_FOUND")
+    return snapshot
+  }
+
+  async function loadPublished(pageId: string): Promise<CmsVersionSnapshot> {
+    assertRepositoryId(pageId)
+    const page = await loadPageStateFromExecutor(database, pageId)
+    if (!page) throw new CmsRepositoryError("PAGE_NOT_FOUND")
+    if (page.lifecycle !== "active" || page.publishedHead === null) {
+      throw new CmsRepositoryError("VERSION_NOT_FOUND")
+    }
+    const snapshot = await loadPublishedSnapshot(database, pageId)
+    if (!snapshot) throw new CmsRepositoryError("CORRUPT_STATE")
     return snapshot
   }
 
@@ -2275,6 +2446,7 @@ export function createCmsContentRepository(database: CmsDatabase) {
     listComments,
     listPages,
     loadDraft,
+    loadPublished,
     loadPageState,
     loadPublishedPage,
     publishVersion,
@@ -2282,5 +2454,6 @@ export function createCmsContentRepository(database: CmsDatabase) {
     restoreArchivedPage,
     saveVersion,
     updateCommentStatus,
+    unpublishPage,
   }
 }

@@ -111,6 +111,18 @@ describe("verifyContentReviewPublicOutput", () => {
     )
   })
 
+  it("fails when the CMS comparison chunk contains internal hydration fields", () => {
+    const output = makeOutput({
+      "assets/content-review-route.js": "clean review route",
+      "assets/cms-compare-route.js": 'const page = { reviewReference: "leak" }',
+      "index.html": "clean public page",
+    })
+
+    expect(() => verifyContentReviewPublicOutput(output)).toThrowError(
+      "raw review reference field: assets/cms-compare-route.js"
+    )
+  })
+
   it("fails when a content-review chunk contains an unused product destination", () => {
     const output = makeOutput({
       "assets/content-review-route.js": "https://teacher.digital.moe.gov.sg",

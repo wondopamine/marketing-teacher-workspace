@@ -156,6 +156,21 @@ describe("CMS editor model", () => {
     expect(isCmsEditorDirty(state)).toBe(true)
   })
 
+  it("tracks publication and unpublication without changing the draft", () => {
+    const initial = snapshot()
+    let state = createCmsEditorState(initial, null)
+    state = cmsEditorReducer(state, {
+      type: "publish-succeeded",
+      publishedHead: initial.head,
+    })
+    expect(state.publishedHead).toEqual(initial.head)
+    expect(state.baseline).toBe(initial)
+
+    state = cmsEditorReducer(state, { type: "unpublish-succeeded" })
+    expect(state.publishedHead).toBeNull()
+    expect(state.baseline).toBe(initial)
+  })
+
   it("supports section duplicate, reorder, hide, archive, and undo as documents", () => {
     const source = homepageV1Contract.pageDocument.sections[1]
     const ids = Array.from(

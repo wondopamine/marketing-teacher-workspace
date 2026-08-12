@@ -145,7 +145,9 @@ function contentReviewDependencyFiles(outputDirectory, files) {
   const entryFiles = files.filter(
     (path) =>
       scriptExtensions.has(extname(path)) &&
-      basename(path).startsWith("content-review-")
+      ["content-review-", "cms-compare-"].some((prefix) =>
+        basename(path).startsWith(prefix)
+      )
   )
 
   if (entryFiles.length === 0) return []

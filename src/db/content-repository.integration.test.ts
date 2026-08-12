@@ -141,12 +141,14 @@ databaseSuite("CMS PostgreSQL repository", () => {
 
     const retry = await repository.importInitialPage(input)
     const draft = await repository.loadDraft(cmsHomepagePageId)
+    const publishedById = await repository.loadPublished(cmsHomepagePageId)
     const published = await repository.loadPublishedPage("/")
 
     expect(imported.created).toBe(true)
     expect(retry.created).toBe(false)
     expect(retry.snapshot).toEqual(imported.snapshot)
     expect(draft).toEqual(imported.snapshot)
+    expect(publishedById).toEqual(imported.snapshot)
     expect(published).toEqual(imported.snapshot)
     expect(draft.pageDocument).toEqual(homepageV1Contract.pageDocument)
 
@@ -335,18 +337,20 @@ databaseSuite("CMS PostgreSQL repository", () => {
   })
 
   it("rejects reserved application paths before creating a page", async () => {
-    await expect(
-      repository.createPage({
-        pageId: randomUUID(),
-        attemptId: randomUUID(),
-        templateId: "homepage-v1",
-        templatePageId: cmsHomepagePageId,
-        templateContract: homepageV1Contract,
-        title: "Reserved path",
-        path: "/cms-preview",
-        displayName: "Alex Tan",
-      })
-    ).rejects.toMatchObject({ code: "INVALID_PATH" })
+    for (const path of ["/cms-preview", "/cms-compare"]) {
+      await expect(
+        repository.createPage({
+          pageId: randomUUID(),
+          attemptId: randomUUID(),
+          templateId: "homepage-v1",
+          templatePageId: cmsHomepagePageId,
+          templateContract: homepageV1Contract,
+          title: "Reserved path",
+          path,
+          displayName: "Alex Tan",
+        })
+      ).rejects.toMatchObject({ code: "INVALID_PATH" })
+    }
     expect(await repository.listPages()).toHaveLength(1)
   })
 
@@ -952,6 +956,89 @@ databaseSuite("CMS PostgreSQL repository", () => {
       where page_id = ${cmsHomepagePageId}
     `)
     expect(events.rows[0].publications).toBe(2)
+  })
+
+  it("unpublishes atomically, retries safely, and keeps the draft and history", async () => {
+    const attemptId = randomUUID()
+    const input = {
+      pageId: cmsHomepagePageId,
+      expectedPublished: imported.snapshot.head,
+      displayName: "Alex Tan",
+      attemptId,
+    } as const
+    const [first, duplicate] = await Promise.all([
+      repository.unpublishPage(input),
+      repository.unpublishPage(input),
+    ])
+
+    expect(first.outcome).toBe("committed")
+    expect(duplicate.unpublished.head).toEqual(imported.snapshot.head)
+    expect(first.live).toBeNull()
+    expect((await repository.loadDraft(cmsHomepagePageId)).head).toEqual(
+      imported.snapshot.head
+    )
+    await expect(
+      repository.loadPublished(cmsHomepagePageId)
+    ).rejects.toMatchObject({ code: "VERSION_NOT_FOUND" })
+    await expect(repository.loadPublishedPage("/")).rejects.toMatchObject({
+      code: "PAGE_NOT_FOUND",
+    })
+    expect((await repository.loadPageState(cmsHomepagePageId)).publishedHead).toBeNull()
+    expect(
+      (await repository.listVersions(cmsHomepagePageId)).versions[0]
+        .isPublished
+    ).toBe(false)
+
+    const republished = await repository.publishVersion({
+      pageId: cmsHomepagePageId,
+      versionId: imported.snapshot.head.versionId,
+      expectedDraft: imported.snapshot.head,
+      expectedPublished: null,
+      displayName: "Jamie Lim",
+      attemptId: randomUUID(),
+    })
+    const laterRetry = await repository.unpublishPage(input)
+    expect(laterRetry.outcome).toBe("committed-but-superseded")
+    expect(laterRetry.live?.head).toEqual(republished.committed.head)
+
+    const events = await database.execute<
+      Record<string, unknown> & { publications: number }
+    >(sql`
+      select count(*)::int as publications
+      from cms_publication_events
+      where page_id = ${cmsHomepagePageId}
+    `)
+    expect(events.rows[0].publications).toBe(3)
+  })
+
+  it("rejects an unpublish based on an older published head", async () => {
+    const saved = await repository.saveVersion({
+      pageId: cmsHomepagePageId,
+      expectedHead: imported.snapshot.head,
+      contract: contractWith(homepageV1Contract, { title: "Version two" }),
+      displayName: "Alex Tan",
+      attemptId: randomUUID(),
+    })
+    const published = await repository.publishVersion({
+      pageId: cmsHomepagePageId,
+      versionId: saved.committed.head.versionId,
+      expectedDraft: saved.committed.head,
+      expectedPublished: imported.snapshot.head,
+      displayName: "Alex Tan",
+      attemptId: randomUUID(),
+    })
+
+    await expect(
+      repository.unpublishPage({
+        pageId: cmsHomepagePageId,
+        expectedPublished: imported.snapshot.head,
+        displayName: "Jamie Lim",
+        attemptId: randomUUID(),
+      })
+    ).rejects.toMatchObject({
+      code: "STALE_PUBLICATION",
+      latest: { head: published.committed.head },
+    })
   })
 
   it("rejects a stale publication and reports an older retry as superseded", async () => {

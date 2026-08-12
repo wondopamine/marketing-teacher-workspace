@@ -7,6 +7,7 @@ function readSource(relativePath: string): string {
 }
 
 const routeSource = readSource("src/routes/cms-preview.tsx")
+const comparisonRouteSource = readSource("src/routes/cms-compare.tsx")
 const serverFunctionSource = readSource("src/server/cms-comparison.ts")
 const handlerSource = readSource("src/server/cms-comparison.handler.server.ts")
 const sessionRouteSource = readSource("src/routes/api/cms/session.tsx")
@@ -16,6 +17,11 @@ describe("protected CMS preview boundary", () => {
     expect(routeSource).toContain('from "@/server/cms-comparison"')
     expect(routeSource).not.toContain("content-repository.server")
     expect(routeSource).not.toContain("cms-capability.server")
+    expect(comparisonRouteSource).toContain(
+      'from "@/server/cms-comparison"'
+    )
+    expect(comparisonRouteSource).not.toContain("content-repository.server")
+    expect(comparisonRouteSource).not.toContain("cms-capability.server")
     expect(serverFunctionSource).toContain(
       'import("./cms-comparison.handler.server")'
     )
@@ -29,8 +35,19 @@ describe("protected CMS preview boundary", () => {
       handlerSource.indexOf("loadDraft")
     )
     expect(handlerSource).toContain("loadPageState")
+    expect(handlerSource.indexOf("requireCmsCapability(request)")).toBeLessThan(
+      handlerSource.indexOf("loadPublished(pageId)")
+    )
+    expect(handlerSource).toContain("projectCmsPublicPage")
     expect(handlerSource).toContain('"Cache-Control": "private, no-store"')
     expect(handlerSource).toContain('Vary: "Cookie"')
+  })
+
+  it("keeps the published comparison free of editor and review providers", () => {
+    expect(comparisonRouteSource).toContain("ContentReviewPage")
+    expect(comparisonRouteSource).not.toContain("CmsWorkspace")
+    expect(comparisonRouteSource).not.toContain("ReviewAnnotationProvider")
+    expect(comparisonRouteSource).not.toContain("buildCmsReviewPresentation")
   })
 
   it("dynamically imports the exchange handler from the API route", () => {

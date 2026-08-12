@@ -180,7 +180,7 @@ function HeroSection({
   headingId: string
   section: TeacherPreviewPromiseSectionDto
   onChange?: SectionTextChange
-  reviewTargets?: ContentReviewSectionReviewTargets
+  reviewTargets?: ContentReviewSectionReviewTargets | null
 }) {
   return (
     <section
@@ -232,7 +232,9 @@ function HeroSection({
       <div data-wireframe-interface-frame="product-view">
         <ProductScreenFigure
           annotationId={
-            reviewTargets?.screenIds[0] ?? reviewAnnotationBindings.heroScreen
+            reviewTargets === null
+              ? undefined
+              : reviewTargets?.screenIds[0] ?? reviewAnnotationBindings.heroScreen
           }
           location="hero-product-view"
           screen={section.screen}
@@ -251,7 +253,7 @@ function ConnectedStorySection({
   headingId: string
   section: TeacherPreviewConnectedStorySectionDto
   onChange?: SectionTextChange
-  reviewTargets?: ContentReviewSectionReviewTargets
+  reviewTargets?: ContentReviewSectionReviewTargets | null
 }) {
   return (
     <section
@@ -261,7 +263,9 @@ function ConnectedStorySection({
     >
       <SectionIntro
         annotationId={
-          reviewTargets?.sectionId ?? reviewAnnotationBindings.story
+          reviewTargets === null
+            ? undefined
+            : reviewTargets?.sectionId ?? reviewAnnotationBindings.story
         }
         headingId={headingId}
         title={section.heading}
@@ -326,8 +330,10 @@ function ConnectedStorySection({
             </div>
             <ProductScreenFigure
               annotationId={
-                reviewTargets?.screenIds[index] ??
-                reviewAnnotationBindings.storyScreens[index]
+                reviewTargets === null
+                  ? undefined
+                  : reviewTargets?.screenIds[index] ??
+                    reviewAnnotationBindings.storyScreens[index]
               }
               location={`story-step-${index + 1}`}
               screen={step.screen}
@@ -348,7 +354,7 @@ function RevealSection({
   headingId: string
   section: TeacherPreviewRevealSectionDto
   onChange?: SectionTextChange
-  reviewTargets?: ContentReviewSectionReviewTargets
+  reviewTargets?: ContentReviewSectionReviewTargets | null
 }) {
   return (
     <section
@@ -427,7 +433,7 @@ function CapabilitiesSection({
   headingId: string
   section: TeacherPreviewCapabilitiesSectionDto
   onChange?: SectionTextChange
-  reviewTargets?: ContentReviewSectionReviewTargets
+  reviewTargets?: ContentReviewSectionReviewTargets | null
 }) {
   return (
     <section
@@ -437,7 +443,10 @@ function CapabilitiesSection({
     >
       <SectionIntro
         annotationId={
-          reviewTargets?.sectionId ?? reviewAnnotationBindings.capabilities
+          reviewTargets === null
+            ? undefined
+            : reviewTargets?.sectionId ??
+              reviewAnnotationBindings.capabilities
         }
         headingId={headingId}
         title={section.heading}
@@ -517,7 +526,7 @@ function AccessSupportSection({
   headingId: string
   section: TeacherPreviewAccessSupportSectionDto
   onChange?: SectionTextChange
-  reviewTargets?: ContentReviewSectionReviewTargets
+  reviewTargets?: ContentReviewSectionReviewTargets | null
 }) {
   return (
     <section
@@ -527,7 +536,9 @@ function AccessSupportSection({
     >
       <SectionIntro
         annotationId={
-          reviewTargets?.sectionId ?? reviewAnnotationBindings.accessSupport
+          reviewTargets === null
+            ? undefined
+            : reviewTargets?.sectionId ?? reviewAnnotationBindings.accessSupport
         }
         headingId={headingId}
         title={section.heading}
@@ -595,7 +606,7 @@ function CloseSection({
   headingId: string
   section: TeacherPreviewCloseSectionDto
   onChange?: SectionTextChange
-  reviewTargets?: ContentReviewSectionReviewTargets
+  reviewTargets?: ContentReviewSectionReviewTargets | null
 }) {
   return (
     <section
@@ -644,7 +655,7 @@ export function ContentReviewSection({
   headingId: string
   section: TeacherPreviewSectionDto
   onChange?: SectionTextChange
-  reviewTargets?: ContentReviewSectionReviewTargets
+  reviewTargets?: ContentReviewSectionReviewTargets | null
 }) {
   switch (section.kind) {
     case "promise":
@@ -708,10 +719,12 @@ export function ContentReviewOutline({
   sections,
   editor,
   reviewTargets,
+  showReviewPins = true,
 }: {
   sections: ReadonlyArray<TeacherPreviewSectionDto>
   editor?: ContentReviewEditAdapter
   reviewTargets?: ReadonlyArray<ContentReviewSectionReviewTargets>
+  showReviewPins?: boolean
 }) {
   return (
     <>
@@ -720,7 +733,7 @@ export function ContentReviewOutline({
           headingId={`wireframe-${section.kind}-${index + 1}`}
           key={`${section.kind}-${index}`}
           section={section}
-          reviewTargets={reviewTargets?.[index]}
+          reviewTargets={showReviewPins ? reviewTargets?.[index] : null}
           onChange={
             editor
               ? (path, value) => editor.updateSectionText(index, path, value)
