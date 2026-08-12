@@ -11,31 +11,45 @@ import { ContentReviewPage } from "../content-review-page"
 import { PublicReviewMode } from "../public-review-mode"
 import { CmsVersionHistoryPanel } from "../version-history/cms-version-history-panel"
 import { CmsSectionContextPanel } from "../section-context/cms-section-context-panel"
+import { CmsPagesPanel } from "../pages/cms-pages-panel"
 import { useReviewAnnotations } from "../review-annotations"
 import { FinishEditingDialog, PublishVersionDialog } from "./cms-editor-dialogs"
 import {
+  addCmsSection,
+  canAddCmsSection,
   cmsEditorReducer,
   createCmsEditorState,
+  duplicateCmsSection,
   isCmsEditorDirty,
   moveCmsSection,
   replaceCmsValue,
   setCmsSectionState,
   updateCmsReviewContext,
 } from "./cms-editor-model"
-import { readCmsHistory, readCmsVersion, writeCms } from "./cms-client"
+import {
+  readCmsHistory,
+  readCmsPages,
+  readCmsVersion,
+  writeCms,
+  writeCmsPage,
+} from "./cms-client"
 import type {
   CmsHead,
+  CmsPageState,
   CmsVersionHistoryItem,
   CmsVersionSnapshot,
 } from "@/db/content-repository.server"
 import type { ContentReviewEditAdapter } from "./content-review-edit-adapter"
+import type { CmsPageForm } from "../pages/cms-pages-panel"
 import type { CmsWriteRequest } from "@/cms/api"
 import type { CmsVersionContract } from "@/cms/document"
+import { cmsSectionTypes } from "@/cms/document"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cmsSectionRegistry } from "@/cms/section-registry"
 import {
   isCmsVersionContract,
+  isReservedCmsPath,
   projectCmsPageDocumentForEditor,
 } from "@/cms/validation"
 import { buildCmsReviewPresentation } from "@/cms/review-presentation"
@@ -45,9 +59,24 @@ type WorkspaceStatus = {
   readonly message: string
 }
 
+type HistoryRetryAction =
+  | {
+      readonly kind: "load"
+      readonly cursor: number | null
+      readonly append: boolean
+    }
+  | {
+      readonly kind: "preview"
+      readonly version: CmsVersionHistoryItem
+    }
+
 type RetriableAttempt = {
   readonly fingerprint: string
   readonly attemptId: string
+}
+
+type RetriablePageAttempt = RetriableAttempt & {
+  readonly pageId: string
 }
 
 type CmsReviewContext = NonNullable<
@@ -72,12 +101,27 @@ function attemptFor(
     : { fingerprint, attemptId: crypto.randomUUID() }
 }
 
+function pageAttemptFor(
+  current: RetriablePageAttempt | null,
+  fingerprint: string
+): RetriablePageAttempt {
+  return current?.fingerprint === fingerprint
+    ? current
+    : {
+        fingerprint,
+        attemptId: crypto.randomUUID(),
+        pageId: crypto.randomUUID(),
+      }
+}
+
 export function CmsWorkspace({
   snapshot,
+  pageState,
   publishedHead,
   csrfToken,
 }: {
   readonly snapshot: CmsVersionSnapshot
+  readonly pageState: CmsPageState
   readonly publishedHead: CmsHead | null
   readonly csrfToken: string
 }) {
@@ -94,10 +138,17 @@ export function CmsWorkspace({
   })
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [sectionsOpen, setSectionsOpen] = useState(false)
+  const [pagesOpen, setPagesOpen] = useState(false)
+  const [pagesLoading, setPagesLoading] = useState(false)
+  const [pagesError, setPagesError] = useState<string | null>(null)
+  const [pages, setPages] = useState<ReadonlyArray<CmsPageState>>([pageState])
+  const [pageBusyAction, setPageBusyAction] = useState<string | null>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyLoadingMore, setHistoryLoadingMore] = useState(false)
   const [historyError, setHistoryError] = useState<string | null>(null)
+  const [historyRetryAction, setHistoryRetryAction] =
+    useState<HistoryRetryAction | null>(null)
   const [history, setHistory] = useState<ReadonlyArray<CmsVersionHistoryItem>>(
     []
   )
@@ -111,7 +162,9 @@ export function CmsWorkspace({
   const saveAttemptRef = useRef<RetriableAttempt | null>(null)
   const publishAttemptRef = useRef<RetriableAttempt | null>(null)
   const restoreAttemptRef = useRef<RetriableAttempt | null>(null)
+  const pageAttemptRef = useRef<RetriablePageAttempt | null>(null)
   const historyOpenerRef = useRef<HTMLButtonElement | null>(null)
+  const pagesOpenerRef = useRef<HTMLButtonElement | null>(null)
 
   const dirty = isCmsEditorDirty(state)
   const busy = status.kind === "busy"
@@ -162,7 +215,10 @@ export function CmsWorkspace({
   }, [editing])
 
   useEffect(() => {
-    if (panelOpen) setHistoryOpen(false)
+    if (panelOpen) {
+      setHistoryOpen(false)
+      setPagesOpen(false)
+    }
   }, [panelOpen])
 
   useEffect(() => {
@@ -245,10 +301,10 @@ export function CmsWorkspace({
     async (cursor: number | null = null, append = false) => {
       if (append) setHistoryLoadingMore(true)
       else setHistoryLoading(true)
-      setHistoryError(null)
       try {
         const response = await readCmsHistory(state.baseline.pageId, cursor)
         if (!response.ok || response.kind !== "history") {
+          setHistoryRetryAction({ kind: "load", cursor, append })
           setHistoryError(
             response.ok
               ? "Version history is not available right now."
@@ -256,6 +312,8 @@ export function CmsWorkspace({
           )
           return
         }
+        setHistoryRetryAction(null)
+        setHistoryError(null)
         setHistory((current) =>
           append
             ? [...current, ...response.history.versions]
@@ -263,6 +321,7 @@ export function CmsWorkspace({
         )
         setHistoryCursor(response.history.nextCursor)
       } catch {
+        setHistoryRetryAction({ kind: "load", cursor, append })
         setHistoryError(
           "Version history is not available right now. Try again."
         )
@@ -279,6 +338,7 @@ export function CmsWorkspace({
       if (opener) historyOpenerRef.current = opener
       setPanelOpen(false)
       setHistoryOpen(true)
+      setPagesOpen(false)
       setSettingsOpen(false)
       setSectionsOpen(false)
       if (history.length === 0 && !historyLoading) void loadHistory()
@@ -288,6 +348,7 @@ export function CmsWorkspace({
 
   const closeHistory = useCallback(() => {
     setHistoryOpen(false)
+    setPagesOpen(false)
     setPreviewVersion(null)
     window.requestAnimationFrame(() => {
       const remembered = historyOpenerRef.current
@@ -299,12 +360,193 @@ export function CmsWorkspace({
     })
   }, [])
 
+  const loadPages = useCallback(async () => {
+    setPagesLoading(true)
+    setPagesError(null)
+    try {
+      const response = await readCmsPages()
+      if (!response.ok) {
+        setPagesError(response.message)
+        return
+      }
+      setPages(response.pages)
+    } catch {
+      setPagesError("We could not load the page list. Try again.")
+    } finally {
+      setPagesLoading(false)
+    }
+  }, [])
+
+  const openPages = useCallback(
+    (opener?: HTMLButtonElement) => {
+      if (opener) pagesOpenerRef.current = opener
+      setPanelOpen(false)
+      setHistoryOpen(false)
+      setPagesOpen(true)
+      setSettingsOpen(false)
+      setSectionsOpen(false)
+      void loadPages()
+    },
+    [loadPages, setPanelOpen]
+  )
+
+  const closePages = useCallback(() => {
+    setPagesOpen(false)
+    window.requestAnimationFrame(() => {
+      const remembered = pagesOpenerRef.current
+      const fallback = document.querySelector<HTMLButtonElement>(
+        "[data-cms-pages-trigger]"
+      )
+      const target = remembered?.isConnected ? remembered : fallback
+      target?.focus()
+    })
+  }, [])
+
+  const openPage = useCallback((pageId: string) => {
+    const query = new URLSearchParams({ page: pageId })
+    window.location.assign(`/cms-preview?${query}`)
+  }, [])
+
+  const submitPageForm = useCallback(
+    async (form: CmsPageForm) => {
+      const name = displayName.trim()
+      if (!name) {
+        setPagesError("Enter your name before creating a page.")
+        return
+      }
+      const fingerprint = JSON.stringify({ form, name })
+      const attempt = pageAttemptFor(pageAttemptRef.current, fingerprint)
+      pageAttemptRef.current = attempt
+      setPageBusyAction("page-form")
+      setPagesError(null)
+      try {
+        const response = await writeCmsPage(
+          form.mode === "create"
+            ? {
+                operation: "create",
+                pageId: attempt.pageId,
+                attemptId: attempt.attemptId,
+                templateId: "homepage-v1",
+                title: form.title,
+                path: form.path,
+                displayName: name,
+              }
+            : {
+                operation: "duplicate",
+                pageId: attempt.pageId,
+                sourcePageId: form.sourcePageId ?? "",
+                attemptId: attempt.attemptId,
+                title: form.title,
+                path: form.path,
+                displayName: name,
+              },
+          csrfToken
+        )
+        if (!response.ok) {
+          if (response.code !== "UNAVAILABLE") pageAttemptRef.current = null
+          setPagesError(response.message)
+          return
+        }
+        pageAttemptRef.current = null
+        setStatus({
+          kind: "success",
+          message:
+            response.operation === "create"
+              ? "Page created as an unpublished draft."
+              : "Page duplicated as an unpublished draft.",
+        })
+        openPage(response.result.page.pageId)
+      } catch {
+        setPagesError(
+          form.mode === "create"
+            ? "We could not create this page. Nothing was published. Try again."
+            : "We could not duplicate this page. Nothing was published. Try again."
+        )
+      } finally {
+        setPageBusyAction(null)
+      }
+    },
+    [csrfToken, displayName, openPage]
+  )
+
+  const changePageLifecycle = useCallback(
+    async (page: CmsPageState, operation: "archive" | "restore-archived") => {
+      const name = displayName.trim()
+      if (!name) {
+        setPagesError(
+          `Enter your name before ${operation === "archive" ? "archiving" : "restoring"} a page.`
+        )
+        return
+      }
+      const fingerprint = JSON.stringify({
+        operation,
+        pageId: page.pageId,
+        lifecycle: page.lifecycle,
+        lifecycleVersion: page.lifecycleVersion,
+        name,
+      })
+      const attempt = pageAttemptFor(pageAttemptRef.current, fingerprint)
+      pageAttemptRef.current = attempt
+      setPageBusyAction(page.pageId)
+      setPagesError(null)
+      try {
+        const response = await writeCmsPage(
+          {
+            operation,
+            pageId: page.pageId,
+            expectedLifecycle: {
+              lifecycle: page.lifecycle,
+              lifecycleVersion: page.lifecycleVersion,
+            },
+            attemptId: attempt.attemptId,
+            displayName: name,
+          },
+          csrfToken
+        )
+        if (!response.ok) {
+          if (response.code !== "UNAVAILABLE") pageAttemptRef.current = null
+          setPagesError(response.message)
+          return
+        }
+        pageAttemptRef.current = null
+        setPages((current) =>
+          current.map((candidate) =>
+            candidate.pageId === page.pageId ? response.result.page : candidate
+          )
+        )
+        const archived = operation === "archive"
+        setStatus({
+          kind: "success",
+          message: archived ? "Page archived." : "Page restored.",
+        })
+        if (archived && page.pageId === state.baseline.pageId) {
+          const fallback = pages.find(
+            (candidate) =>
+              candidate.pageId !== page.pageId &&
+              candidate.lifecycle === "active"
+          )
+          if (fallback) openPage(fallback.pageId)
+        }
+      } catch {
+        setPagesError(
+          operation === "archive"
+            ? "We could not archive this page. The page is still available. Try again."
+            : "We could not restore this page. The page remains archived. Try again."
+        )
+      } finally {
+        setPageBusyAction(null)
+      }
+    },
+    [csrfToken, displayName, openPage, pages, state.baseline.pageId]
+  )
+
   const startOrFinishEditing = useCallback(() => {
     if (editing) {
       dispatch({ type: "request-finish" })
       return
     }
     setHistoryOpen(false)
+    setPagesOpen(false)
     setPreviewVersion(null)
     setStatus({
       kind: "idle",
@@ -407,24 +649,23 @@ export function CmsWorkspace({
   const previewHistoryVersion = useCallback(
     async (version: CmsVersionHistoryItem) => {
       setPreviewingVersionId(version.head.versionId)
-      setHistoryError(null)
       try {
         const response = await readCmsVersion(
           state.baseline.pageId,
           version.head.versionId
         )
         if (!response.ok || response.kind !== "version") {
+          setHistoryRetryAction({ kind: "preview", version })
           setHistoryError(
             response.ok ? "That version could not be loaded." : response.message
           )
           return
         }
+        setHistoryRetryAction(null)
+        setHistoryError(null)
         setPreviewVersion(response.version)
-        setStatus({
-          kind: "success",
-          message: `Previewing version ${response.version.head.versionNumber}.`,
-        })
       } catch {
+        setHistoryRetryAction({ kind: "preview", version })
         setHistoryError("That version could not be loaded. Try again.")
       } finally {
         setPreviewingVersionId(null)
@@ -432,6 +673,15 @@ export function CmsWorkspace({
     },
     [state.baseline.pageId]
   )
+
+  const retryHistory = useCallback(() => {
+    if (!historyRetryAction) return
+    if (historyRetryAction.kind === "load") {
+      void loadHistory(historyRetryAction.cursor, historyRetryAction.append)
+      return
+    }
+    void previewHistoryVersion(historyRetryAction.version)
+  }, [historyRetryAction, loadHistory, previewHistoryVersion])
 
   const restoreVersion = useCallback(async () => {
     if (!previewVersion || dirty) return
@@ -605,6 +855,19 @@ export function CmsWorkspace({
     <>
       <Button
         type="button"
+        variant="outline"
+        size="lg"
+        className="min-h-11"
+        data-cms-pages-trigger
+        aria-controls="cms-pages-panel"
+        aria-expanded={pagesOpen}
+        disabled={busy}
+        onClick={(event) => openPages(event.currentTarget)}
+      >
+        Pages
+      </Button>
+      <Button
+        type="button"
         variant="ghost"
         size="lg"
         className="min-h-11"
@@ -628,11 +891,14 @@ export function CmsWorkspace({
         variant="outline"
         size="lg"
         className="min-h-11"
+        aria-controls="cms-page-settings-panel"
         aria-expanded={settingsOpen}
         disabled={busy}
         onClick={() => {
           setSettingsOpen((open) => !open)
           setSectionsOpen(false)
+          setPagesOpen(false)
+          setHistoryOpen(false)
         }}
       >
         Page settings
@@ -642,11 +908,14 @@ export function CmsWorkspace({
         variant="outline"
         size="lg"
         className="min-h-11"
+        aria-controls="cms-sections-panel"
         aria-expanded={sectionsOpen}
         disabled={busy}
         onClick={() => {
           setSectionsOpen((open) => !open)
           setSettingsOpen(false)
+          setPagesOpen(false)
+          setHistoryOpen(false)
         }}
       >
         Sections
@@ -657,6 +926,8 @@ export function CmsWorkspace({
         size="lg"
         className="min-h-11"
         data-cms-history-trigger
+        aria-controls="cms-version-history-panel"
+        aria-expanded={historyOpen}
         disabled={busy}
         onClick={(event) => openHistory(event.currentTarget)}
       >
@@ -704,7 +975,21 @@ export function CmsWorkspace({
         variant="outline"
         size="lg"
         className="min-h-11"
+        data-cms-pages-trigger
+        aria-controls="cms-pages-panel"
+        aria-expanded={pagesOpen}
+        onClick={(event) => openPages(event.currentTarget)}
+      >
+        Pages
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="lg"
+        className="min-h-11"
         data-cms-history-trigger
+        aria-controls="cms-version-history-panel"
+        aria-expanded={historyOpen}
         onClick={(event) => openHistory(event.currentTarget)}
       >
         Version history
@@ -720,13 +1005,15 @@ export function CmsWorkspace({
     </>
   )
 
-  const sidePanelOpen = panelOpen || historyOpen
+  const sidePanelOpen = panelOpen || historyOpen || pagesOpen
   const previewing = previewVersion !== null
 
   return (
     <div
       className={
-        sidePanelOpen ? "lg:grid lg:grid-cols-[minmax(0,1fr)_22rem]" : undefined
+        sidePanelOpen
+          ? "flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_22rem]"
+          : undefined
       }
     >
       <PublicReviewMode
@@ -757,7 +1044,9 @@ export function CmsWorkspace({
 
       <div
         className={
-          sidePanelOpen ? "min-w-0 lg:col-start-1 lg:row-start-2" : "min-w-0"
+          sidePanelOpen
+            ? "order-2 min-w-0 lg:order-none lg:col-start-1 lg:row-start-2"
+            : "min-w-0"
         }
       >
         {editing ? (
@@ -794,7 +1083,7 @@ export function CmsWorkspace({
                 className="min-h-11"
                 onClick={() => setPreviewVersion(null)}
               >
-                Return to current draft
+                Exit version preview
               </Button>
             </div>
           </div>
@@ -875,6 +1164,7 @@ export function CmsWorkspace({
         loading={historyLoading}
         loadingMore={historyLoadingMore}
         error={historyError}
+        retryKind={historyRetryAction?.kind ?? null}
         versions={history}
         nextCursor={historyCursor}
         selected={previewVersion}
@@ -887,12 +1177,28 @@ export function CmsWorkspace({
         onPreview={(version) => void previewHistoryVersion(version)}
         onRestore={() => void restoreVersion()}
         onLoadMore={() =>
-          void loadHistory(
-            historyError ? null : historyCursor,
-            historyError ? false : history.length > 0
-          )
+          void loadHistory(historyCursor, history.length > 0)
         }
+        onRetry={retryHistory}
         onReturnToDraft={() => setPreviewVersion(null)}
+      />
+
+      <CmsPagesPanel
+        open={pagesOpen}
+        loading={pagesLoading}
+        error={pagesError}
+        pages={pages}
+        currentPageId={state.baseline.pageId}
+        dirty={dirty}
+        busyAction={pageBusyAction}
+        displayName={displayName}
+        onDisplayNameChange={setDisplayName}
+        onClose={closePages}
+        onReload={() => void loadPages()}
+        onSubmit={(form) => void submitPageForm(form)}
+        onArchive={(page) => void changePageLifecycle(page, "archive")}
+        onRestore={(page) => void changePageLifecycle(page, "restore-archived")}
+        onOpenPage={openPage}
       />
 
       <FinishEditingDialog
@@ -939,9 +1245,11 @@ function PageSettings({
     value: string
   ) => void
 }) {
-  const pathValid = /^\/(?:[a-z0-9]+(?:-[a-z0-9]+)*)?$/.test(path)
+  const pathValid =
+    /^\/(?:[a-z0-9]+(?:-[a-z0-9]+)*)?$/.test(path) && !isReservedCmsPath(path)
   return (
     <section
+      id="cms-page-settings-panel"
       data-review-chrome
       aria-labelledby="cms-page-settings-heading"
       className="border-b border-border bg-background px-4 py-5 font-body sm:px-6"
@@ -973,7 +1281,8 @@ function PageSettings({
               className="mt-1 min-h-11"
             />
             <span className="mt-1 block text-xs font-normal text-muted-foreground">
-              Use / or one lower-case path, such as /family-support.
+              Use / or one lower-case path, such as /family-support. App
+              addresses are reserved.
             </span>
           </label>
           <label className="text-sm font-medium lg:col-span-2">
@@ -1086,9 +1395,25 @@ function SectionManager({
   readonly onNotice: (message: string) => void
 }) {
   const [contextSectionId, setContextSectionId] = useState<string | null>(null)
+  const [focusLifecycleSectionId, setFocusLifecycleSectionId] = useState<
+    string | null
+  >(null)
+  const lifecycleActionRefs = useRef(new Map<string, HTMLButtonElement>())
+  const [sectionType, setSectionType] = useState(
+    () => cmsSectionTypes.find((type) => cmsSectionRegistry[type].canArchive)!
+  )
   const sections = contract.pageDocument.sections
+  const addableTypes = cmsSectionTypes.filter(
+    (type) => cmsSectionRegistry[type].canArchive
+  )
+  useEffect(() => {
+    if (!focusLifecycleSectionId) return
+    lifecycleActionRefs.current.get(focusLifecycleSectionId)?.focus()
+    setFocusLifecycleSectionId(null)
+  }, [contract, focusLifecycleSectionId])
   return (
     <section
+      id="cms-sections-panel"
       data-review-chrome
       aria-labelledby="cms-sections-heading"
       className="border-b border-border bg-background px-4 py-5 font-body sm:px-6"
@@ -1101,10 +1426,43 @@ function SectionManager({
           Sections
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Reorder, hide, or archive a section. Undo stays available until you
-          save.
+          Hide keeps a section in this page. Archive removes it from use but
+          keeps its content, context, and feedback. Undo stays available until
+          you save.
         </p>
-        <ol className="mt-4 divide-y divide-border border-y border-border">
+        <div className="mt-4 flex flex-col gap-3 border-y border-border py-4 sm:flex-row sm:items-end">
+          <label className="min-w-0 flex-1 text-sm font-medium">
+            Section type
+            <select
+              data-cms-native-undo
+              value={sectionType}
+              onChange={(event) =>
+                setSectionType(event.target.value as typeof sectionType)
+              }
+              className="mt-1 min-h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              {addableTypes.map((type) => (
+                <option key={type} value={type}>
+                  {cmsSectionRegistry[type].label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="min-h-11"
+            disabled={!canAddCmsSection(contract, sectionType)}
+            onClick={() => {
+              onChange(addCmsSection(contract, sectionType))
+              onNotice(`${cmsSectionRegistry[sectionType].label} added.`)
+            }}
+          >
+            Add section
+          </Button>
+        </div>
+        <ol className="divide-y divide-border border-b border-border">
           {sections.map((section, index) => {
             const rule = cmsSectionRegistry[section.type]
             const fixed = !rule.canArchive
@@ -1129,6 +1487,11 @@ function SectionManager({
                   >
                     {context ? (
                       <Button
+                        ref={(element) => {
+                          if (element)
+                            lifecycleActionRefs.current.set(section.id, element)
+                          else lifecycleActionRefs.current.delete(section.id)
+                        }}
                         type="button"
                         variant="outline"
                         size="lg"
@@ -1148,7 +1511,9 @@ function SectionManager({
                       variant="outline"
                       size="lg"
                       className="min-h-11"
-                      disabled={fixed || index <= 1}
+                      disabled={
+                        fixed || section.state === "archived" || index <= 1
+                      }
                       onClick={() =>
                         onChange(moveCmsSection(contract, section.id, -1))
                       }
@@ -1160,7 +1525,11 @@ function SectionManager({
                       variant="outline"
                       size="lg"
                       className="min-h-11"
-                      disabled={fixed || index >= sections.length - 2}
+                      disabled={
+                        fixed ||
+                        section.state === "archived" ||
+                        index >= sections.length - 2
+                      }
                       onClick={() =>
                         onChange(moveCmsSection(contract, section.id, 1))
                       }
@@ -1169,11 +1538,18 @@ function SectionManager({
                     </Button>
                     {section.state === "archived" ? (
                       <Button
+                        ref={(element) => {
+                          if (element)
+                            lifecycleActionRefs.current.set(section.id, element)
+                          else lifecycleActionRefs.current.delete(section.id)
+                        }}
                         type="button"
                         variant="outline"
                         size="lg"
                         className="min-h-11"
+                        disabled={!canAddCmsSection(contract, section.type)}
                         onClick={() => {
+                          setFocusLifecycleSectionId(section.id)
                           onChange(
                             setCmsSectionState(contract, section.id, "visible")
                           )
@@ -1186,6 +1562,23 @@ function SectionManager({
                       </Button>
                     ) : (
                       <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="lg"
+                          className="min-h-11"
+                          disabled={
+                            fixed || !canAddCmsSection(contract, section.type)
+                          }
+                          onClick={() => {
+                            onChange(duplicateCmsSection(contract, section.id))
+                            onNotice(
+                              `${rule.label} duplicated. New feedback will stay with the copy.`
+                            )
+                          }}
+                        >
+                          Duplicate
+                        </Button>
                         <Button
                           type="button"
                           variant="outline"
@@ -1207,12 +1600,21 @@ function SectionManager({
                           {section.state === "hidden" ? "Show" : "Hide"}
                         </Button>
                         <Button
+                          ref={(element) => {
+                            if (element)
+                              lifecycleActionRefs.current.set(
+                                section.id,
+                                element
+                              )
+                            else lifecycleActionRefs.current.delete(section.id)
+                          }}
                           type="button"
                           variant="destructive"
                           size="lg"
                           className="min-h-11"
                           disabled={fixed}
                           onClick={() => {
+                            setFocusLifecycleSectionId(section.id)
                             onChange(
                               setCmsSectionState(
                                 contract,

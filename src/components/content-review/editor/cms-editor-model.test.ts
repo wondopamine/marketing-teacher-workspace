@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  addCmsSection,
+  canAddCmsSection,
   cmsEditorReducer,
   createCmsEditorState,
   duplicateCmsSection,
@@ -10,8 +12,13 @@ import {
   setCmsSectionState,
 } from "./cms-editor-model"
 import type { CmsVersionSnapshot } from "@/db/content-repository.server"
+import type { CmsVersionContract } from "@/cms/document"
 import { digestCmsVersionContract } from "@/cms/canonical.server"
 import { homepageV1Contract } from "@/cms/templates/homepage-v1.server"
+import {
+  isCmsVersionContract,
+  projectCmsPageDocumentForEditor,
+} from "@/cms/validation"
 
 function snapshot(versionNumber = 1): CmsVersionSnapshot {
   return {
@@ -167,6 +174,16 @@ describe("CMS editor model", () => {
       expect(copied.fields.steps[0].screen.id).not.toBe(
         source.fields.steps[0].screen.id
       )
+      expect(duplicate.reviewDocument.targets[copied.id]).toEqual(
+        homepageV1Contract.reviewDocument.targets[source.id]
+      )
+      expect(
+        duplicate.reviewDocument.targets[copied.fields.steps[0].screen.id]
+      ).toEqual(
+        homepageV1Contract.reviewDocument.targets[
+          source.fields.steps[0].screen.id
+        ]
+      )
     }
 
     const moved = moveCmsSection(homepageV1Contract, source.id, 1)
@@ -182,5 +199,68 @@ describe("CMS editor model", () => {
       setCmsSectionState(homepageV1Contract, source.id, "archived").pageDocument
         .sections[1].id
     ).toBe(source.id)
+    expect(
+      setCmsSectionState(
+        homepageV1Contract,
+        homepageV1Contract.pageDocument.sections[0].id,
+        "archived"
+      )
+    ).toBe(homepageV1Contract)
+  })
+
+  it("adds only approved section types within their saved limits", () => {
+    let nextId = 0
+    const createId = () =>
+      `20000000-0000-4000-8000-${String(nextId++).padStart(12, "0")}`
+    let contract: CmsVersionContract = homepageV1Contract
+
+    expect(canAddCmsSection(contract, "connected-story")).toBe(true)
+    contract = addCmsSection(contract, "connected-story", createId)
+    contract = addCmsSection(contract, "connected-story", createId)
+    contract = addCmsSection(contract, "connected-story", createId)
+    expect(
+      contract.pageDocument.sections.filter(
+        (section) =>
+          section.type === "connected-story" && section.state !== "archived"
+      )
+    ).toHaveLength(4)
+    expect(canAddCmsSection(contract, "connected-story")).toBe(false)
+    expect(addCmsSection(contract, "connected-story", createId)).toBe(contract)
+
+    const archived = setCmsSectionState(
+      contract,
+      contract.pageDocument.sections.find(
+        (section) => section.type === "connected-story"
+      )!.id,
+      "archived"
+    )
+    expect(canAddCmsSection(archived, "connected-story")).toBe(true)
+    const added = addCmsSection(archived, "connected-story", createId)
+    expect(added.pageDocument.sections.at(-1)?.type).toBe("footer-feedback")
+    expect(addCmsSection(added, "promise", createId)).toBe(added)
+  })
+
+  it.each([
+    "connected-story",
+    "reveal",
+    "capabilities",
+    "close",
+    "access-support",
+  ] as const)("adds and projects the approved %s section", (type) => {
+    let nextId = 0
+    const added = addCmsSection(
+      homepageV1Contract,
+      type,
+      () => `30000000-0000-4000-8000-${String(nextId++).padStart(12, "0")}`
+    )
+
+    expect(added).not.toBe(homepageV1Contract)
+    expect(isCmsVersionContract(added)).toBe(true)
+    expect(projectCmsPageDocumentForEditor(added.pageDocument)).not.toBeNull()
+    expect(
+      added.pageDocument.sections.filter(
+        (section) => section.type === type && section.state === "visible"
+      )
+    ).toHaveLength(2)
   })
 })

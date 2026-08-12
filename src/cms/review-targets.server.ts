@@ -2,7 +2,11 @@ import "@tanstack/react-start/server-only"
 
 import { createHash } from "node:crypto"
 
-import type { CmsPageDocument, CmsSectionDocument } from "./document"
+import type {
+  CmsPageDocument,
+  CmsReviewDocument,
+  CmsSectionDocument,
+} from "./document"
 
 export type CmsReviewTargetSeed = {
   readonly id: string
@@ -205,4 +209,53 @@ export function buildCmsReviewTargetSeeds(
     throw new Error("CMS review target generation produced a duplicate ID")
   }
   return targets
+}
+
+export function remapCmsReviewDocument(
+  sourcePageId: string,
+  targetPageId: string,
+  sourcePage: CmsPageDocument,
+  targetPage: CmsPageDocument,
+  sourceReview: CmsReviewDocument,
+  idMap: ReadonlyMap<string, string>
+): CmsReviewDocument {
+  const sourceSeeds = buildCmsReviewTargetSeeds(sourcePageId, sourcePage)
+  const targetSeeds = buildCmsReviewTargetSeeds(targetPageId, targetPage)
+  const targets: Record<
+    string,
+    NonNullable<CmsReviewDocument["targets"][string]>
+  > = {}
+
+  for (const source of sourceSeeds) {
+    const context = sourceReview.targets[source.id]
+    if (!context) continue
+
+    let targetId: string | undefined
+    if (source.kind === "page") {
+      targetId = targetPageId
+    } else if (
+      source.kind === "section" ||
+      source.kind === "repeated-item" ||
+      source.kind === "screen"
+    ) {
+      targetId = idMap.get(source.id)
+    } else {
+      const targetSectionId = source.sectionId
+        ? idMap.get(source.sectionId)
+        : null
+      const targetRepeatedItemId = source.repeatedItemId
+        ? idMap.get(source.repeatedItemId)
+        : null
+      targetId = targetSeeds.find(
+        (candidate) =>
+          candidate.kind === "field" &&
+          candidate.sectionId === targetSectionId &&
+          candidate.fieldKey === source.fieldKey &&
+          candidate.repeatedItemId === targetRepeatedItemId
+      )?.id
+    }
+    if (targetId) targets[targetId] = structuredClone(context)
+  }
+
+  return { targets }
 }

@@ -210,3 +210,54 @@ None.
 - Responsive evidence reviewed at 360, 768, and 1280px, plus an independent live 320px reflow measurement.
 
 Independent-review limitation: this evaluation was performed by a separate evaluator subagent, but it shares the same model family and repository context as the implementation agent. It provides process independence, not independent-model diversity.
+
+## Phase 7: bounded page and section management
+
+The CMS now supports a controlled set of page and section changes without becoming a general website builder. Reviewers can create a page from the approved template, duplicate it, change its title and path, archive it, and restore it. They can add, duplicate, reorder, hide, archive, and restore the five repeatable section types. The opening and footer remain fixed, and each repeatable type has a server-enforced limit.
+
+Every duplicated page and section receives new stable content and review IDs. Design intent is copied; existing feedback is not. Archived sections keep their content, context, and feedback. Archived pages keep their immutable version history and cannot be edited or published until restored. Published pages must be unpublished before they can be archived.
+
+The released `/` homepage remains on its static source. New pages and CMS publications are private during shadow mode.
+
+Responsive evidence:
+
+- `/private/tmp/cms-phase7-pages-1280.png`
+- `/private/tmp/cms-phase7-pages-360-fixed.png`
+- `/private/tmp/cms-phase7-pages-320.png`
+- `/private/tmp/cms-phase7-public-root.png`
+
+Verification completed after the independent review fixes:
+
+- 45 test files and 289 tests passed; the database-only file was skipped in the regular suite.
+- All 18 PostgreSQL integration tests passed against the local test database.
+- TypeScript, ESLint, the production build, public-output leakage scan, and built-route isolation passed.
+- The token audit and static accessibility check passed.
+- The content scanner reported only internal response-code comparison strings such as `STALE_DRAFT` and `UNAVAILABLE`; these are not visible copy.
+- `CMP-1: asserted, no manifest — manifest absent for marketing-teacher-workspace`
+
+### Verbatim independent evaluator report
+
+PASS
+
+VERDICT: pass. No L0 or L1 blockers remain in the Phase 7 bounded page/section CMS UI.
+
+Evidence:
+
+- Pages/full-width behavior: `CmsWorkspace` keeps the teacher preview full width by default and makes Pages, Version history, Sections, and reviewer context separate disclosures. The Pages rail is coherent at 1280 (`/private/tmp/cms-phase7-pages-1280.png`) and moves directly below the toolbar at 360/320 (`cms-phase7-pages-360-fixed.png`, `cms-phase7-pages-320.png`). Live 320px measurement was `scrollWidth === clientWidth === 320`; panel top matched the toolbar bottom.
+- Pages flow: `cms-pages-panel.tsx` uses a labelled list and action groups, clear lifecycle badges, plain consequence copy, and reversible Archive/Restore. New/Duplicate expose `aria-controls`/`aria-expanded`, focus Page title, and Cancel returns to the exact opener. Async lifecycle controls retain focus across Archive↔Restore and expose accurate pending labels/states.
+- Section manager: `cms-workspace.tsx` and `cms-editor-model.ts` provide bounded add, duplicate, reorder, hide, archive, restore, context editing, and Undo. Fixed sections and limits are enforced; cloned sections receive new stable content/review IDs, while archived content/context/feedback is retained. Teacher copy remains distinct from reviewer-only context.
+- History/restore: `cms-version-history-panel.tsx` explains that restore creates a new draft, preserves immutable history, and manages focus for panel open/close, Preview, Return, Restore, and errors. Retry now repeats the exact failed initial-load, load-more cursor, or version-preview action. Pending, success, and recovery states are visible and accessible without duplicate announcements.
+- Accessibility/action clarity: native labelled controls, semantic headings/lists/groups, 44px targets, visible focus, disclosure state, and context-change focus all pass the scoped A11Y controls. Destructive actions satisfy CMP-2 through explicit consequence copy plus persistent Undo/Restore; published pages cannot be archived accidentally.
+- Copy/craft: the interface uses short, direct language such as “Page address”, “Current page”, and “restore it as a new draft”. No material AI-writing tells were found. Layout hierarchy, density, and 66ch prose measures remain coherent.
+- Public boundary: `/private/tmp/cms-phase7-public-root.png` confirms the released `/` experience is unchanged; CMS/reviewer controls remain outside the public homepage boundary.
+- Verification: focused Phase 7 suite 22/22 passed; full suite 45 files/288 tests passed (1 integration file skipped without DB); TypeScript and ESLint passed. CMP-1: asserted, no manifest — `.tfx/component-manifest.json` is absent; existing Button/Input/native elements were reused.
+
+L2 advisories (non-blocking):
+
+1. Give repeated history actions version-specific accessible names such as “Preview version 3” for faster screen-reader button navigation.
+2. Preserve focus on the replacement Restore/Archive control after the synchronous section-level Archive/Restore toggle; current async page lifecycle focus is already correct.
+3. Replace the editor notice “new feedback targets” with plainer wording such as “New feedback will stay with the copy.”
+
+Independent-review limitation: this was a separate evaluator pass, but it used the same model family and shared worktree.
+
+All three non-blocking advisories were applied after this report. The final focused workspace suite passed 8 tests, bringing the full suite to 289 tests.

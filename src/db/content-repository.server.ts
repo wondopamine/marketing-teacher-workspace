@@ -19,12 +19,17 @@ import {
   digestCmsValue,
   digestCmsVersionContract,
 } from "@/cms/canonical.server"
-import { buildCmsReviewTargetSeeds } from "@/cms/review-targets.server"
+import {
+  buildCmsReviewTargetSeeds,
+  remapCmsReviewDocument,
+} from "@/cms/review-targets.server"
+import { cloneCmsContractForPage } from "@/cms/clone"
 import {
   isCmsPageDocument,
   isCmsReviewDocument,
   isCmsStableId,
   isCmsVersionContract,
+  isReservedCmsPath,
   normaliseCmsPath,
 } from "@/cms/validation"
 
@@ -52,12 +57,18 @@ type StoredVersionRow = Record<string, unknown> & {
 type StoredPageHeadRow = Record<string, unknown> & {
   readonly pageId: string
   readonly lifecycle: "active" | "archived"
+  readonly lifecycleVersion: number
   readonly draftVersionId: string
   readonly draftVersionNumber: number
   readonly draftDigest: string
   readonly publishedVersionId: string | null
   readonly publishedVersionNumber: number | null
   readonly publishedDigest: string | null
+}
+
+type StoredLifecycleEventRow = Record<string, unknown> & {
+  readonly toLifecycleVersion: number
+  readonly requestFingerprint: string
 }
 
 type StoredPublicationRow = Record<string, unknown> & {
@@ -166,9 +177,56 @@ export type CmsVersionHistoryPage = {
 
 export type CmsPageState = {
   readonly pageId: string
+  readonly title: string
+  readonly path: string
   readonly lifecycle: "active" | "archived"
+  readonly lifecycleVersion: number
   readonly draftHead: CmsHead
   readonly publishedHead: CmsHead | null
+  readonly updatedAt: string
+}
+
+export type CmsLifecycleHead = Pick<
+  CmsPageState,
+  "lifecycle" | "lifecycleVersion"
+>
+
+export type CmsPageCreateResult = {
+  readonly created: boolean
+  readonly snapshot: CmsVersionSnapshot
+  readonly page: CmsPageState
+}
+
+export type CmsPageLifecycleResult = {
+  readonly outcome: "committed" | "committed-but-superseded"
+  readonly page: CmsPageState
+}
+
+export type CreateCmsPageInput = {
+  readonly pageId: string
+  readonly attemptId: string
+  readonly templateId: "homepage-v1"
+  readonly templatePageId: string
+  readonly templateContract: CmsVersionContract
+  readonly title: string
+  readonly path: string
+  readonly displayName: string
+}
+
+export type DuplicateCmsPageInput = {
+  readonly pageId: string
+  readonly sourcePageId: string
+  readonly attemptId: string
+  readonly title: string
+  readonly path: string
+  readonly displayName: string
+}
+
+export type ChangeCmsPageLifecycleInput = {
+  readonly pageId: string
+  readonly expectedLifecycle: CmsLifecycleHead
+  readonly displayName: string
+  readonly attemptId: string
 }
 
 export const cmsCommentSubjects = ["page-content", "design-intent"] as const
@@ -235,10 +293,13 @@ export type CmsRepositoryErrorCode =
   | "INVALID_CURSOR"
   | "NO_CHANGES"
   | "PAGE_EXISTS"
+  | "PAGE_ARCHIVED"
   | "PAGE_NOT_FOUND"
+  | "PAGE_PUBLISHED"
   | "PATH_TAKEN"
   | "PERSISTENCE_FAILED"
   | "STALE_DRAFT"
+  | "STALE_LIFECYCLE"
   | "STALE_PUBLICATION"
   | "TARGET_ARCHIVED"
   | "TARGET_NOT_FOUND"
@@ -376,7 +437,10 @@ function assertImportInput(input: ImportInitialCmsPageInput): void {
   if (!isCmsVersionContract(input.contract)) {
     throw new CmsRepositoryError("INVALID_DOCUMENT")
   }
-  if (normaliseCmsPath(input.contract.pageDocument.page.path) === null) {
+  if (
+    normaliseCmsPath(input.contract.pageDocument.page.path) === null ||
+    isReservedCmsPath(input.contract.pageDocument.page.path)
+  ) {
     throw new CmsRepositoryError("INVALID_PATH")
   }
   assertReviewDocumentTargets(input.pageId, input.contract)
@@ -405,6 +469,22 @@ function assertHead(value: CmsHead): void {
   ) {
     throw new CmsRepositoryError("INVALID_HEAD")
   }
+}
+
+function assertLifecycleHead(value: CmsLifecycleHead): void {
+  if (!Number.isInteger(value.lifecycleVersion) || value.lifecycleVersion < 1) {
+    throw new CmsRepositoryError("STALE_LIFECYCLE")
+  }
+}
+
+function sameLifecycleHead(
+  left: CmsLifecycleHead,
+  right: CmsLifecycleHead
+): boolean {
+  return (
+    left.lifecycle === right.lifecycle &&
+    left.lifecycleVersion === right.lifecycleVersion
+  )
 }
 
 function sameHead(left: CmsHead | null, right: CmsHead | null): boolean {
@@ -449,6 +529,26 @@ function normaliseDisplayName(value: string): string {
     /[\p{Cc}\p{Cf}]/u.test(normalized)
   ) {
     throw new CmsRepositoryError("INVALID_DISPLAY_NAME")
+  }
+  return normalized
+}
+
+function normalisePageTitle(value: string): string {
+  const normalized = value.normalize("NFC").trim()
+  if (
+    normalized.length === 0 ||
+    [...normalized].length > 160 ||
+    /[\p{Cc}\p{Cf}]/u.test(normalized)
+  ) {
+    throw new CmsRepositoryError("INVALID_DOCUMENT")
+  }
+  return normalized
+}
+
+function normalisePagePath(value: string): string {
+  const normalized = normaliseCmsPath(value)
+  if (normalized === null || isReservedCmsPath(normalized)) {
+    throw new CmsRepositoryError("INVALID_PATH")
   }
   return normalized
 }
@@ -589,7 +689,10 @@ function assertContract(contract: CmsVersionContract): void {
   if (!isCmsVersionContract(contract)) {
     throw new CmsRepositoryError("INVALID_DOCUMENT")
   }
-  if (normaliseCmsPath(contract.pageDocument.page.path) === null) {
+  if (
+    normaliseCmsPath(contract.pageDocument.page.path) === null ||
+    isReservedCmsPath(contract.pageDocument.page.path)
+  ) {
     throw new CmsRepositoryError("INVALID_PATH")
   }
 }
@@ -673,6 +776,7 @@ async function lockPage(
     select
       pages.id as "pageId",
       pages.lifecycle as "lifecycle",
+      pages.lifecycle_version as "lifecycleVersion",
       pages.draft_version_id as "draftVersionId",
       pages.draft_version_number as "draftVersionNumber",
       pages.draft_digest as "draftDigest",
@@ -686,6 +790,66 @@ async function lockPage(
   const row = result.rows.at(0)
   if (!row) throw new CmsRepositoryError("PAGE_NOT_FOUND")
   return row
+}
+
+async function loadPageStateFromExecutor(
+  executor: CmsExecutor,
+  pageId: string
+): Promise<CmsPageState | null> {
+  type PageStateRow = StoredPageHeadRow & {
+    readonly title: string
+    readonly path: string
+    readonly updatedAt: Date | string
+  }
+  const result = await executor.execute<PageStateRow>(sql`
+    select
+      pages.id as "pageId",
+      pages.title as "title",
+      routes.normalized_path as "path",
+      pages.lifecycle as "lifecycle",
+      pages.lifecycle_version as "lifecycleVersion",
+      pages.draft_version_id as "draftVersionId",
+      pages.draft_version_number as "draftVersionNumber",
+      pages.draft_digest as "draftDigest",
+      pages.published_version_id as "publishedVersionId",
+      pages.published_version_number as "publishedVersionNumber",
+      pages.published_digest as "publishedDigest",
+      pages.updated_at as "updatedAt"
+    from cms_pages as pages
+    inner join cms_routes as routes
+      on routes.page_id = pages.id and routes.is_draft_path = true
+    where pages.id = ${pageId}
+    limit 1
+  `)
+  const page = result.rows.at(0)
+  if (!page) return null
+  return {
+    pageId,
+    title: page.title,
+    path: page.path,
+    lifecycle: page.lifecycle,
+    lifecycleVersion: page.lifecycleVersion,
+    draftHead: draftHeadFromPage(page),
+    publishedHead: publishedHeadFromPage(page),
+    updatedAt: isoTime(page.updatedAt),
+  }
+}
+
+async function loadLifecycleByAttempt(
+  executor: CmsExecutor,
+  pageId: string,
+  attemptId: string
+): Promise<StoredLifecycleEventRow | null> {
+  const result = await executor.execute<StoredLifecycleEventRow>(sql`
+    select
+      events.to_lifecycle_version as "toLifecycleVersion",
+      events.request_fingerprint as "requestFingerprint"
+    from cms_page_lifecycle_events as events
+    where events.page_id = ${pageId}
+      and events.attempt_id = ${attemptId}
+    limit 1
+  `)
+  return result.rows[0] ?? null
 }
 
 async function loadPublicationByAttempt(
@@ -894,7 +1058,257 @@ function translateDatabaseError(error: unknown): never {
   throw error
 }
 
+async function insertUnpublishedPage(
+  transaction: CmsTransaction,
+  input: {
+    readonly pageId: string
+    readonly attemptId: string
+    readonly requestFingerprint: string
+    readonly contract: CmsVersionContract
+    readonly displayName: string
+  }
+): Promise<CmsVersionSnapshot> {
+  const canonicalDigest = digestCmsVersionContract(input.contract)
+  const versionId = randomUUID()
+  const page = input.contract.pageDocument.page
+
+  await transaction.execute(sql`set constraints all deferred`)
+  await transaction.insert(cmsPages).values({
+    id: input.pageId,
+    title: page.title,
+    lifecycle: "active",
+    lifecycleVersion: 1,
+    draftVersionId: versionId,
+    draftVersionNumber: 1,
+    draftDigest: canonicalDigest,
+    publishedVersionId: null,
+    publishedVersionNumber: null,
+    publishedDigest: null,
+  })
+  await transaction.insert(cmsPageVersions).values({
+    id: versionId,
+    pageId: input.pageId,
+    versionNumber: 1,
+    parentVersionId: null,
+    restoredFromVersionId: null,
+    pageSchemaVersion: input.contract.pageSchemaVersion,
+    reviewSchemaVersion: input.contract.reviewSchemaVersion,
+    sectionLibraryVersion: input.contract.sectionLibraryVersion,
+    pageDocument: input.contract.pageDocument,
+    reviewDocument: input.contract.reviewDocument,
+    canonicalDigest,
+    attributionKind: "self-declared",
+    editorDisplayName: input.displayName,
+    attemptId: input.attemptId,
+    requestFingerprint: input.requestFingerprint,
+  })
+  await transaction.insert(cmsRoutes).values({
+    normalizedPath: page.path,
+    pageId: input.pageId,
+    isDraftPath: true,
+    isPublishedPath: false,
+  })
+  const targets = buildCmsReviewTargetSeeds(
+    input.pageId,
+    input.contract.pageDocument
+  )
+  const archivedAt = new Date().toISOString()
+  await transaction
+    .insert(cmsReviewTargets)
+    .values(
+      targets.map((target) =>
+        target.state === "archived" ? { ...target, archivedAt } : target
+      )
+    )
+  await transaction.insert(cmsPageLifecycleEvents).values({
+    id: randomUUID(),
+    pageId: input.pageId,
+    eventKind: "created",
+    fromLifecycleVersion: null,
+    toLifecycleVersion: 1,
+    attributionKind: "self-declared",
+    editorDisplayName: input.displayName,
+    attemptId: input.attemptId,
+    requestFingerprint: input.requestFingerprint,
+  })
+
+  const inserted = await loadVersionByAttempt(
+    transaction,
+    input.pageId,
+    input.attemptId
+  )
+  if (!inserted) throw new CmsRepositoryError("PERSISTENCE_FAILED")
+  return snapshotFromRow(inserted)
+}
+
 export function createCmsContentRepository(database: CmsDatabase) {
+  async function createdPageResult(
+    executor: CmsExecutor,
+    snapshot: CmsVersionSnapshot,
+    created: boolean
+  ): Promise<CmsPageCreateResult> {
+    const page = await loadPageStateFromExecutor(executor, snapshot.pageId)
+    if (!page) throw new CmsRepositoryError("CORRUPT_STATE")
+    return { created, snapshot, page }
+  }
+
+  async function createPage(
+    input: CreateCmsPageInput
+  ): Promise<CmsPageCreateResult> {
+    assertRepositoryId(input.pageId)
+    assertRepositoryId(input.attemptId)
+    assertRepositoryId(input.templatePageId)
+    assertContract(input.templateContract)
+    assertReviewDocumentTargets(input.templatePageId, input.templateContract)
+    const title = normalisePageTitle(input.title)
+    const path = normalisePagePath(input.path)
+    const displayName = normaliseDisplayName(input.displayName)
+    const requestFingerprint = digestCmsValue({
+      operation: "create-page",
+      pageId: input.pageId,
+      templateId: input.templateId,
+      title,
+      path,
+      displayName,
+    })
+
+    try {
+      return await database.transaction(async (transaction) => {
+        await transaction.execute(
+          sql`select pg_advisory_xact_lock(hashtextextended(${`cms-create:${input.pageId}`}, 0))`
+        )
+        const committed = await loadVersionByAttempt(
+          transaction,
+          input.pageId,
+          input.attemptId
+        )
+        if (committed) {
+          if (committed.requestFingerprint !== requestFingerprint) {
+            throw new CmsRepositoryError("ATTEMPT_REUSED")
+          }
+          return createdPageResult(
+            transaction,
+            snapshotFromRow(committed),
+            false
+          )
+        }
+        const existing = await transaction.execute(sql`
+          select 1 from cms_pages where id = ${input.pageId} limit 1
+        `)
+        if (existing.rows[0]) throw new CmsRepositoryError("PAGE_EXISTS")
+
+        const cloned = cloneCmsContractForPage(input.templateContract, {
+          title,
+          path,
+          createId: randomUUID,
+        })
+        const contract: CmsVersionContract = {
+          ...cloned.contract,
+          reviewDocument: remapCmsReviewDocument(
+            input.templatePageId,
+            input.pageId,
+            input.templateContract.pageDocument,
+            cloned.contract.pageDocument,
+            input.templateContract.reviewDocument,
+            cloned.idMap
+          ),
+        }
+        assertContract(contract)
+        assertReviewDocumentTargets(input.pageId, contract)
+        const snapshot = await insertUnpublishedPage(transaction, {
+          pageId: input.pageId,
+          attemptId: input.attemptId,
+          requestFingerprint,
+          contract,
+          displayName,
+        })
+        return createdPageResult(transaction, snapshot, true)
+      })
+    } catch (error) {
+      translateDatabaseError(error)
+    }
+  }
+
+  async function duplicatePage(
+    input: DuplicateCmsPageInput
+  ): Promise<CmsPageCreateResult> {
+    assertRepositoryId(input.pageId)
+    assertRepositoryId(input.sourcePageId)
+    assertRepositoryId(input.attemptId)
+    if (input.pageId === input.sourcePageId) {
+      throw new CmsRepositoryError("INVALID_ID")
+    }
+    const title = normalisePageTitle(input.title)
+    const path = normalisePagePath(input.path)
+    const displayName = normaliseDisplayName(input.displayName)
+    const requestFingerprint = digestCmsValue({
+      operation: "duplicate-page",
+      pageId: input.pageId,
+      sourcePageId: input.sourcePageId,
+      title,
+      path,
+      displayName,
+    })
+
+    try {
+      return await database.transaction(async (transaction) => {
+        await transaction.execute(
+          sql`select pg_advisory_xact_lock(hashtextextended(${`cms-create:${input.pageId}`}, 0))`
+        )
+        const committed = await loadVersionByAttempt(
+          transaction,
+          input.pageId,
+          input.attemptId
+        )
+        if (committed) {
+          if (committed.requestFingerprint !== requestFingerprint) {
+            throw new CmsRepositoryError("ATTEMPT_REUSED")
+          }
+          return createdPageResult(
+            transaction,
+            snapshotFromRow(committed),
+            false
+          )
+        }
+        const existing = await transaction.execute(sql`
+          select 1 from cms_pages where id = ${input.pageId} limit 1
+        `)
+        if (existing.rows[0]) throw new CmsRepositoryError("PAGE_EXISTS")
+
+        const source = await loadDraftSnapshot(transaction, input.sourcePageId)
+        if (!source) throw new CmsRepositoryError("PAGE_NOT_FOUND")
+        const cloned = cloneCmsContractForPage(source, {
+          title,
+          path,
+          createId: randomUUID,
+        })
+        const contract: CmsVersionContract = {
+          ...cloned.contract,
+          reviewDocument: remapCmsReviewDocument(
+            input.sourcePageId,
+            input.pageId,
+            source.pageDocument,
+            cloned.contract.pageDocument,
+            source.reviewDocument,
+            cloned.idMap
+          ),
+        }
+        assertContract(contract)
+        assertReviewDocumentTargets(input.pageId, contract)
+        const snapshot = await insertUnpublishedPage(transaction, {
+          pageId: input.pageId,
+          attemptId: input.attemptId,
+          requestFingerprint,
+          contract,
+          displayName,
+        })
+        return createdPageResult(transaction, snapshot, true)
+      })
+    } catch (error) {
+      translateDatabaseError(error)
+    }
+  }
+
   async function importInitialPage(
     input: ImportInitialCmsPageInput
   ): Promise<ImportInitialCmsPageResult> {
@@ -1177,6 +1591,10 @@ export function createCmsContentRepository(database: CmsDatabase) {
           return committedDraftResult(transaction, afterLock)
         }
 
+        if (page.lifecycle === "archived") {
+          throw new CmsRepositoryError("PAGE_ARCHIVED")
+        }
+
         const currentHead = draftHeadFromPage(page)
         if (!sameHead(currentHead, input.expectedHead)) {
           const latest = await loadDraftSnapshot(transaction, input.pageId)
@@ -1243,6 +1661,10 @@ export function createCmsContentRepository(database: CmsDatabase) {
             throw new CmsRepositoryError("ATTEMPT_REUSED")
           }
           return committedDraftResult(transaction, afterLock)
+        }
+
+        if (page.lifecycle === "archived") {
+          throw new CmsRepositoryError("PAGE_ARCHIVED")
         }
 
         const currentHead = draftHeadFromPage(page)
@@ -1427,6 +1849,10 @@ export function createCmsContentRepository(database: CmsDatabase) {
           )
         }
 
+        if (page.lifecycle === "archived") {
+          throw new CmsRepositoryError("PAGE_ARCHIVED")
+        }
+
         const currentDraft = draftHeadFromPage(page)
         const currentPublished = publishedHeadFromPage(page)
         if (!sameHead(currentDraft, input.expectedDraft)) {
@@ -1509,30 +1935,180 @@ export function createCmsContentRepository(database: CmsDatabase) {
     return snapshot
   }
 
-  async function loadPageState(pageId: string): Promise<CmsPageState> {
-    assertRepositoryId(pageId)
-    const result = await database.execute<StoredPageHeadRow>(sql`
+  async function listPages(): Promise<ReadonlyArray<CmsPageState>> {
+    type PageListRow = StoredPageHeadRow & {
+      readonly title: string
+      readonly path: string
+      readonly updatedAt: Date | string
+    }
+    const result = await database.execute<PageListRow>(sql`
       select
         pages.id as "pageId",
+        pages.title as "title",
+        routes.normalized_path as "path",
         pages.lifecycle as "lifecycle",
+        pages.lifecycle_version as "lifecycleVersion",
         pages.draft_version_id as "draftVersionId",
         pages.draft_version_number as "draftVersionNumber",
         pages.draft_digest as "draftDigest",
         pages.published_version_id as "publishedVersionId",
         pages.published_version_number as "publishedVersionNumber",
-        pages.published_digest as "publishedDigest"
+        pages.published_digest as "publishedDigest",
+        pages.updated_at as "updatedAt"
       from cms_pages as pages
-      where pages.id = ${pageId}
-      limit 1
+      inner join cms_routes as routes
+        on routes.page_id = pages.id and routes.is_draft_path = true
+      order by
+        case when pages.lifecycle = 'active' then 0 else 1 end,
+        pages.updated_at desc,
+        pages.id asc
     `)
-    const page = result.rows.at(0)
-    if (!page) throw new CmsRepositoryError("PAGE_NOT_FOUND")
-    return {
-      pageId,
+    return result.rows.map((page) => ({
+      pageId: page.pageId,
+      title: page.title,
+      path: page.path,
       lifecycle: page.lifecycle,
+      lifecycleVersion: page.lifecycleVersion,
       draftHead: draftHeadFromPage(page),
       publishedHead: publishedHeadFromPage(page),
+      updatedAt: isoTime(page.updatedAt),
+    }))
+  }
+
+  async function loadPageState(pageId: string): Promise<CmsPageState> {
+    assertRepositoryId(pageId)
+    const page = await loadPageStateFromExecutor(database, pageId)
+    if (!page) throw new CmsRepositoryError("PAGE_NOT_FOUND")
+    return page
+  }
+
+  async function changePageLifecycle(
+    input: ChangeCmsPageLifecycleInput,
+    nextLifecycle: "active" | "archived"
+  ): Promise<CmsPageLifecycleResult> {
+    assertRepositoryId(input.pageId)
+    assertRepositoryId(input.attemptId)
+    assertLifecycleHead(input.expectedLifecycle)
+    const displayName = normaliseDisplayName(input.displayName)
+    const eventKind = nextLifecycle === "archived" ? "archived" : "restored"
+    const requestFingerprint = digestCmsValue({
+      operation: `${eventKind}-page`,
+      pageId: input.pageId,
+      expectedLifecycle: input.expectedLifecycle,
+      displayName,
+    })
+
+    try {
+      return await database.transaction(async (transaction) => {
+        const beforeLock = await loadLifecycleByAttempt(
+          transaction,
+          input.pageId,
+          input.attemptId
+        )
+        if (beforeLock) {
+          if (beforeLock.requestFingerprint !== requestFingerprint) {
+            throw new CmsRepositoryError("ATTEMPT_REUSED")
+          }
+          const page = await loadPageStateFromExecutor(
+            transaction,
+            input.pageId
+          )
+          if (!page) throw new CmsRepositoryError("CORRUPT_STATE")
+          return {
+            outcome:
+              page.lifecycleVersion === beforeLock.toLifecycleVersion
+                ? "committed"
+                : "committed-but-superseded",
+            page,
+          }
+        }
+
+        const locked = await lockPage(transaction, input.pageId)
+        const afterLock = await loadLifecycleByAttempt(
+          transaction,
+          input.pageId,
+          input.attemptId
+        )
+        if (afterLock) {
+          if (afterLock.requestFingerprint !== requestFingerprint) {
+            throw new CmsRepositoryError("ATTEMPT_REUSED")
+          }
+          const page = await loadPageStateFromExecutor(
+            transaction,
+            input.pageId
+          )
+          if (!page) throw new CmsRepositoryError("CORRUPT_STATE")
+          return {
+            outcome:
+              page.lifecycleVersion === afterLock.toLifecycleVersion
+                ? "committed"
+                : "committed-but-superseded",
+            page,
+          }
+        }
+
+        const current: CmsLifecycleHead = {
+          lifecycle: locked.lifecycle,
+          lifecycleVersion: locked.lifecycleVersion,
+        }
+        if (!sameLifecycleHead(current, input.expectedLifecycle)) {
+          throw new CmsRepositoryError("STALE_LIFECYCLE")
+        }
+        if (current.lifecycle === nextLifecycle) {
+          throw new CmsRepositoryError("NO_CHANGES")
+        }
+        if (nextLifecycle === "archived" && publishedHeadFromPage(locked)) {
+          throw new CmsRepositoryError("PAGE_PUBLISHED")
+        }
+
+        const nextVersion = current.lifecycleVersion + 1
+        await transaction.insert(cmsPageLifecycleEvents).values({
+          id: randomUUID(),
+          pageId: input.pageId,
+          eventKind,
+          fromLifecycleVersion: current.lifecycleVersion,
+          toLifecycleVersion: nextVersion,
+          attributionKind: "self-declared",
+          editorDisplayName: displayName,
+          attemptId: input.attemptId,
+          requestFingerprint,
+        })
+        const moved = await transaction.execute<
+          Record<string, unknown> & { pageId: string }
+        >(sql`
+          update cms_pages
+          set
+            lifecycle = ${nextLifecycle},
+            lifecycle_version = ${nextVersion},
+            archived_at = case when ${nextLifecycle} = 'archived' then now() else null end,
+            updated_at = now()
+          where id = ${input.pageId}
+            and lifecycle = ${current.lifecycle}
+            and lifecycle_version = ${current.lifecycleVersion}
+          returning id as "pageId"
+        `)
+        if (moved.rows[0]?.pageId !== input.pageId) {
+          throw new CmsRepositoryError("STALE_LIFECYCLE")
+        }
+        const page = await loadPageStateFromExecutor(transaction, input.pageId)
+        if (!page) throw new CmsRepositoryError("CORRUPT_STATE")
+        return { outcome: "committed", page }
+      })
+    } catch (error) {
+      translateDatabaseError(error)
     }
+  }
+
+  async function archivePage(
+    input: ChangeCmsPageLifecycleInput
+  ): Promise<CmsPageLifecycleResult> {
+    return changePageLifecycle(input, "archived")
+  }
+
+  async function restoreArchivedPage(
+    input: ChangeCmsPageLifecycleInput
+  ): Promise<CmsPageLifecycleResult> {
+    return changePageLifecycle(input, "active")
   }
 
   async function listComments(
@@ -1689,16 +2265,21 @@ export function createCmsContentRepository(database: CmsDatabase) {
   }
 
   return {
+    archivePage,
+    createPage,
     createComment,
+    duplicatePage,
     importInitialPage,
     getVersion,
     listVersions,
     listComments,
+    listPages,
     loadDraft,
     loadPageState,
     loadPublishedPage,
     publishVersion,
     restoreVersion,
+    restoreArchivedPage,
     saveVersion,
     updateCommentStatus,
   }

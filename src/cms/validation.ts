@@ -28,6 +28,7 @@ type UnknownRecord = Record<string, unknown>
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const pagePathPattern = /^\/(?:[a-z0-9]+(?:-[a-z0-9]+)*)?$/
+const reservedCmsPaths = new Set(["/api", "/cms-preview", "/content-review"])
 
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -79,6 +80,10 @@ export function isCmsStableId(value: unknown): value is string {
 export function normaliseCmsPath(value: string): string | null {
   const normalised = value.trim().toLowerCase()
   return pagePathPattern.test(normalised) ? normalised : null
+}
+
+export function isReservedCmsPath(value: string): boolean {
+  return reservedCmsPaths.has(value)
 }
 
 function isAction(value: unknown): value is CmsActionDocument | null {
@@ -275,6 +280,7 @@ export function isCmsPageDocument(value: unknown): value is CmsPageDocument {
     !isNonBlankString(value.page.title, 160) ||
     typeof value.page.path !== "string" ||
     normaliseCmsPath(value.page.path) !== value.page.path ||
+    isReservedCmsPath(value.page.path) ||
     !isNonBlankString(value.page.description, 320) ||
     !isNonBlankString(value.page.brand, 120) ||
     !Array.isArray(value.sections) ||

@@ -10,7 +10,7 @@ import {
 import { landingPageV2Content, landingPageV2Publication } from "./landing-v2"
 import { getLandingPageV2StructureIssues } from "./landing-v2-readiness"
 import {
-  isTeacherPreviewDocumentDto,
+  isCanonicalTeacherPreviewDocumentDto,
   isTeacherPreviewScreenDto,
 } from "./teacher-preview-document"
 import {
@@ -510,7 +510,7 @@ function buildDocument(
     },
   }
 
-  return isTeacherPreviewDocumentDto(document) &&
+  return isCanonicalTeacherPreviewDocumentDto(document) &&
     hasSafePublicValues(document, registry, manifest)
     ? document
     : null

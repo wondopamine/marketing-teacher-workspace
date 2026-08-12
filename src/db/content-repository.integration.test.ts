@@ -22,6 +22,14 @@ import {
   homepageV1Contract,
 } from "@/cms/templates/homepage-v1.server"
 import { buildCmsReviewTargetSeeds } from "@/cms/review-targets.server"
+import {
+  addCmsSection,
+  duplicateCmsSection,
+  moveCmsSection,
+  replaceCmsValue,
+  setCmsSectionState,
+} from "@/components/content-review/editor/cms-editor-model"
+import { isCmsVersionContract } from "@/cms/validation"
 
 const testDatabaseUrl = process.env.CMS_TEST_DATABASE_URL
 const databaseSuite = testDatabaseUrl ? describe : describe.skip
@@ -171,6 +179,175 @@ databaseSuite("CMS PostgreSQL repository", () => {
         homepageV1Contract.pageDocument
       ).length,
     })
+  })
+
+  it("creates one unpublished page from the approved template and retries safely", async () => {
+    const pageId = randomUUID()
+    const attemptId = randomUUID()
+    const input = {
+      pageId,
+      attemptId,
+      templateId: "homepage-v1" as const,
+      templatePageId: cmsHomepagePageId,
+      templateContract: homepageV1Contract,
+      title: "Family support",
+      path: "/family-support",
+      displayName: "Alex Tan",
+    }
+    const created = await repository.createPage(input)
+    const retry = await repository.createPage(input)
+
+    expect(created.created).toBe(true)
+    expect(created.snapshot.head.versionNumber).toBe(1)
+    expect(created.page).toMatchObject({
+      pageId,
+      title: "Family support",
+      path: "/family-support",
+      lifecycle: "active",
+      lifecycleVersion: 1,
+      publishedHead: null,
+    })
+    expect(retry.created).toBe(false)
+    expect(retry.snapshot.head).toEqual(created.snapshot.head)
+    await expect(
+      repository.loadPublishedPage("/family-support")
+    ).rejects.toMatchObject({ code: "PAGE_NOT_FOUND" })
+
+    const pages = await repository.listPages()
+    expect(pages.map((page) => page.pageId).sort()).toEqual(
+      [cmsHomepagePageId, pageId].sort()
+    )
+  })
+
+  it("duplicates page content and design intent with fresh IDs but no comments", async () => {
+    const story = homepageV1Contract.pageDocument.sections.find(
+      (section) => section.type === "connected-story"
+    )
+    if (!story) throw new Error("Expected the connected story fixture")
+    await repository.createComment({
+      id: randomUUID(),
+      pageId: cmsHomepagePageId,
+      targetId: story.id,
+      targetVersionId: imported.snapshot.head.versionId,
+      subject: "design-intent",
+      body: "Keep this comment on the source page only.",
+      displayName: "Alex Tan",
+    })
+
+    const pageId = randomUUID()
+    const duplicated = await repository.duplicatePage({
+      pageId,
+      sourcePageId: cmsHomepagePageId,
+      attemptId: randomUUID(),
+      title: "Teacher Workspace copy",
+      path: "/teacher-workspace-copy",
+      displayName: "Jamie Lim",
+    })
+    const copiedStory = duplicated.snapshot.pageDocument.sections.find(
+      (section) => section.type === "connected-story"
+    )
+    if (!copiedStory) throw new Error("Expected a duplicated story")
+
+    expect(copiedStory.id).not.toBe(story.id)
+    expect(duplicated.snapshot.reviewDocument.targets[copiedStory.id]).toEqual(
+      homepageV1Contract.reviewDocument.targets[story.id]
+    )
+    expect(await repository.listComments(pageId)).toEqual([])
+    expect(duplicated.page.publishedHead).toBeNull()
+  })
+
+  it("archives and restores an unpublished page without deleting its history", async () => {
+    const pageId = randomUUID()
+    const created = await repository.createPage({
+      pageId,
+      attemptId: randomUUID(),
+      templateId: "homepage-v1",
+      templatePageId: cmsHomepagePageId,
+      templateContract: homepageV1Contract,
+      title: "Support guide",
+      path: "/support-guide",
+      displayName: "Alex Tan",
+    })
+    const archiveAttemptId = randomUUID()
+    const archiveInput = {
+      pageId,
+      expectedLifecycle: {
+        lifecycle: "active" as const,
+        lifecycleVersion: 1,
+      },
+      displayName: "Alex Tan",
+      attemptId: archiveAttemptId,
+    }
+    const archived = await repository.archivePage(archiveInput)
+    const retry = await repository.archivePage(archiveInput)
+
+    expect(archived.page).toMatchObject({
+      lifecycle: "archived",
+      lifecycleVersion: 2,
+    })
+    expect(retry).toEqual(archived)
+    expect((await repository.listVersions(pageId)).versions).toHaveLength(1)
+    expect((await repository.loadDraft(pageId)).head).toEqual(
+      created.snapshot.head
+    )
+    await expect(
+      repository.saveVersion({
+        pageId,
+        expectedHead: created.snapshot.head,
+        contract: contractWith(created.snapshot, {
+          title: "An archived edit",
+        }),
+        displayName: "Alex Tan",
+        attemptId: randomUUID(),
+      })
+    ).rejects.toMatchObject({ code: "PAGE_ARCHIVED" })
+
+    const restored = await repository.restoreArchivedPage({
+      pageId,
+      expectedLifecycle: {
+        lifecycle: "archived",
+        lifecycleVersion: 2,
+      },
+      displayName: "Jamie Lim",
+      attemptId: randomUUID(),
+    })
+    expect(restored.page).toMatchObject({
+      lifecycle: "active",
+      lifecycleVersion: 3,
+    })
+    expect(restored.page.draftHead).toEqual(created.snapshot.head)
+
+    await expect(repository.archivePage(archiveInput)).resolves.toMatchObject({
+      outcome: "committed-but-superseded",
+      page: { lifecycle: "active", lifecycleVersion: 3 },
+    })
+    await expect(
+      repository.archivePage({
+        pageId: cmsHomepagePageId,
+        expectedLifecycle: {
+          lifecycle: "active",
+          lifecycleVersion: 1,
+        },
+        displayName: "Alex Tan",
+        attemptId: randomUUID(),
+      })
+    ).rejects.toMatchObject({ code: "PAGE_PUBLISHED" })
+  })
+
+  it("rejects reserved application paths before creating a page", async () => {
+    await expect(
+      repository.createPage({
+        pageId: randomUUID(),
+        attemptId: randomUUID(),
+        templateId: "homepage-v1",
+        templatePageId: cmsHomepagePageId,
+        templateContract: homepageV1Contract,
+        title: "Reserved path",
+        path: "/cms-preview",
+        displayName: "Alex Tan",
+      })
+    ).rejects.toMatchObject({ code: "INVALID_PATH" })
+    expect(await repository.listPages()).toHaveLength(1)
   })
 
   it("enforces append-only versions and exact same-page heads", async () => {
@@ -482,6 +659,82 @@ databaseSuite("CMS PostgreSQL repository", () => {
       state: "active",
       archivedAt: null,
     })
+  })
+
+  it("round-trips every approved repeatable section through save, history, and restore", async () => {
+    const repeatableTypes = [
+      "connected-story",
+      "reveal",
+      "capabilities",
+      "close",
+      "access-support",
+    ] as const
+    let contract: CmsVersionContract = homepageV1Contract
+
+    for (const type of repeatableTypes) {
+      const existingIds = new Set(
+        contract.pageDocument.sections.map((section) => section.id)
+      )
+      contract = addCmsSection(contract, type, randomUUID)
+      const added = contract.pageDocument.sections.find(
+        (section) => section.type === type && !existingIds.has(section.id)
+      )
+      if (!added) throw new Error(`Expected a new ${type} section`)
+
+      const addedIndex = contract.pageDocument.sections.findIndex(
+        (section) => section.id === added.id
+      )
+      contract = replaceCmsValue(
+        contract,
+        ["pageDocument", "sections", addedIndex, "fields", "heading"],
+        `Saved ${type} section`
+      )
+      contract = duplicateCmsSection(contract, added.id, randomUUID)
+      const duplicate = contract.pageDocument.sections[addedIndex + 1]
+      contract = moveCmsSection(contract, duplicate.id, -1)
+      contract = setCmsSectionState(contract, added.id, "hidden")
+      contract = setCmsSectionState(contract, duplicate.id, "archived")
+    }
+
+    expect(isCmsVersionContract(contract)).toBe(true)
+    const saved = await repository.saveVersion({
+      pageId: cmsHomepagePageId,
+      expectedHead: imported.snapshot.head,
+      contract,
+      displayName: "Alex Tan",
+      attemptId: randomUUID(),
+    })
+    const reloaded = await repository.loadDraft(cmsHomepagePageId)
+    expect(reloaded.pageDocument).toEqual(contract.pageDocument)
+    expect(reloaded.reviewDocument).toEqual(contract.reviewDocument)
+
+    const later = await repository.saveVersion({
+      pageId: cmsHomepagePageId,
+      expectedHead: saved.committed.head,
+      contract: contractWith(saved.committed, {
+        title: "A later draft before structural restore",
+      }),
+      displayName: "Jamie Lim",
+      attemptId: randomUUID(),
+    })
+    const restored = await repository.restoreVersion({
+      pageId: cmsHomepagePageId,
+      sourceVersionId: saved.committed.head.versionId,
+      expectedHead: later.committed.head,
+      displayName: "Alex Tan",
+      attemptId: randomUUID(),
+    })
+
+    expect(restored.committed.pageDocument).toEqual(contract.pageDocument)
+    expect(restored.committed.reviewDocument).toEqual(contract.reviewDocument)
+    expect(restored.committed.restoredFromVersionId).toBe(
+      saved.committed.head.versionId
+    )
+    expect(
+      (await repository.listVersions(cmsHomepagePageId)).versions.map(
+        (version) => version.head.versionNumber
+      )
+    ).toEqual([4, 3, 2, 1])
   })
 
   it("keeps feedback on stable targets through edits, reorder, archive, and restore", async () => {

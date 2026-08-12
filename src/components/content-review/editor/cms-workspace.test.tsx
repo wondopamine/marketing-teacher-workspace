@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ReviewAnnotationProvider } from "../review-annotations"
@@ -6,12 +12,15 @@ import { CmsWorkspace } from "./cms-workspace"
 import {
   readCmsComments,
   readCmsHistory,
+  readCmsPages,
   readCmsVersion,
   writeCms,
   writeCmsComment,
+  writeCmsPage,
 } from "./cms-client"
 import type { CmsVersionContract } from "@/cms/document"
 import type {
+  CmsPageState,
   CmsVersionHistoryItem,
   CmsVersionSnapshot,
 } from "@/db/content-repository.server"
@@ -26,16 +35,37 @@ vi.mock("@/server/review-feedback", () => ({
 vi.mock("./cms-client", () => ({
   readCmsComments: vi.fn(),
   readCmsHistory: vi.fn(),
+  readCmsPages: vi.fn(),
   readCmsVersion: vi.fn(),
   writeCms: vi.fn(),
   writeCmsComment: vi.fn(),
+  writeCmsPage: vi.fn(),
 }))
 
 const mockedReadComments = vi.mocked(readCmsComments)
 const mockedReadHistory = vi.mocked(readCmsHistory)
+const mockedReadPages = vi.mocked(readCmsPages)
 const mockedReadVersion = vi.mocked(readCmsVersion)
 const mockedWrite = vi.mocked(writeCms)
 const mockedWriteComment = vi.mocked(writeCmsComment)
+const mockedWritePage = vi.mocked(writeCmsPage)
+
+function pageState(
+  initial: CmsVersionSnapshot,
+  overrides: Partial<CmsPageState> = {}
+): CmsPageState {
+  return {
+    pageId: initial.pageId,
+    title: initial.pageDocument.page.title,
+    path: initial.pageDocument.page.path,
+    lifecycle: "active" as const,
+    lifecycleVersion: 1,
+    draftHead: initial.head,
+    publishedHead: initial.head,
+    updatedAt: initial.createdAt,
+    ...overrides,
+  }
+}
 
 function snapshot(
   versionNumber = 1,
@@ -80,6 +110,7 @@ function renderWorkspace(initial = snapshot()) {
     <ReviewAnnotationProvider>
       <CmsWorkspace
         snapshot={initial}
+        pageState={pageState(initial)}
         publishedHead={initial.head}
         csrfToken="csrf-token"
       />
@@ -101,8 +132,14 @@ describe("CMS workspace", () => {
     mockedReadComments.mockResolvedValue({ ok: true, comments: [] })
     mockedReadHistory.mockReset()
     mockedReadVersion.mockReset()
+    mockedReadPages.mockReset()
+    mockedReadPages.mockResolvedValue({
+      ok: true,
+      pages: [pageState(snapshot())],
+    })
     mockedWrite.mockReset()
     mockedWriteComment.mockReset()
+    mockedWritePage.mockReset()
   })
 
   it("supports direct editing, keyboard undo, and every finish choice", async () => {
@@ -206,9 +243,32 @@ describe("CMS workspace", () => {
     await waitFor(() => {
       expect(document.activeElement?.textContent).toContain("Version history")
     })
-    const previewButtons = screen.getAllByRole("button", { name: "Preview" })
-    fireEvent.click(previewButtons.at(-1) as HTMLButtonElement)
+    const previewButtons = screen.getAllByRole("button", {
+      name: /Preview version/,
+    })
+    const versionOnePreview = previewButtons.at(-1) as HTMLButtonElement
+    fireEvent.click(versionOnePreview)
     expect(await screen.findByText("Previewing saved version 1")).not.toBeNull()
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Return to current draft" })
+      )
+    })
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Return to current draft" })
+    )
+    await waitFor(() => {
+      expect(document.activeElement).toBe(versionOnePreview)
+    })
+
+    fireEvent.click(versionOnePreview)
+    await screen.findByText("Previewing saved version 1")
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Return to current draft" })
+      )
+    })
 
     fireEvent.click(
       screen.getByRole("button", { name: "Restore this version" })
@@ -227,6 +287,89 @@ describe("CMS workspace", () => {
     await waitFor(() => {
       expect(document.activeElement).toBe(
         screen.getByRole("button", { name: "Version history" })
+      )
+    })
+  })
+
+  it("retries the exact failed history action without losing focus", async () => {
+    const version1 = snapshot(1)
+    const version2 = snapshot(2)
+    const version3 = snapshot(3)
+    mockedReadHistory
+      .mockResolvedValueOnce({
+        ok: true,
+        kind: "history",
+        history: {
+          versions: [
+            historyItem(version3, { current: true }),
+            historyItem(version2),
+          ],
+          nextCursor: 2,
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        code: "UNAVAILABLE",
+        message: "Earlier versions could not be loaded. Try again.",
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        kind: "history",
+        history: {
+          versions: [historyItem(version1, { published: true })],
+          nextCursor: null,
+        },
+      })
+    mockedReadVersion
+      .mockResolvedValueOnce({
+        ok: false,
+        code: "UNAVAILABLE",
+        message: "That version could not be loaded. Try again.",
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        kind: "version",
+        version: version1,
+      })
+    renderWorkspace(version3)
+
+    fireEvent.click(screen.getByRole("button", { name: "Version history" }))
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Load earlier versions" })
+    )
+    const loadRetry = await screen.findByRole("button", { name: "Try again" })
+    await waitFor(() => expect(document.activeElement).toBe(loadRetry))
+    fireEvent.click(loadRetry)
+    expect(await screen.findByText("Version 1")).not.toBeNull()
+    expect(mockedReadHistory.mock.calls.slice(-2)).toEqual([
+      [version3.pageId, 2],
+      [version3.pageId, 2],
+    ])
+
+    const versionOneRow = screen.getByText("Version 1").closest("li")
+    if (!versionOneRow) throw new Error("Expected the version 1 history row")
+    fireEvent.click(
+      within(versionOneRow).getByRole("button", { name: "Preview version 1" })
+    )
+    const previewRetry = await screen.findByRole("button", {
+      name: "Try again",
+    })
+    await waitFor(() => expect(document.activeElement).toBe(previewRetry))
+    fireEvent.click(previewRetry)
+    expect(await screen.findByText("Previewing saved version 1")).not.toBeNull()
+    expect(mockedReadVersion).toHaveBeenNthCalledWith(
+      1,
+      version3.pageId,
+      version1.head.versionId
+    )
+    expect(mockedReadVersion).toHaveBeenNthCalledWith(
+      2,
+      version3.pageId,
+      version1.head.versionId
+    )
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Return to current draft" })
       )
     })
   })
@@ -275,5 +418,191 @@ describe("CMS workspace", () => {
         "The opening states the teacher outcome before showing the product."
       )
     ).toBeNull()
+  })
+
+  it("adds a bounded section and includes the structural change in undo", () => {
+    const { container } = renderWorkspace()
+    fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
+    fireEvent.click(screen.getByRole("button", { name: "Sections" }))
+
+    expect(
+      container.querySelectorAll(
+        '[data-teacher-preview] [data-wireframe-section="connected-story"]'
+      )
+    ).toHaveLength(1)
+    fireEvent.click(screen.getByRole("button", { name: "Add section" }))
+    expect(
+      container.querySelectorAll(
+        '[data-teacher-preview] [data-wireframe-section="connected-story"]'
+      )
+    ).toHaveLength(2)
+    expect(
+      screen.getByRole<HTMLButtonElement>("button", { name: "Save draft" })
+        .disabled
+    ).toBe(false)
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }))
+    expect(
+      container.querySelectorAll(
+        '[data-teacher-preview] [data-wireframe-section="connected-story"]'
+      )
+    ).toHaveLength(1)
+  })
+
+  it("keeps focus on the replacement section lifecycle action", async () => {
+    renderWorkspace()
+    fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
+    fireEvent.click(screen.getByRole("button", { name: "Sections" }))
+
+    const sectionActions = screen.getByRole("group", {
+      name: "Connected story section actions",
+    })
+    fireEvent.click(
+      within(sectionActions).getByRole("button", { name: "Archive" })
+    )
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        within(sectionActions).getByRole("button", { name: "Restore" })
+      )
+    })
+
+    fireEvent.click(
+      within(sectionActions).getByRole("button", { name: "Restore" })
+    )
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        within(sectionActions).getByRole("button", { name: "Archive" })
+      )
+    })
+  })
+
+  it("manages page creation and restore without exposing public content", async () => {
+    const current = snapshot()
+    const archived = pageState(current, {
+      pageId: "44444444-4444-4444-8444-444444444444",
+      title: "Archived guide",
+      path: "/archived-guide",
+      lifecycle: "archived",
+      lifecycleVersion: 2,
+      publishedHead: null,
+    })
+    const another = pageState(current, {
+      pageId: "55555555-5555-4555-8555-555555555555",
+      title: "Another draft",
+      path: "/another-draft",
+      publishedHead: null,
+    })
+    mockedReadPages.mockResolvedValue({
+      ok: true,
+      pages: [pageState(current), another, archived],
+    })
+    mockedWritePage.mockImplementation((request) => {
+      if (request.operation === "create") {
+        return Promise.resolve({
+          ok: false,
+          code: "PATH_TAKEN",
+          message:
+            "That page address is already in use. Choose another address.",
+        })
+      }
+      if (request.operation === "restore-archived") {
+        return Promise.resolve({
+          ok: true,
+          operation: "restore-archived",
+          result: {
+            outcome: "committed",
+            page: {
+              ...archived,
+              lifecycle: "active",
+              lifecycleVersion: 3,
+            },
+          },
+        })
+      }
+      return Promise.reject(new Error("Unexpected page request"))
+    })
+    renderWorkspace(current)
+
+    fireEvent.click(screen.getByRole("button", { name: "Pages" }))
+    expect(await screen.findByText("Archived guide")).not.toBeNull()
+    expect(
+      screen.getByText(/Archive removes an unpublished page from active use/)
+    ).not.toBeNull()
+    fireEvent.change(screen.getByRole("textbox", { name: "Your name" }), {
+      target: { value: "Alex Tan" },
+    })
+    const newPageButton = screen.getByRole("button", { name: "New page" })
+    fireEvent.click(newPageButton)
+    expect(newPageButton.getAttribute("aria-expanded")).toBe("true")
+    expect(newPageButton.getAttribute("aria-controls")).toBe("cms-page-form")
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("textbox", { name: "Page title" })
+      )
+    })
+    fireEvent.change(screen.getByRole("textbox", { name: "Page title" }), {
+      target: { value: "Family support" },
+    })
+    fireEvent.change(screen.getByRole("textbox", { name: /^Page address/ }), {
+      target: { value: "/family-support" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Create page" }))
+
+    expect(
+      await screen.findByText(
+        "That page address is already in use. Choose another address."
+      )
+    ).not.toBeNull()
+    expect(mockedWritePage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: "create",
+        title: "Family support",
+        path: "/family-support",
+      }),
+      "csrf-token"
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
+    await waitFor(() => {
+      expect(document.activeElement).toBe(newPageButton)
+    })
+    expect(newPageButton.getAttribute("aria-expanded")).toBe("false")
+
+    const duplicateButtons = screen.getAllByRole("button", {
+      name: "Duplicate",
+    })
+    fireEvent.click(duplicateButtons[0])
+    expect(duplicateButtons[0].getAttribute("aria-expanded")).toBe("true")
+    expect(duplicateButtons[1].getAttribute("aria-expanded")).toBe("false")
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("textbox", { name: "Page title" })
+      )
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
+    await waitFor(() => {
+      expect(document.activeElement).toBe(duplicateButtons[0])
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "Restore" }))
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Restore" })).toBeNull()
+    })
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        within(
+          screen.getByRole("group", {
+            name: "Archived guide page actions",
+          })
+        ).getByRole("button", { name: "Archive" })
+      )
+    })
+    expect(mockedWritePage).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        operation: "restore-archived",
+        pageId: archived.pageId,
+      }),
+      "csrf-token"
+    )
   })
 })

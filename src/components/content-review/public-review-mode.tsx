@@ -664,7 +664,7 @@ export function PublicReviewMode({
         }
         data-review-chrome
         hidden={!panelOpen}
-        className="z-40 min-w-0 border-b border-foreground/20 bg-background font-body text-sm lg:col-start-2 lg:row-start-2 lg:min-h-screen lg:border-b-0 lg:border-l"
+        className="order-1 z-40 min-w-0 border-b border-foreground/20 bg-background font-body text-sm lg:order-none lg:col-start-2 lg:row-start-2 lg:min-h-screen lg:border-b-0 lg:border-l"
       >
         <div className="lg:sticky lg:top-[calc(var(--masthead-h)+4.25rem)] lg:max-h-[calc(100vh-var(--masthead-h)-4.25rem)] lg:overflow-y-auto">
           {externalReviewPanel ? (

@@ -2,10 +2,36 @@ import type {
   CmsCommentReadResponse,
   CmsCommentWriteRequest,
   CmsCommentWriteResponse,
+  CmsPageReadResponse,
+  CmsPageWriteRequest,
+  CmsPageWriteResponse,
   CmsReadResponse,
   CmsWriteRequest,
   CmsWriteResponse,
 } from "@/cms/api"
+
+export async function readCmsPages(): Promise<CmsPageReadResponse> {
+  const response = await fetch("/api/cms/pages", {
+    credentials: "same-origin",
+  })
+  return (await response.json()) as CmsPageReadResponse
+}
+
+export async function writeCmsPage(
+  request: CmsPageWriteRequest,
+  csrfToken: string
+): Promise<CmsPageWriteResponse> {
+  const response = await fetch("/api/cms/pages", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+      "x-cms-csrf": csrfToken,
+    },
+    body: JSON.stringify(request),
+  })
+  return (await response.json()) as CmsPageWriteResponse
+}
 
 export async function readCmsComments(
   pageId: string,

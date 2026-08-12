@@ -312,11 +312,9 @@ export function isTeacherPreviewDocumentDto(
     !hasExactKeys(value, ["brand", "sections", "footer"]) ||
     !isNonBlank(value.brand) ||
     !Array.isArray(value.sections) ||
-    value.sections.length !== teacherPreviewSectionKinds.length ||
+    value.sections.length < 1 ||
+    value.sections.length > 19 ||
     !value.sections.every(isSection) ||
-    !value.sections.every(
-      (section, index) => section.kind === teacherPreviewSectionKinds[index]
-    ) ||
     !isRecord(value.footer) ||
     !hasExactKeys(value.footer, ["brand", "body", "feedbackLabel"]) ||
     value.footer.brand !== value.brand ||
@@ -326,11 +324,36 @@ export function isTeacherPreviewDocumentDto(
     return false
   }
 
-  const promise = value.sections[0]
-  const story = value.sections[1]
-  if (promise.kind !== "promise" || story.kind !== "connected-story") {
+  const counts = new Map<TeacherPreviewSectionKind, number>()
+  for (const section of value.sections) {
+    counts.set(section.kind, (counts.get(section.kind) ?? 0) + 1)
+  }
+  return (
+    value.sections[0]?.kind === "promise" &&
+    counts.get("promise") === 1 &&
+    teacherPreviewSectionKinds
+      .filter((kind) => kind !== "promise")
+      .every((kind) => (counts.get(kind) ?? 0) <= 4)
+  )
+}
+
+export function isCanonicalTeacherPreviewDocumentDto(
+  value: unknown
+): value is TeacherPreviewDocumentDto {
+  if (
+    !isTeacherPreviewDocumentDto(value) ||
+    value.sections.length !== teacherPreviewSectionKinds.length ||
+    !value.sections.every(
+      (section, index) => section.kind === teacherPreviewSectionKinds[index]
+    )
+  ) {
     return false
   }
+
+  const promise = value.sections[0]
+  const story = value.sections[1]
+  if (promise.kind !== "promise" || story.kind !== "connected-story")
+    return false
   const screenSources = [
     promise.screen.src,
     ...story.steps.map((step) => step.screen.src),

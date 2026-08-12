@@ -6,7 +6,12 @@ import { getCmsComparisonPageData } from "@/server/cms-comparison"
 import { buildCmsReviewPresentation } from "@/cms/review-presentation"
 
 export const Route = createFileRoute("/cms-preview")({
-  loader: () => getCmsComparisonPageData(),
+  validateSearch: (search: Record<string, unknown>) => ({
+    page: typeof search.page === "string" ? search.page : undefined,
+  }),
+  loaderDeps: ({ search }) => ({ pageId: search.page ?? null }),
+  loader: ({ deps }) =>
+    getCmsComparisonPageData({ data: { pageId: deps.pageId } }),
   headers: () => ({
     "Cache-Control": "private, no-store",
     "CDN-Cache-Control": "no-store",
@@ -44,6 +49,7 @@ function CmsPreviewRoute() {
     >
       <CmsWorkspace
         snapshot={data.snapshot}
+        pageState={data.page}
         publishedHead={data.publishedHead}
         csrfToken={data.csrfToken}
       />

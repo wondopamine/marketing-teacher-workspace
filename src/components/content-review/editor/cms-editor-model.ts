@@ -5,8 +5,11 @@ import type {
 import type {
   CmsSectionDocument,
   CmsSectionState,
+  CmsSectionType,
   CmsVersionContract,
 } from "@/cms/document"
+import { cloneCmsSection, copyCmsReviewContexts } from "@/cms/clone"
+import { cmsSectionRegistry } from "@/cms/section-registry"
 
 export type CmsEditorMode = "viewing" | "editing"
 
@@ -249,59 +252,50 @@ export function updateCmsReviewContext(
   }
 }
 
-function sectionWithFreshIds(
-  section: CmsSectionDocument,
-  createId: () => string
-): CmsSectionDocument {
-  const next = structuredClone(section)
-  if (next.type === "promise") {
-    return {
-      ...next,
-      id: createId(),
-      fields: {
-        ...next.fields,
-        screen: { ...next.fields.screen, id: createId() },
+function activeSectionCount(
+  contract: CmsVersionContract,
+  type: CmsSectionType
+): number {
+  return contract.pageDocument.sections.filter(
+    (section) => section.type === type && section.state !== "archived"
+  ).length
+}
+
+export function canAddCmsSection(
+  contract: CmsVersionContract,
+  type: CmsSectionType
+): boolean {
+  return (
+    contract.pageDocument.sections.length < 20 &&
+    activeSectionCount(contract, type) < cmsSectionRegistry[type].maximum
+  )
+}
+
+function contractWithClonedSection(
+  contract: CmsVersionContract,
+  source: CmsSectionDocument,
+  insertAt: number,
+  createId: () => string,
+  state: CmsSectionState
+): CmsVersionContract {
+  const cloned = cloneCmsSection(source, createId)
+  const section = { ...cloned.section, state } as CmsSectionDocument
+  const copiedReview = copyCmsReviewContexts(
+    contract.reviewDocument,
+    cloned.idMap
+  )
+  const sections = [...contract.pageDocument.sections]
+  sections.splice(insertAt, 0, section)
+  return {
+    ...contract,
+    pageDocument: { ...contract.pageDocument, sections },
+    reviewDocument: {
+      targets: {
+        ...contract.reviewDocument.targets,
+        ...copiedReview.targets,
       },
-    }
+    },
   }
-  if (next.type === "connected-story") {
-    return {
-      ...next,
-      id: createId(),
-      fields: {
-        ...next.fields,
-        steps: next.fields.steps.map((step) => ({
-          ...step,
-          id: createId(),
-          screen: { ...step.screen, id: createId() },
-        })),
-      },
-    }
-  }
-  if (next.type === "reveal") {
-    return {
-      ...next,
-      id: createId(),
-      fields: {
-        ...next.fields,
-        asides: next.fields.asides.map((aside) => ({
-          ...aside,
-          id: createId(),
-        })),
-      },
-    }
-  }
-  if (next.type === "capabilities") {
-    return {
-      ...next,
-      id: createId(),
-      fields: {
-        ...next.fields,
-        items: next.fields.items.map((item) => ({ ...item, id: createId() })),
-      },
-    }
-  }
-  return { ...next, id: createId() }
 }
 
 export function duplicateCmsSection(
@@ -314,13 +308,43 @@ export function duplicateCmsSection(
   )
   if (index < 0) return contract
   const source = contract.pageDocument.sections[index]
-  const duplicate = sectionWithFreshIds(source, createId)
-  const sections = [...contract.pageDocument.sections]
-  sections.splice(index + 1, 0, duplicate)
-  return {
-    ...contract,
-    pageDocument: { ...contract.pageDocument, sections },
+  if (
+    source.state === "archived" ||
+    !cmsSectionRegistry[source.type].canArchive ||
+    !canAddCmsSection(contract, source.type)
+  ) {
+    return contract
   }
+  return contractWithClonedSection(
+    contract,
+    source,
+    index + 1,
+    createId,
+    source.state
+  )
+}
+
+export function addCmsSection(
+  contract: CmsVersionContract,
+  type: CmsSectionType,
+  createId: () => string = () => crypto.randomUUID()
+): CmsVersionContract {
+  if (!cmsSectionRegistry[type].canArchive || !canAddCmsSection(contract, type))
+    return contract
+  const source = contract.pageDocument.sections.find(
+    (section) => section.type === type
+  )
+  const footerIndex = contract.pageDocument.sections.findIndex(
+    (section) => section.type === "footer-feedback"
+  )
+  if (!source || footerIndex < 0) return contract
+  return contractWithClonedSection(
+    contract,
+    source,
+    footerIndex,
+    createId,
+    "visible"
+  )
 }
 
 export function moveCmsSection(
@@ -353,12 +377,23 @@ export function setCmsSectionState(
   sectionId: string,
   state: CmsSectionState
 ): CmsVersionContract {
+  const section = contract.pageDocument.sections.find(
+    (candidate) => candidate.id === sectionId
+  )
+  if (!section || !cmsSectionRegistry[section.type].canArchive) return contract
+  if (
+    section.state === "archived" &&
+    state !== "archived" &&
+    !canAddCmsSection(contract, section.type)
+  ) {
+    return contract
+  }
   return {
     ...contract,
     pageDocument: {
       ...contract.pageDocument,
-      sections: contract.pageDocument.sections.map((section) =>
-        section.id === sectionId ? { ...section, state } : section
+      sections: contract.pageDocument.sections.map((candidate) =>
+        candidate.id === sectionId ? { ...candidate, state } : candidate
       ),
     },
   }

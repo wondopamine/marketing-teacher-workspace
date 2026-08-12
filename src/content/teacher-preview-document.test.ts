@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  isCanonicalTeacherPreviewDocumentDto,
   isTeacherPreviewDocumentDto,
   teacherPreviewSectionKinds,
 } from "./teacher-preview-document"
@@ -15,10 +16,11 @@ function readyDocument() {
 }
 
 describe("teacher-preview document contract", () => {
-  it("accepts only the six canonical section kinds in their exact order", () => {
+  it("keeps the imported source on the six canonical sections in exact order", () => {
     const document = readyDocument()
 
     expect(isTeacherPreviewDocumentDto(document)).toBe(true)
+    expect(isCanonicalTeacherPreviewDocumentDto(document)).toBe(true)
     expect(document.sections.map((section) => section.kind)).toEqual(
       teacherPreviewSectionKinds
     )
@@ -31,7 +33,26 @@ describe("teacher-preview document contract", () => {
         ...document.sections.slice(2),
       ],
     }
-    expect(isTeacherPreviewDocumentDto(reordered)).toBe(false)
+    expect(isCanonicalTeacherPreviewDocumentDto(reordered)).toBe(false)
+  })
+
+  it("accepts bounded CMS repeats after the opening section", () => {
+    const document = readyDocument()
+    const reordered = {
+      ...document,
+      sections: [
+        document.sections[0],
+        document.sections[3],
+        document.sections[2],
+        document.sections[1],
+        document.sections[4],
+        document.sections[5],
+        document.sections[2],
+      ],
+    }
+
+    expect(isTeacherPreviewDocumentDto(reordered)).toBe(true)
+    expect(isCanonicalTeacherPreviewDocumentDto(reordered)).toBe(false)
   })
 
   it("rejects extra keys at every public boundary", () => {
@@ -90,6 +111,25 @@ describe("teacher-preview document contract", () => {
     }
     expect(
       isTeacherPreviewDocumentDto({
+        ...document,
+        sections: [
+          promise,
+          {
+            ...story,
+            steps: [
+              {
+                ...story.steps[0],
+                screen: promise.screen,
+              },
+              ...story.steps.slice(1),
+            ],
+          },
+          ...document.sections.slice(2),
+        ],
+      })
+    ).toBe(true)
+    expect(
+      isCanonicalTeacherPreviewDocumentDto({
         ...document,
         sections: [
           promise,

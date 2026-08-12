@@ -10,6 +10,7 @@ import {
 import { getCmsDatabase } from "@/db/client.server"
 import { createCmsContentRepository } from "@/db/content-repository.server"
 import { cmsHomepagePageId } from "@/cms/templates/homepage-v1.server"
+import { isCmsStableId } from "@/cms/validation"
 
 function setPrivateHeaders(): void {
   setResponseHeaders(
@@ -23,7 +24,8 @@ function setPrivateHeaders(): void {
 }
 
 export async function loadCmsComparisonPageData(
-  request: Request
+  request: Request,
+  requestedPageId: string | null = null
 ): Promise<CmsComparisonPageData> {
   setPrivateHeaders()
   let session
@@ -37,14 +39,19 @@ export async function loadCmsComparisonPageData(
   }
 
   try {
+    if (requestedPageId !== null && !isCmsStableId(requestedPageId)) {
+      return { status: "unavailable" }
+    }
     const repository = createCmsContentRepository(getCmsDatabase())
+    const pageId = requestedPageId ?? cmsHomepagePageId
     const [snapshot, page] = await Promise.all([
-      repository.loadDraft(cmsHomepagePageId),
-      repository.loadPageState(cmsHomepagePageId),
+      repository.loadDraft(pageId),
+      repository.loadPageState(pageId),
     ])
     return {
       status: "ready",
       snapshot,
+      page,
       publishedHead: page.publishedHead,
       csrfToken: session.csrfToken,
     }

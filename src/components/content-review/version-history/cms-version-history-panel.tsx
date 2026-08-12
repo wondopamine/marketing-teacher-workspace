@@ -19,6 +19,7 @@ export function CmsVersionHistoryPanel({
   loading,
   loadingMore,
   error,
+  retryKind,
   versions,
   nextCursor,
   selected,
@@ -29,12 +30,14 @@ export function CmsVersionHistoryPanel({
   onPreview,
   onRestore,
   onLoadMore,
+  onRetry,
   onReturnToDraft,
 }: {
   readonly open: boolean
   readonly loading: boolean
   readonly loadingMore: boolean
   readonly error: string | null
+  readonly retryKind: "load" | "preview" | null
   readonly versions: ReadonlyArray<CmsVersionHistoryItem>
   readonly nextCursor: number | null
   readonly selected: CmsVersionSnapshot | null
@@ -45,12 +48,60 @@ export function CmsVersionHistoryPanel({
   readonly onPreview: (version: CmsVersionHistoryItem) => void
   readonly onRestore: () => void
   readonly onLoadMore: () => void
+  readonly onRetry: () => void
   readonly onReturnToDraft: () => void
 }) {
   const headingRef = useRef<HTMLHeadingElement | null>(null)
+  const returnToDraftRef = useRef<HTMLButtonElement | null>(null)
+  const retryRef = useRef<HTMLButtonElement | null>(null)
+  const previewButtonRefs = useRef(new Map<string, HTMLButtonElement>())
+  const previousSelectedIdRef = useRef<string | null>(null)
+  const selectedExitFocusRef = useRef<"preview" | "heading">("preview")
+  const previousErrorRef = useRef<string | null>(null)
+  const retryingRef = useRef<"history" | "preview" | null>(null)
   useEffect(() => {
     if (open) headingRef.current?.focus()
   }, [open])
+  useEffect(() => {
+    const selectedId = selected?.head.versionId ?? null
+    const previousId = previousSelectedIdRef.current
+    previousSelectedIdRef.current = selectedId
+    if (selectedId && selectedId !== previousId) {
+      window.requestAnimationFrame(() => returnToDraftRef.current?.focus())
+      return
+    }
+    if (!selectedId && previousId) {
+      window.requestAnimationFrame(() => {
+        if (selectedExitFocusRef.current === "heading") {
+          headingRef.current?.focus()
+        } else {
+          const previewButton = previewButtonRefs.current.get(previousId)
+          if (previewButton?.isConnected) previewButton.focus()
+          else headingRef.current?.focus()
+        }
+        selectedExitFocusRef.current = "preview"
+      })
+    }
+  }, [selected?.head.versionId])
+  const retryBusy =
+    loading || loadingMore || previewingVersionId !== null
+  useEffect(() => {
+    const previousError = previousErrorRef.current
+    if (error) {
+      previousErrorRef.current = error
+      if (error === previousError) return
+      window.requestAnimationFrame(() => retryRef.current?.focus())
+      return
+    }
+    previousErrorRef.current = null
+    if (retryingRef.current && !retryBusy) {
+      const completedRetry = retryingRef.current
+      retryingRef.current = null
+      if (completedRetry === "history") {
+        window.requestAnimationFrame(() => headingRef.current?.focus())
+      }
+    }
+  }, [error, retryBusy])
   const numberById = useMemo(
     () =>
       new Map(
@@ -65,9 +116,10 @@ export function CmsVersionHistoryPanel({
 
   return (
     <aside
+      id="cms-version-history-panel"
       aria-labelledby="cms-version-history-heading"
       data-review-chrome
-      className="z-40 min-w-0 border-b border-foreground/20 bg-background font-body text-sm lg:col-start-2 lg:row-start-2 lg:min-h-screen lg:border-b-0 lg:border-l"
+      className="order-1 z-40 min-w-0 border-b border-foreground/20 bg-background font-body text-sm lg:order-none lg:col-start-2 lg:row-start-2 lg:min-h-screen lg:border-b-0 lg:border-l"
     >
       <div className="lg:sticky lg:top-[calc(var(--masthead-h)+4.25rem)] lg:max-h-[calc(100vh-var(--masthead-h)-4.25rem)] lg:overflow-y-auto">
         <header className="border-b border-border px-4 py-4">
@@ -77,7 +129,7 @@ export function CmsVersionHistoryPanel({
                 id="cms-version-history-heading"
                 ref={headingRef}
                 tabIndex={-1}
-                className="font-heading text-xl font-semibold outline-none"
+                className="font-heading text-xl font-semibold outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
               >
                 Version history
               </h2>
@@ -118,11 +170,15 @@ export function CmsVersionHistoryPanel({
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button
+                  ref={returnToDraftRef}
                   type="button"
                   variant="outline"
                   size="lg"
                   className="min-h-11"
-                  onClick={onReturnToDraft}
+                  onClick={() => {
+                    selectedExitFocusRef.current = "preview"
+                    onReturnToDraft()
+                  }}
                 >
                   Return to current draft
                 </Button>
@@ -136,7 +192,10 @@ export function CmsVersionHistoryPanel({
                     selected.head.versionNumber ===
                       versions.find((v) => v.isCurrentDraft)?.head.versionNumber
                   }
-                  onClick={onRestore}
+                  onClick={() => {
+                    selectedExitFocusRef.current = "heading"
+                    onRestore()
+                  }}
                 >
                   {restoring ? "Restoring…" : "Restore this version"}
                 </Button>
@@ -144,23 +203,36 @@ export function CmsVersionHistoryPanel({
             </section>
           ) : null}
 
-          {loading ? (
-            <p role="status" className="py-6 text-muted-foreground">
-              Loading version history…
-            </p>
-          ) : error ? (
+          {error ? (
             <div>
-              <p className="leading-5 text-destructive">{error}</p>
+              <p
+                id="cms-version-history-error"
+                className="leading-5 text-destructive"
+              >
+                {error}
+              </p>
               <Button
+                ref={retryRef}
                 type="button"
                 variant="outline"
                 size="lg"
                 className="mt-3 min-h-11"
-                onClick={onLoadMore}
+                aria-describedby="cms-version-history-error"
+                aria-disabled={retryBusy}
+                onClick={() => {
+                  if (retryBusy) return
+                  retryingRef.current =
+                    retryKind === "preview" ? "preview" : "history"
+                  onRetry()
+                }}
               >
-                Try again
+                {retryBusy ? "Trying again…" : "Try again"}
               </Button>
             </div>
+          ) : loading ? (
+            <p role="status" className="py-6 text-muted-foreground">
+              Loading version history…
+            </p>
           ) : (
             <ol className="divide-y divide-border border-y border-border">
               {versions.map((version) => {
@@ -184,11 +256,29 @@ export function CmsVersionHistoryPanel({
                         </p>
                       </div>
                       <Button
+                        ref={(element) => {
+                          if (element)
+                            previewButtonRefs.current.set(
+                              version.head.versionId,
+                              element
+                            )
+                          else
+                            previewButtonRefs.current.delete(
+                              version.head.versionId
+                            )
+                        }}
                         type="button"
                         variant="outline"
                         size="lg"
                         className="min-h-11"
                         disabled={isSelected || previewingVersionId !== null}
+                        aria-label={`${
+                          isSelected
+                            ? "Viewing"
+                            : previewingVersionId === version.head.versionId
+                              ? "Loading"
+                              : "Preview"
+                        } version ${version.head.versionNumber}`}
                         onClick={() => onPreview(version)}
                       >
                         {isSelected
