@@ -119,7 +119,7 @@ describe("CMS workspace", () => {
     mockedWriteComment.mockReset()
   })
 
-  it("places View published left of the right-aligned viewing tools", () => {
+  it("groups published versions left of the right-aligned review tools", () => {
     renderWorkspace()
 
     const reviewTools = screen.getByRole("group", { name: "Review tools" })
@@ -129,10 +129,40 @@ describe("CMS workspace", () => {
       )
     ).toEqual([
       "View published",
-      "Show section context",
       "Version history",
+      "Show section context",
       "Edit content",
     ])
+  })
+
+  it("opens version history on the left and section context on the right", async () => {
+    renderWorkspace()
+
+    fireEvent.click(screen.getByRole("button", { name: "Version history" }))
+    const historyPanel = await screen.findByRole("complementary", {
+      name: "Version history",
+    })
+    expect(historyPanel.getAttribute("data-cms-panel-side")).toBe("left")
+    expect(
+      historyPanel.parentElement?.getAttribute("data-cms-panel-side")
+    ).toBe("left")
+    const teacherPreview = document.querySelector("[data-teacher-preview]")
+    expect(teacherPreview).not.toBeNull()
+    expect(
+      historyPanel.compareDocumentPosition(teacherPreview as Element) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).not.toBe(0)
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }))
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show section context" })
+    )
+    expect(
+      screen
+        .getByRole("complementary", { name: "Section context and feedback" })
+        .closest("[data-cms-panel-side]")
+        ?.getAttribute("data-cms-panel-side")
+    ).toBe("right")
   })
 
   it("supports direct editing, keyboard undo, and every finish choice", async () => {

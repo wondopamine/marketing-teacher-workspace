@@ -870,3 +870,144 @@ Button, link, and toolbar group.
 > a session-tooling 404 at the capability endpoint; independent curl evidence
 > confirms the deployment correctly returns HTTP 303 to `/cms-preview`, so this
 > is not graded as product behavior. No files were edited.
+
+## Scoped amendment: separate version and section workspaces
+
+Approved by the product owner on 2026-08-12.
+
+### Sprint contract
+
+1. In viewing mode, **View published** and **Version history** form the
+   left-aligned version group, in that order.
+2. **Show section context** and **Edit content** remain the right-aligned review
+   group, in that order.
+3. Opening Version history places its 22-rem panel to the left of the teacher
+   page at desktop widths. Opening Section context or Section order keeps its
+   panel to the right of the page.
+4. Only one side panel is open at a time. Existing disclosure, async, focus,
+   preview, restore, editing, and Admin behavior stays unchanged.
+5. At narrow widths, either panel stacks before the content in DOM reading
+   order. Controls remain reachable with no horizontal page scroll.
+
+### Approved plan
+
+Group the existing View published link and Version history button inside the
+toolbar's leading-control slot. Keep the existing review actions in the trailing
+group. Give the workspace an explicit left or right panel state: history selects
+the left-column grid, while section context and Section order keep the existing
+right-column grid. No new action, component, async transaction, or content is
+introduced.
+
+The desktop distinction is intentional: the left side answers “which saved
+version am I looking at?”, while the right side answers “how is this section
+designed or ordered?”. At 320, 360, and 768 pixels the rails stack because
+preserving readable content and 44-pixel controls matters more than simulating a
+desktop side at a narrow width.
+
+In-scope controls: A11Y-1, A11Y-2, A11Y-4, A11Y-7, A11Y-8, A11Y-11, CMP-1,
+CMP-3, CMP-5, CMP-7, LAY-2, LAY-5, LAY-6, and LAY-7. No waiver is requested.
+
+### Component inventory
+
+- Route: `/cms-preview` in viewing mode, plus existing Editor/Admin side panels.
+- Components: `CmsWorkspace`, `PublicReviewMode`, `CmsVersionHistoryPanel`,
+  `CmsSectionContextPanel`, `SectionOrderPanel`, and existing `Button` controls.
+- Viewing controls, in DOM order: View published; Version history; Show section
+  context; Edit content.
+- States to verify: default viewing; history loading, success, error and version
+  preview; left-panel close/focus return; right context disclosure; right Section
+  order disclosure; 320, 360, 768, and 1280-pixel layout.
+
+### Verification
+
+- Exact unaliased Preview:
+  `https://marketing-teacher-workspace-p8959g804-wondopamines-projects.vercel.app`
+- Evidence:
+  `/private/tmp/cms-version-sides-1280-view.png`,
+  `/private/tmp/cms-version-sides-1280-history.png`,
+  `/private/tmp/cms-version-sides-1280-context.png`,
+  `/private/tmp/cms-version-sides-1280-sections.png`,
+  `/private/tmp/cms-version-sides-768-view.png`,
+  `/private/tmp/cms-version-sides-768-history.png`,
+  `/private/tmp/cms-version-sides-360-view.png`,
+  `/private/tmp/cms-version-sides-320-view.png`, and
+  `/private/tmp/cms-version-sides-320-history.png`.
+- At 1280 pixels, the history panel occupies the left 352 pixels and the
+  teacher page occupies the remaining 928 pixels. Section context and Section
+  order use the right 352 pixels while the teacher page stays in the left 928
+  pixels.
+- At 768 and 320 pixels, the history panel stacks before the teacher page. At
+  1280, 768, 360, and 320 pixels, `scrollWidth === clientWidth`.
+- A final hosted 320-pixel check confirmed the history panel precedes the
+  teacher preview in the DOM as well as visually.
+- At 320 pixels the toolbar forms two clear rows: View published and Version
+  history first, then Show section context and Edit content. Every control is 44
+  pixels high.
+- Opening history sets `aria-expanded="true"` and focuses its heading. Closing
+  it returns focus to Version history. Opening section context focuses its
+  existing trigger, and entering Admin mode focuses Section order on the right.
+- History loading and success were observed in the hosted Preview. Existing
+  focused tests cover the actionable error/retry path and exact failed-action
+  retry without losing focus.
+- The full suite passed 54 files and 326 tests. The database integration file
+  was skipped because no test database is configured. TypeScript, scoped
+  ESLint, Prettier, token audit, static accessibility, contrast, production
+  build, and output-boundary checks passed.
+- `CMP-1: asserted, no manifest — manifest absent for marketing-teacher-workspace`
+  Evidence source: direct product-codebase review; existing Button, toolbar,
+  and side-panel patterns were reused.
+- Dark mode: N/A — the product does not support it.
+- Production remains unchanged.
+
+### Independent evaluator report
+
+> VERDICT: PASS
+>
+> BLOCKING (must fix before ship): None. L0: 0; L1: 0.
+>
+> ADVISORY (should fix): None. L2: 0.
+>
+> Contract compliance:
+>
+> 1. PASS — viewing toolbar DOM order is View published, Version history, Show section context, Edit content; captures show the first pair left-aligned and second pair right-aligned.
+> 2. PASS — Version history renders as an exact 22rem/352px left rail at desktop, with teacher content occupying the remaining 928px.
+> 3. PASS — Section context and Admin Section order remain 22rem right rails.
+> 4. PASS — panel-opening paths close competing panels. History loading/error/retry, preview/restore, edit/Admin behavior, heading focus, and trigger-focus restoration remain covered.
+> 5. PASS — History, Section context, and Section order now precede teacher content in actual JSX DOM order. At narrow widths they stack visually in that same order; supplied measurements show no horizontal overflow through 320px.
+>
+> Plan fidelity: PASS. The current implementation matches the approved leading/trailing toolbar groups and explicit left/right panel state, reusing the existing components without introducing actions, copy, or transactions.
+>
+> Quality grades:
+>
+> - Design quality: STRONG — clear version-left/review-right information architecture.
+> - Originality: STRONG — purposeful composition of established workspace patterns.
+> - Craft: STRONG — consistent 22rem rails, aligned boundaries, responsive wrapping, and designed focus/state behavior.
+> - Functionality: STRONG — all entry, close, retry, preview, restore, editing, and Admin paths remain usable.
+> - Dark mode: N/A — product has no dark mode.
+>
+> Judgment/control notes:
+>
+> - A11Y-1 PASS — supplied contrast checks are green; no problematic color change is visible.
+> - A11Y-2 PASS — native controls retain visible focus; History focuses its heading and Close returns focus to Version history.
+> - A11Y-4 PASS — controls remain at least 44px high at 320px.
+> - A11Y-7 PASS — labelled groups/asides, real headings/lists, and corrected DOM reading order match the visual structure.
+> - A11Y-8 PASS — native roles/names and `aria-expanded` accurately expose disclosure state.
+> - A11Y-11 PASS — context replacements use focus movement; loading uses status semantics; actionable errors focus the described retry control without double announcement.
+> - CMP-1 PASS — existing Button, toolbar, and side-panel patterns are composed directly.
+> - CMP-3 PASS — History preserves visible loading, success/content, error, and exact-action retry states.
+> - CMP-5 PASS — Edit content remains the sole filled viewing-toolbar action; panel primaries belong to distinct task regions.
+> - CMP-7 PASS — established variants and sibling affordances remain consistent.
+> - LAY-2 PASS — 320/360/768/1280 evidence shows usable reflow, matching DOM/visual order, reachable controls, and no horizontal page scroll.
+> - LAY-5 PASS — toolbar and rail density suit scanning and version-management tasks.
+> - LAY-6 PASS — desktop rail/page boundaries and toolbar groups align cleanly.
+> - LAY-7 PASS — the paired rail-and-preview composition supports the comparison task without competing decorative regions.
+>
+> CMP-1: asserted, no manifest — manifest absent for marketing-teacher-workspace
+>
+> Evidence source: direct product-codebase review; existing Button, toolbar, and side-panel patterns were reused.
+>
+> UNCOVERED: None identified.
+>
+> Evidence reviewed: current diff and source inventory, all nine supplied captures, supplied browser measurements and interaction evidence, current DOM-order regression, `git diff --check`, and an independent focused rerun of 19/19 tests.
+>
+> Independent-review limitation: the full 54-file/326-test suite, build/scanner results, production-unchanged claim, and DB skip were accepted from supplied evidence rather than rerun. The capability session was unavailable for independent hosted replay, so live behavior was graded from supplied browser evidence plus current source and focused tests. No files were edited.

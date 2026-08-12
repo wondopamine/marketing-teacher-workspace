@@ -83,8 +83,7 @@ export function CmsVersionHistoryPanel({
       })
     }
   }, [selected?.head.versionId])
-  const retryBusy =
-    loading || loadingMore || previewingVersionId !== null
+  const retryBusy = loading || loadingMore || previewingVersionId !== null
   useEffect(() => {
     const previousError = previousErrorRef.current
     if (error) {
@@ -118,8 +117,9 @@ export function CmsVersionHistoryPanel({
     <aside
       id="cms-version-history-panel"
       aria-labelledby="cms-version-history-heading"
+      data-cms-panel-side="left"
       data-review-chrome
-      className="order-1 z-40 min-w-0 border-b border-foreground/20 bg-background font-body text-sm lg:order-none lg:col-start-2 lg:row-start-2 lg:min-h-screen lg:border-b-0 lg:border-l"
+      className="z-40 order-1 min-w-0 border-b border-foreground/20 bg-background font-body text-sm lg:order-none lg:col-start-1 lg:row-start-2 lg:min-h-screen lg:border-r lg:border-b-0"
     >
       <div className="lg:sticky lg:top-[calc(var(--masthead-h)+4.25rem)] lg:max-h-[calc(100vh-var(--masthead-h)-4.25rem)] lg:overflow-y-auto">
         <header className="border-b border-border px-4 py-4">

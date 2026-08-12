@@ -811,7 +811,25 @@ export function CmsWorkspace({
       </Button>
     </>
   ) : (
+    <Button
+      type="button"
+      size="lg"
+      className="min-h-11"
+      onClick={startOrFinishEditing}
+    >
+      Edit content
+    </Button>
+  )
+
+  const leadingControls = !editing ? (
     <>
+      {state.publishedHead ? (
+        <Button asChild variant="outline" size="lg" className="min-h-11">
+          <a href={publishedComparisonHref} target="_blank" rel="noreferrer">
+            View published
+          </a>
+        </Button>
+      ) : null}
       <Button
         type="button"
         variant="outline"
@@ -824,40 +842,22 @@ export function CmsWorkspace({
       >
         Version history
       </Button>
-      <Button
-        type="button"
-        size="lg"
-        className="min-h-11"
-        onClick={startOrFinishEditing}
-      >
-        Edit content
-      </Button>
     </>
-  )
-
-  const leadingControls =
-    !editing && state.publishedHead ? (
-      <Button
-        asChild
-        variant="outline"
-        size="lg"
-        className="min-h-11 self-start"
-      >
-        <a href={publishedComparisonHref} target="_blank" rel="noreferrer">
-          View published
-        </a>
-      </Button>
-    ) : null
+  ) : null
 
   const sidePanelOpen = panelOpen || historyOpen || sectionsOpen
+  const sidePanelSide = historyOpen ? "left" : sidePanelOpen ? "right" : null
   const previewing = previewVersion !== null
 
   return (
     <div
+      data-cms-panel-side={sidePanelSide ?? undefined}
       className={
-        sidePanelOpen
-          ? "flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_22rem]"
-          : undefined
+        sidePanelSide === "left"
+          ? "flex flex-col lg:grid lg:grid-cols-[22rem_minmax(0,1fr)]"
+          : sidePanelSide === "right"
+            ? "flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_22rem]"
+            : undefined
       }
     >
       <PublicReviewMode
@@ -890,11 +890,54 @@ export function CmsWorkspace({
         }}
       />
 
+      {editing && adminMode && sectionsOpen ? (
+        <SectionOrderPanel
+          contract={state.present}
+          onChange={(contract) => {
+            apply(contract)
+            setStatus({
+              kind: "success",
+              message: "Section order updated. Use Undo to restore it.",
+            })
+          }}
+          onClose={() => {
+            setSectionsOpen(false)
+            window.requestAnimationFrame(() =>
+              sectionsButtonRef.current?.focus()
+            )
+          }}
+        />
+      ) : null}
+
+      <CmsVersionHistoryPanel
+        open={historyOpen}
+        loading={historyLoading}
+        loadingMore={historyLoadingMore}
+        error={historyError}
+        retryKind={historyRetryAction?.kind ?? null}
+        versions={history}
+        nextCursor={historyCursor}
+        selected={previewVersion}
+        dirty={dirty}
+        restoring={
+          status.kind === "busy" && status.message.startsWith("Restoring")
+        }
+        previewingVersionId={previewingVersionId}
+        onClose={closeHistory}
+        onPreview={(version) => void previewHistoryVersion(version)}
+        onRestore={() => void restoreVersion()}
+        onLoadMore={() => void loadHistory(historyCursor, history.length > 0)}
+        onRetry={retryHistory}
+        onReturnToDraft={() => setPreviewVersion(null)}
+      />
+
       <div
         className={
-          sidePanelOpen
-            ? "order-2 min-w-0 lg:order-none lg:col-start-1 lg:row-start-2"
-            : "min-w-0"
+          sidePanelSide === "left"
+            ? "order-2 min-w-0 lg:order-none lg:col-start-2 lg:row-start-2"
+            : sidePanelSide === "right"
+              ? "order-2 min-w-0 lg:order-none lg:col-start-1 lg:row-start-2"
+              : "min-w-0"
         }
       >
         {editing ? (
@@ -981,47 +1024,6 @@ export function CmsWorkspace({
           </main>
         )}
       </div>
-
-      {editing && adminMode && sectionsOpen ? (
-        <SectionOrderPanel
-          contract={state.present}
-          onChange={(contract) => {
-            apply(contract)
-            setStatus({
-              kind: "success",
-              message: "Section order updated. Use Undo to restore it.",
-            })
-          }}
-          onClose={() => {
-            setSectionsOpen(false)
-            window.requestAnimationFrame(() =>
-              sectionsButtonRef.current?.focus()
-            )
-          }}
-        />
-      ) : null}
-
-      <CmsVersionHistoryPanel
-        open={historyOpen}
-        loading={historyLoading}
-        loadingMore={historyLoadingMore}
-        error={historyError}
-        retryKind={historyRetryAction?.kind ?? null}
-        versions={history}
-        nextCursor={historyCursor}
-        selected={previewVersion}
-        dirty={dirty}
-        restoring={
-          status.kind === "busy" && status.message.startsWith("Restoring")
-        }
-        previewingVersionId={previewingVersionId}
-        onClose={closeHistory}
-        onPreview={(version) => void previewHistoryVersion(version)}
-        onRestore={() => void restoreVersion()}
-        onLoadMore={() => void loadHistory(historyCursor, history.length > 0)}
-        onRetry={retryHistory}
-        onReturnToDraft={() => setPreviewVersion(null)}
-      />
 
       <FinishEditingDialog
         open={state.finishChoiceOpen}

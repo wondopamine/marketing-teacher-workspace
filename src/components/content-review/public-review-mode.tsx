@@ -627,7 +627,11 @@ export function PublicReviewMode({
               externalEditor?.adminActive ? "Admin tools" : "Review tools"
             }
           >
-            {leadingControls}
+            {leadingControls ? (
+              <div className="flex min-w-0 flex-wrap gap-2">
+                {leadingControls}
+              </div>
+            ) : null}
             <div
               className={
                 leadingControls
