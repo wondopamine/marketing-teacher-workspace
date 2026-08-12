@@ -42,27 +42,41 @@ function WireframeLabel({
   )
 }
 
-function InertAction({
+function SectionAction({
   action,
   onChange,
+  href,
 }: {
   action: TeacherPreviewActionDto | null
   onChange?: SectionTextChange
+  href?: string
 }) {
   if (!action) return null
 
   return (
     <div className="mt-7">
-      <EditableCopy
-        as="span"
-        value={action.label}
-        label="Edit action label"
-        onChange={
-          onChange ? (value) => onChange(["action", "label"], value) : undefined
-        }
-        className="inline-flex min-h-12 items-center justify-center border-2 border-foreground bg-foreground px-6 py-3 font-semibold text-background select-none"
-        data-wireframe-action
-      />
+      {href ? (
+        <a
+          href={href}
+          rel="noreferrer"
+          className="inline-flex min-h-12 items-center justify-center border-2 border-foreground bg-foreground px-6 py-3 font-semibold text-background transition-colors hover:bg-foreground/85 focus-visible:ring-3 focus-visible:ring-foreground/40 focus-visible:ring-offset-2 focus-visible:outline-none"
+        >
+          {action.label}
+        </a>
+      ) : (
+        <EditableCopy
+          as="span"
+          value={action.label}
+          label="Edit action label"
+          onChange={
+            onChange
+              ? (value) => onChange(["action", "label"], value)
+              : undefined
+          }
+          className="inline-flex min-h-12 items-center justify-center border-2 border-foreground bg-foreground px-6 py-3 font-semibold text-background select-none"
+          data-wireframe-action
+        />
+      )}
       {action.note ? (
         <EditableCopy
           as="p"
@@ -176,11 +190,13 @@ function HeroSection({
   section,
   onChange,
   reviewTargets,
+  actionHref,
 }: {
   headingId: string
   section: TeacherPreviewPromiseSectionDto
   onChange?: SectionTextChange
   reviewTargets?: ContentReviewSectionReviewTargets | null
+  actionHref?: string
 }) {
   return (
     <section
@@ -226,7 +242,11 @@ function HeroSection({
             key={index}
           />
         ))}
-        <InertAction action={section.action} onChange={onChange} />
+        <SectionAction
+          action={section.action}
+          onChange={onChange}
+          href={actionHref}
+        />
       </div>
 
       <div data-wireframe-interface-frame="product-view">
@@ -602,11 +622,13 @@ function CloseSection({
   section,
   onChange,
   reviewTargets,
+  actionHref,
 }: {
   headingId: string
   section: TeacherPreviewCloseSectionDto
   onChange?: SectionTextChange
   reviewTargets?: ContentReviewSectionReviewTargets | null
+  actionHref?: string
 }) {
   return (
     <section
@@ -641,7 +663,11 @@ function CloseSection({
           key={index}
         />
       ))}
-      <InertAction action={section.action} onChange={onChange} />
+      <SectionAction
+        action={section.action}
+        onChange={onChange}
+        href={actionHref}
+      />
     </section>
   )
 }
@@ -651,11 +677,13 @@ export function ContentReviewSection({
   section,
   onChange,
   reviewTargets,
+  actionHref,
 }: {
   headingId: string
   section: TeacherPreviewSectionDto
   onChange?: SectionTextChange
   reviewTargets?: ContentReviewSectionReviewTargets | null
+  actionHref?: string
 }) {
   switch (section.kind) {
     case "promise":
@@ -665,6 +693,7 @@ export function ContentReviewSection({
           section={section}
           onChange={onChange}
           reviewTargets={reviewTargets}
+          actionHref={actionHref}
         />
       )
     case "connected-story":
@@ -701,6 +730,7 @@ export function ContentReviewSection({
           section={section}
           onChange={onChange}
           reviewTargets={reviewTargets}
+          actionHref={actionHref}
         />
       )
     case "access-support":
@@ -720,11 +750,13 @@ export function ContentReviewOutline({
   editor,
   reviewTargets,
   showReviewPins = true,
+  actionHref,
 }: {
   sections: ReadonlyArray<TeacherPreviewSectionDto>
   editor?: ContentReviewEditAdapter
   reviewTargets?: ReadonlyArray<ContentReviewSectionReviewTargets>
   showReviewPins?: boolean
+  actionHref?: string
 }) {
   return (
     <>
@@ -733,6 +765,7 @@ export function ContentReviewOutline({
           headingId={`wireframe-${section.kind}-${index + 1}`}
           key={`${section.kind}-${index}`}
           section={section}
+          actionHref={actionHref}
           reviewTargets={showReviewPins ? reviewTargets?.[index] : null}
           onChange={
             editor

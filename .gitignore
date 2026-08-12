@@ -16,6 +16,7 @@ todos.json
 .compound-engineering/*.local.yaml
 .gstack/
 .vercel
+backups/
 
 # Local agent orchestration artifacts (review runs, generated implementation plans)
 .context/

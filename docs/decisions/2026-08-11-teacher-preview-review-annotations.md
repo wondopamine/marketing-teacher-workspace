@@ -324,3 +324,80 @@ the page and path being reviewed.
 Independent-review limitation: this used a separate reviewer context and live
 and code re-grade, but the same model family and shared worktree—not an external
 human or independent black-box audit.
+
+## Phase 9: Preview cutover rehearsal
+
+The public CMS read path is now controlled by `CONTENT_SOURCE=static|cms`.
+Leaving the setting unset uses the released static site. An invalid setting
+fails closed, and a CMS read failure returns a clear 503 page instead of
+quietly showing old static content.
+
+The same strict teacher-facing projection now serves `/` and published
+one-part paths in CMS mode. Missing paths return a real 404. Drafts, history,
+section context, feedback, editor identity, stable IDs, hidden sections, and
+archived sections stay outside public HTML and hydration data.
+
+The Preview rehearsal used a separate PostgreSQL 17 Neon database in
+Singapore. Migrations completed, the homepage import was idempotent, and the
+shared edit link opened the CMS workspace through a secure capability cookie.
+Publishing stayed separate from production.
+
+Preview evidence:
+
+- CMS candidate: `https://marketing-teacher-workspace-dszayy228-wondopamines-projects.vercel.app`
+- static rollback build: `https://marketing-teacher-workspace-l520l4ax6-wondopamines-projects.vercel.app`
+- public CMS page at 1280px: `/private/tmp/cms-phase9-final-public-1280.png`
+- public CMS page at 320px: `/private/tmp/cms-phase9-final-public-320.png`
+- authenticated workspace at 1280px: `/private/tmp/cms-phase9-workspace-1280.png`
+
+The CMS candidate returned 200 for `/`, a real 404 for an unknown path, one
+main landmark, one H1, and no horizontal overflow at 320px. Its public HTML
+contained no review pins, editable regions, UUIDs, reviewer copy, comments,
+or version fields. Both sign-in actions use the code-owned Teacher Workspace
+product URL, and the footer uses the code-owned feedback URL. One-part and
+deep 404 pages include a clear link back to the homepage. Five uncached hosted
+reads succeeded; the first took about 2.7 seconds and the next four took about
+0.7 seconds each.
+
+The rollback rehearsal changed Preview to `static`, deployed the released
+visual homepage, confirmed CMS-only paths returned 404, and then restored
+Preview to `cms`. Production was not changed. Its public domain still serves
+the released static deployment from commit `0faca1a`.
+
+Before the rehearsal closed, the hosted publication was exported to a private
+file and the hosted database was backed up with PostgreSQL 17 tools. Both
+files use mode `0600`; `pg_restore --list` confirmed a valid custom archive
+with the expected tables, constraints, foreign keys, indexes, and append-only
+triggers. Export and backup replacement now use a private temporary file and
+an atomic final step, so a forced replacement cannot remove the last good copy
+or retain older, wider file permissions.
+
+The release and rollback steps are recorded in
+`docs/runbooks/cms-cutover.md`. Production promotion remains blocked on the
+user's explicit final approval.
+
+Final verification after the independent review fixes:
+
+- 54 regular test files and 323 tests passed; the database-only file was
+  skipped in the regular suite.
+- All 20 PostgreSQL integration tests passed against the dedicated local test
+  database.
+- TypeScript, ESLint, CMS and static production builds, output leakage scans,
+  route isolation, the protected-route verifier, and the public-source switch
+  verifier passed.
+- The final unaliased CMS Preview passed live checks at 1280px and 320px.
+- Production remains on the released static deployment from commit `0faca1a`.
+
+### Independent evaluator report
+
+PASS
+
+The evaluator first found three release blockers: 404 pages had no way home,
+the public sign-in and feedback labels were still inert wireframe elements,
+and forced backups could retain wide permissions or remove the last good file
+before replacement. Each issue was fixed, covered by focused tests, and
+checked again in the final hosted Preview. No L0 or L1 blocker remains.
+
+Independent-review limitation: this used a separate reviewer context and live
+and code re-grade, but the same model family and shared worktree—not an external
+human or independent black-box audit.

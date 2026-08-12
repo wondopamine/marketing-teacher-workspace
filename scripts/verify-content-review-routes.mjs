@@ -123,20 +123,61 @@ for (const value of prohibitedReviewOutput) {
 }
 
 const homeHtml = await render(server, "/")
-assert(
-  countMatches(homeHtml, /<title>/g) === 1 &&
-    homeHtml.includes(
-      "<title>Teacher Workspace. Every student. One View.</title>"
-    ),
-  "The public homepage title changed while adding content review."
-)
+const homeHtmlLower = homeHtml.toLowerCase()
+const contentSource = process.env.CONTENT_SOURCE?.trim() || "static"
+
 assert(
   !homeHtml.includes('<meta name="robots"') &&
-    !/href="\/content-review(?:["?#/])/.test(homeHtml) &&
-    homeHtml.includes("paper-page"),
-  "The public homepage inherited draft metadata, links to the review route, or lost its existing shell."
+    !/href="\/content-review(?:["?#]|\/(?!screens\/))/.test(homeHtml),
+  "The public homepage inherited draft metadata or a link to the review route."
 )
 
+if (contentSource === "static") {
+  assert(
+    countMatches(homeHtml, /<title>/g) === 1 &&
+      homeHtml.includes(
+        "<title>Teacher Workspace. Every student. One View.</title>"
+      ) &&
+      homeHtml.includes("paper-page") &&
+      !homeHtml.includes("data-teacher-preview"),
+    "The static public homepage changed while adding content review."
+  )
+} else if (contentSource === "cms") {
+  assert(
+    countMatches(homeHtml, /<title>/g) === 1 &&
+      homeHtml.includes(
+        "<title>Teacher Workspace | Every student gets the support they qualify for</title>"
+      ) &&
+      countMatches(homeHtml, /<main\b/g) === 1 &&
+      countMatches(homeHtml, /<h1\b/g) === 1 &&
+      homeHtml.includes("data-teacher-preview") &&
+      !homeHtml.includes("paper-page") &&
+      !homeHtml.includes("data-review-pin"),
+    "The CMS public homepage did not render the strict teacher publication."
+  )
+  for (const value of [
+    "reviewdocument",
+    "designintent",
+    "editordisplayname",
+    "versionnumber",
+    "csrftoken",
+    "private cms comparison",
+  ]) {
+    assert(
+      !homeHtmlLower.includes(value),
+      `The CMS public homepage exposed ${value}.`
+    )
+  }
+  assert(
+    !/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i.test(
+      homeHtml
+    ),
+    "The CMS public homepage exposed a stable identifier."
+  )
+} else {
+  throw new Error(`Unexpected CONTENT_SOURCE: ${contentSource}`)
+}
+
 console.log(
-  "Verified /content-review through the built Start handler and confirmed / remains isolated."
+  `Verified /content-review and the isolated ${contentSource} public homepage through the built Start handler.`
 )

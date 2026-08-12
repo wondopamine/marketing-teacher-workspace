@@ -23,6 +23,7 @@
     "verify:content-review-output": "node scripts/verify-content-review-public-output.mjs",
     "verify:content-review-routes": "node scripts/verify-content-review-routes.mjs",
     "verify:cms-read-path": "node scripts/verify-cms-protected-route.mjs",
+    "verify:cms-public-source": "node scripts/verify-cms-public-source.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint",
@@ -32,6 +33,8 @@
     "db:migrate": "tsx scripts/migrate-cms.ts",
     "cms:import": "tsx scripts/import-cms-homepage.ts",
     "cms:create-edit-link": "tsx scripts/create-cms-edit-link.ts",
+    "cms:export-published": "tsx scripts/export-cms-publication.ts",
+    "cms:backup-database": "node scripts/backup-cms-database.mjs",
     "gen:hero-images": "node scripts/gen-hero-images.mjs"
   },
   "dependencies": {

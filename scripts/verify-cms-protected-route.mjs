@@ -118,15 +118,48 @@ assert(
 
 const publicResponse = await server.fetch(new Request(`${origin}/`))
 const publicHtml = await publicResponse.text()
-assert(
-  publicResponse.status === 200 && publicHtml.includes("paper-page"),
-  "The released homepage changed during CMS shadow publishing"
-)
+const contentSource = process.env.CONTENT_SOURCE?.trim() || "static"
+if (contentSource === "static") {
+  assert(
+    publicResponse.status === 200 && publicHtml.includes("paper-page"),
+    "The released homepage changed during CMS shadow publishing"
+  )
+} else if (contentSource === "cms") {
+  const publicHtmlLower = publicHtml.toLowerCase()
+  assert(
+    publicResponse.status === 200 &&
+      publicHtml.includes("data-teacher-preview") &&
+      publicHtml.includes("Every student gets the support they qualify for") &&
+      !publicHtml.includes("paper-page") &&
+      !publicHtml.includes("data-review-pin"),
+    "The public route did not render the strict CMS publication"
+  )
+  for (const value of [
+    "reviewdocument",
+    "designintent",
+    "editordisplayname",
+    "versionnumber",
+    "csrftoken",
+  ]) {
+    assert(
+      !publicHtmlLower.includes(value),
+      `The public CMS hydration exposed ${value}`
+    )
+  }
+  assert(
+    !/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i.test(
+      publicHtml
+    ),
+    "The public CMS hydration exposed a stable identifier"
+  )
+} else {
+  throw new Error(`Unexpected CONTENT_SOURCE: ${contentSource}`)
+}
 assert(
   !publicHtml.includes("Private CMS comparison"),
   "The released homepage inherited private comparison chrome"
 )
 
 console.log(
-  "Verified the shared edit link, protected CMS reads, private published comparison, and unchanged released homepage."
+  `Verified the shared edit link, protected CMS reads, private published comparison, and ${contentSource} public homepage.`
 )

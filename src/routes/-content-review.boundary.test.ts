@@ -9,6 +9,7 @@ function readSource(relativePath: string): string {
 const routeSource = readSource("src/routes/content-review.tsx")
 const homeSource = readSource("src/routes/index.tsx")
 const serverSource = readSource("src/server/content-review.ts")
+const publicServerSource = readSource("src/server/public-page.ts")
 
 describe("content-review route boundary", () => {
   it("loads only the public-safe server function from the route", () => {
@@ -40,7 +41,15 @@ describe("content-review route boundary", () => {
     expect(serverSource).not.toContain("landing-v2-review.server")
   })
 
-  it("does not add a content-review entry point to the public homepage", () => {
-    expect(homeSource).not.toContain("content-review")
+  it("gates the public homepage through the strict public-page server boundary", () => {
+    expect(homeSource).toContain('from "@/server/public-page"')
+    expect(homeSource).toContain('getPublicPageData({ data: { path: "/" } })')
+    expect(publicServerSource).toContain(
+      'import("./public-page.handler.server")'
+    )
+    expect(homeSource).not.toContain("cms-comparison")
+    expect(homeSource).not.toContain("reviewDocument")
+    expect(homeSource).not.toContain("ReviewAnnotationProvider")
+    expect(publicServerSource).not.toContain("content-repository.server")
   })
 })

@@ -4,6 +4,7 @@ import { Suspense, lazy } from "react"
 import appCss from "../styles.css?url"
 import { SkipLink } from "@/components/landing/skip-link"
 import { MastheadSg } from "@/components/landing/masthead-sg"
+import { PublicPageMessage } from "@/components/public/public-page-message"
 
 const DirectEdit = lazy(() =>
   import('made-refine').then((m) => ({ default: m.DirectEdit }))
@@ -55,10 +56,12 @@ export const Route = createRootRoute({
     ],
   }),
   notFoundComponent: () => (
-    <main className="container mx-auto p-4 pt-16">
-      <h1>404</h1>
-      <p>The requested page could not be found.</p>
-    </main>
+    <PublicPageMessage
+      heading="Page not found"
+      action={{ href: "/", label: "Go to homepage" }}
+    >
+      The requested page could not be found.
+    </PublicPageMessage>
   ),
   shellComponent: RootDocument,
 })

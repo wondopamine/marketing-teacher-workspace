@@ -14,11 +14,16 @@ export function ContentReviewPage({
   editor,
   reviewTargets,
   showReviewPins = true,
+  publicLinks,
 }: {
   data: TeacherPreviewPageDataDto
   editor?: ContentReviewEditAdapter
   reviewTargets?: ContentReviewReviewTargets
   showReviewPins?: boolean
+  publicLinks?: {
+    readonly product: string
+    readonly feedback: string
+  }
 }) {
   if (data.kind === "error") return <ContentReviewError />
 
@@ -54,6 +59,7 @@ export function ContentReviewPage({
             editor={editor}
             reviewTargets={reviewTargets?.sections}
             showReviewPins={showReviewPins}
+            actionHref={publicLinks?.product}
           />
         </div>
       </main>
@@ -97,17 +103,29 @@ export function ContentReviewPage({
             ))}
           </div>
           {footer.feedbackLabel ? (
-            <EditableCopy
-              as="span"
-              value={footer.feedbackLabel}
-              label="Edit footer feedback label"
-              className="text-sm font-medium select-none"
-              onChange={
-                editor
-                  ? (value) => editor.updateFooterText(["feedbackLabel"], value)
-                  : undefined
-              }
-            />
+            publicLinks ? (
+              <a
+                href={publicLinks.feedback}
+                rel="noreferrer"
+                target="_blank"
+                className="inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
+              >
+                {footer.feedbackLabel}
+              </a>
+            ) : (
+              <EditableCopy
+                as="span"
+                value={footer.feedbackLabel}
+                label="Edit footer feedback label"
+                className="text-sm font-medium select-none"
+                onChange={
+                  editor
+                    ? (value) =>
+                        editor.updateFooterText(["feedbackLabel"], value)
+                    : undefined
+                }
+              />
+            )
           ) : null}
         </div>
       </footer>
