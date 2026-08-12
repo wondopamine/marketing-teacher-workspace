@@ -597,16 +597,16 @@ the plan reuses the existing Button and page-side-panel patterns.
 
 ### Plan summary
 
-| Dimension | Plan |
-|---|---|
-| Structure | Page plus a 22rem Section order side panel on wide screens; one column at 320px |
-| Components | Existing Button, ordered list, aside, and CMS draft model |
-| Interaction and motion | Open/close without decorative motion; move one section per action |
-| Async and A11Y-11 | No new async state; panel change uses focus, existing save/publish use live status |
-| Controls | A11Y-1/2/4/7/8/11, CMP-1/5/7, CNT-2/3, SLP-9, LAY-2/5/6/7 |
-| Waivers | None |
-| Tradeoff | Only ordering is exposed; advanced section and page controls remain hidden |
-| Evidence | 320, 768, and 1280 frames; keyboard reorder, Undo, close, and Admin exit |
+| Dimension              | Plan                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| Structure              | Page plus a 22rem Section order side panel on wide screens; one column at 320px    |
+| Components             | Existing Button, ordered list, aside, and CMS draft model                          |
+| Interaction and motion | Open/close without decorative motion; move one section per action                  |
+| Async and A11Y-11      | No new async state; panel change uses focus, existing save/publish use live status |
+| Controls               | A11Y-1/2/4/7/8/11, CMP-1/5/7, CNT-2/3, SLP-9, LAY-2/5/6/7                          |
+| Waivers                | None                                                                               |
+| Tradeoff               | Only ordering is exposed; advanced section and page controls remain hidden         |
+| Evidence               | 320, 768, and 1280 frames; keyboard reorder, Undo, close, and Admin exit           |
 
 ### Verification
 
@@ -717,3 +717,156 @@ the plan reuses the existing Button and page-side-panel patterns.
 > independently, but the full suite/build and production-unchanged claims were
 > accepted from the supplied evidence rather than rerun; database integration
 > and dark mode were not available.
+
+## Scoped amendment: viewing-toolbar alignment
+
+Approved by the product owner on 2026-08-12.
+
+### Sprint contract
+
+1. In the non-editing CMS toolbar, **View published** is the left-most action.
+2. **Show section context**, **Version history**, and **Edit content** form a
+   right-aligned group in that order.
+3. The change affects position only. Labels, variants, destinations, disclosure
+   state, focus behavior, and editing/Admin toolbars remain unchanged.
+4. At 320px the left action and right group may stack, but their reading order
+   stays the same and the page does not scroll horizontally.
+
+### Approved plan
+
+Add one optional leading-control slot to the existing `PublicReviewMode` toolbar.
+`CmsWorkspace` places the existing View published link in that slot only while
+viewing. The remaining viewing controls stay in the existing review group and
+align to the right. No component, action, copy, async behavior, or motion is added.
+
+The tradeoff is an extra toolbar row at narrow widths. That is preferable to
+shrinking or clipping the four 44px controls. The reading order remains View
+published, Show section context, Version history, then Edit content.
+
+In-scope controls: A11Y-1, A11Y-2, A11Y-4, A11Y-7, A11Y-8, CMP-1, CMP-5,
+CMP-7, LAY-2, LAY-5, LAY-6, and LAY-7. No waiver is requested. CMP-1:
+asserted, no manifest — manifest absent for marketing-teacher-workspace.
+Evidence source: direct product-codebase review; the plan reuses the existing
+Button, link, and toolbar group.
+
+### Component inventory
+
+- Route: `/cms-preview` in viewing mode.
+- Components: `CmsWorkspace`, `PublicReviewMode`, and existing `Button` links.
+- Controls, in DOM order: View published; Show section context; Version history;
+  Edit content.
+- States to verify: default viewing state, section-context disclosure, keyboard
+  focus, 320px wrap, 768px alignment, and 1280px alignment.
+
+### Verification
+
+- Exact unaliased Preview:
+  `https://marketing-teacher-workspace-ix5tq9440-wondopamines-projects.vercel.app`
+- Evidence:
+  `/private/tmp/cms-view-toolbar-1280-final.png`,
+  `/private/tmp/cms-view-toolbar-768-final.png`,
+  `/private/tmp/cms-view-toolbar-360-final.png`, and
+  `/private/tmp/cms-view-toolbar-320-final.png`.
+- At 1280px, View published begins at x=24. The right group begins at x=837
+  and ends at x=1256. At 768px, all four controls remain on one row with the
+  same left/right alignment.
+- At 360px and 320px, View published keeps its natural width on the left. The
+  other three controls wrap into a right-aligned group. At 320px,
+  `scrollWidth === clientWidth === 320`, and all four targets measure 44px high.
+- Keyboard focus moves in DOM order from View published to Show section context,
+  Version history, and Edit content. Opening section context changes
+  `aria-expanded` to `true`, reveals the labelled panel, and keeps focus on Hide
+  section context.
+- The regular suite passed 54 files and 325 tests, with the database integration
+  file skipped when no test database is configured. The focused suite passed 18
+  tests. TypeScript, scoped ESLint, Prettier, token audit, static accessibility,
+  contrast, the production build, and output-boundary checks passed.
+- `type-scan` reports the existing `line-height: 1` on the decorative review-pin
+  count in `pinStyles`. Manual review confirms it is a single-line badge, not
+  body copy, so TYP-2 does not apply to that declaration.
+- Dark mode: N/A — the product does not support it.
+- Production remains unchanged.
+
+### Independent evaluator report
+
+> VERDICT: PASS
+>
+> BLOCKING: None. L0: 0; L1: 0.
+>
+> ADVISORY: None. L2: 0.
+>
+> Contract compliance:
+>
+> 1. PASS — View published is the first toolbar control and occupies the
+>    left-most position.
+> 2. PASS — Show section context, Version history, and Edit content form one
+>    right-aligned group in that DOM order.
+> 3. PASS — source review confirms a positioning-only change: existing labels,
+>    Button variants, comparison destination, disclosure state, focus behavior,
+>    and Editor/Admin control sets are unchanged.
+> 4. PASS — 320px capture preserves reading order through wrapping; supplied
+>    measurement is `scrollWidth === clientWidth === 320`, with all four targets
+>    44px high.
+>
+> Plan fidelity: PASS. The implementation matches the approved optional
+> leading-control-slot design, reuses existing controls, and introduces no
+> action, copy, async behavior, or motion.
+>
+> Quality grades:
+>
+> - Design quality: STRONG — the separated left destination and right task group
+>   establish clear hierarchy without changing meaning.
+> - Originality: STRONG — appropriate composition of established product
+>   patterns, with no unwarranted novelty.
+> - Craft: STRONG — alignment holds at 1280/768 and wraps cleanly at 360/320;
+>   the disclosure frame retains a clear visible focus state.
+> - Functionality: STRONG — DOM/tab order and section-context disclosure behavior
+>   remain complete and predictable.
+> - Dark mode: N/A — product has no dark mode.
+>
+> Control notes:
+>
+> - A11Y-1 PASS — supplied contrast scan is green; no color or variant changed.
+> - A11Y-2 PASS — all four native controls retain the shared visible focus ring;
+>   supplied keyboard traversal follows exact DOM order.
+> - A11Y-4 PASS — supplied 320px measurements show 44px-high targets.
+> - A11Y-7 PASS — the toolbar remains a labelled group, and control labels make
+>   sense independently.
+> - A11Y-8 PASS — link/button roles and names remain native; Show section context
+>   changes `aria-expanded` to `true` while revealing its labelled panel.
+> - CMP-1 PASS — existing Button, link, and toolbar-group patterns are reused.
+> - CMP-5 PASS — Edit content remains the single filled action; the other
+>   controls remain outline actions.
+> - CMP-7 PASS — design-system defaults and sibling control affordances are
+>   unchanged.
+> - LAY-2 PASS — captures at 1280, 768, 360, and 320 show intact reading order
+>   and no narrow-width clipping or horizontal scroll.
+> - LAY-5 PASS — narrow wrapping preserves usable target size without making the
+>   toolbar cramped.
+> - LAY-6 PASS — 1280/768 frames show deliberate left/right edge alignment;
+>   narrow groups align coherently after wrapping.
+> - LAY-7 PASS — Edit content remains the strongest action while View published
+>   is clearly separated as the leading destination.
+> - TYP-2 N/A to the reported scan line — `line-height: 1` belongs to a
+>   pre-existing decorative, single-line review-pin badge, not body copy.
+>
+> CMP-1: asserted, no manifest — manifest absent for
+> marketing-teacher-workspace
+>
+> Evidence source: direct product-codebase review; existing Button/link/toolbar
+> group reused.
+>
+> UNCOVERED: No uncovered product defect identified.
+>
+> Evidence reviewed: current diff and decision amendment; independently
+> enumerated toolbar controls; five supplied responsive/disclosure captures;
+> supplied DOM positions, tab order, target-size, overflow, focus, console,
+> scanner, full-suite, and build results; fresh focused rerun of
+> `cms-workspace.test.tsx` passed 13/13; `git diff --check` passed.
+>
+> Independent-review limitation: the full 54-file/325-test suite, build/scanner
+> results, production-unchanged claim, and database skip were accepted from
+> supplied evidence rather than independently rerun. Browser replay encountered
+> a session-tooling 404 at the capability endpoint; independent curl evidence
+> confirms the deployment correctly returns HTTP 303 to `/cms-preview`, so this
+> is not graded as product behavior. No files were edited.

@@ -832,15 +832,22 @@ export function CmsWorkspace({
       >
         Edit content
       </Button>
-      {state.publishedHead ? (
-        <Button asChild variant="outline" size="lg" className="min-h-11">
-          <a href={publishedComparisonHref} target="_blank" rel="noreferrer">
-            View published
-          </a>
-        </Button>
-      ) : null}
     </>
   )
+
+  const leadingControls =
+    !editing && state.publishedHead ? (
+      <Button
+        asChild
+        variant="outline"
+        size="lg"
+        className="min-h-11 self-start"
+      >
+        <a href={publishedComparisonHref} target="_blank" rel="noreferrer">
+          View published
+        </a>
+      </Button>
+    ) : null
 
   const sidePanelOpen = panelOpen || historyOpen || sectionsOpen
   const previewing = previewVersion !== null
@@ -859,6 +866,7 @@ export function CmsWorkspace({
           adminActive: adminMode,
           adminCommandOpen: adminCommandMenuOpen,
           busy,
+          leadingControls,
           controls,
           statusMessage: state.conflict
             ? "A newer draft was saved. Your changes are still here."

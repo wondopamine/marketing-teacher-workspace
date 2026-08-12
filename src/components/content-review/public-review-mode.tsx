@@ -171,6 +171,7 @@ export type ExternalReviewEditor = {
   readonly adminActive?: boolean
   readonly adminCommandOpen?: boolean
   readonly busy: boolean
+  readonly leadingControls?: React.ReactNode
   readonly controls: React.ReactNode
   readonly statusMessage: string
   readonly onAdminCommand?: () => void
@@ -585,6 +586,7 @@ export function PublicReviewMode({
                   ? readySummary
                   : "Review a section or edit the teacher copy."
   const visibleStatusMessage = externalEditor?.statusMessage ?? statusMessage
+  const leadingControls = externalEditor?.leadingControls
 
   const toggleRationale = () => {
     if (active) {
@@ -615,51 +617,64 @@ export function PublicReviewMode({
             </p>
           </div>
           <div
-            className="flex w-full flex-wrap gap-2 [&>*:last-child]:ml-auto"
+            className={
+              leadingControls
+                ? "flex w-full flex-col gap-2 sm:grid sm:grid-cols-[auto_minmax(0,1fr)]"
+                : "flex w-full flex-wrap gap-2 [&>*:last-child]:ml-auto"
+            }
             role="group"
             aria-label={
               externalEditor?.adminActive ? "Admin tools" : "Review tools"
             }
           >
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              ref={rationaleRef}
-              aria-controls="review-rationale-panel"
-              aria-expanded={panelOpen}
-              disabled={
-                editLoading || externalEditor?.active || externalEditor?.busy
+            {leadingControls}
+            <div
+              className={
+                leadingControls
+                  ? "flex min-w-0 flex-wrap justify-end gap-2"
+                  : "contents [&>*:last-child]:ml-auto"
               }
-              onClick={toggleRationale}
-              className="min-h-11 px-4"
             >
-              {externalReviewPanel
-                ? panelOpen
-                  ? "Hide section context"
-                  : "Show section context"
-                : panelOpen
-                  ? "Hide rationale"
-                  : "Show rationale"}
-            </Button>
-            {externalEditor?.controls ?? (
               <Button
                 type="button"
                 variant="outline"
                 size="lg"
-                ref={toggleRef}
-                aria-pressed={active}
-                disabled={editLoading}
-                onClick={() => (active ? deactivate() : void activate())}
-                className="min-h-11 px-4 aria-pressed:bg-foreground aria-pressed:text-background"
+                ref={rationaleRef}
+                aria-controls="review-rationale-panel"
+                aria-expanded={panelOpen}
+                disabled={
+                  editLoading || externalEditor?.active || externalEditor?.busy
+                }
+                onClick={toggleRationale}
+                className="min-h-11 px-4"
               >
-                {editLoading
-                  ? "Preparing…"
-                  : active
-                    ? "Finish editing"
-                    : "Edit content"}
+                {externalReviewPanel
+                  ? panelOpen
+                    ? "Hide section context"
+                    : "Show section context"
+                  : panelOpen
+                    ? "Hide rationale"
+                    : "Show rationale"}
               </Button>
-            )}
+              {externalEditor?.controls ?? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  ref={toggleRef}
+                  aria-pressed={active}
+                  disabled={editLoading}
+                  onClick={() => (active ? deactivate() : void activate())}
+                  className="min-h-11 px-4 aria-pressed:bg-foreground aria-pressed:text-background"
+                >
+                  {editLoading
+                    ? "Preparing…"
+                    : active
+                      ? "Finish editing"
+                      : "Edit content"}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -673,7 +688,7 @@ export function PublicReviewMode({
         }
         data-review-chrome
         hidden={!panelOpen}
-        className="order-1 z-40 min-w-0 border-b border-foreground/20 bg-background font-body text-sm lg:order-none lg:col-start-2 lg:row-start-2 lg:min-h-screen lg:border-b-0 lg:border-l"
+        className="z-40 order-1 min-w-0 border-b border-foreground/20 bg-background font-body text-sm lg:order-none lg:col-start-2 lg:row-start-2 lg:min-h-screen lg:border-b-0 lg:border-l"
       >
         <div className="lg:sticky lg:top-[calc(var(--masthead-h)+4.25rem)] lg:max-h-[calc(100vh-var(--masthead-h)-4.25rem)] lg:overflow-y-auto">
           {externalReviewPanel ? (

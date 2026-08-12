@@ -119,6 +119,22 @@ describe("CMS workspace", () => {
     mockedWriteComment.mockReset()
   })
 
+  it("places View published left of the right-aligned viewing tools", () => {
+    renderWorkspace()
+
+    const reviewTools = screen.getByRole("group", { name: "Review tools" })
+    expect(
+      Array.from(reviewTools.querySelectorAll("a, button")).map((control) =>
+        control.textContent.trim()
+      )
+    ).toEqual([
+      "View published",
+      "Show section context",
+      "Version history",
+      "Edit content",
+    ])
+  })
+
   it("supports direct editing, keyboard undo, and every finish choice", async () => {
     renderWorkspace()
 
