@@ -35,11 +35,11 @@ try {
   assert(cms.response.status === 200, "CMS mode did not serve the homepage")
   assert(
     cms.html.includes("data-teacher-preview") &&
-      cms.html.includes("Every student gets the support they qualify for") &&
-      cms.html.includes('href="https://teacher.digital.moe.gov.sg"') &&
       cms.html.includes(
-        'href="https://go.gov.sg/teacherworkspace-feedback"'
+        "Bring student support and family communication together"
       ) &&
+      cms.html.includes('href="https://teacher.digital.moe.gov.sg"') &&
+      cms.html.includes('href="https://go.gov.sg/teacherworkspace-feedback"') &&
       !cms.html.includes("paper-page"),
     "CMS mode did not serve the exact published teacher page with live public actions"
   )

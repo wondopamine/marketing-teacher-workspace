@@ -46,7 +46,7 @@ describe("ContentReviewPage", () => {
     expect(screen.getAllByRole("main")).toHaveLength(1)
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
-      "Every student gets the support they qualify for"
+      "Bring student support and family communication together"
     )
     expect(within(main).queryByRole("contentinfo")).toBeNull()
     expect(footer.closest("[data-teacher-preview]")).toBe(preview)
@@ -120,7 +120,7 @@ describe("ContentReviewPage", () => {
     ).not.toBeNull()
     expect(
       screen.getByRole("heading", {
-        name: "The family hears from you, and the record shows it.",
+        name: "Posts keeps the family message and read status together.",
       })
     ).not.toBeNull()
   })

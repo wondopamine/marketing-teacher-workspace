@@ -8,7 +8,9 @@ describe("bundled MDX sources", () => {
 
     expect(hero).toBeTypeOf("string")
     expect(hero).toContain("---")
-    expect(hero).toContain("# Every student gets the support they qualify for")
+    expect(hero).toContain(
+      "# Bring student support and family communication together"
+    )
   })
 
   it("keys every landing document by its repo-relative path", () => {
@@ -30,7 +32,8 @@ describe("bundled MDX sources", () => {
     }
 
     const headline = spans.find(
-      (span) => span.text === "Every student gets the support they qualify for"
+      (span) =>
+        span.text === "Bring student support and family communication together"
     )
     expect(headline?.file).toBe("content/landing/02-hero.mdx")
     expect(

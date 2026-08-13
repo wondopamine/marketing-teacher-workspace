@@ -6,8 +6,9 @@ Source: [GitHub issue #3](https://github.com/String-dxd/marketing-teacher-worksp
 
 ## What is locked
 
-- The page tells one connected student-care story across Student Insights, AI
-  next-step guidance, Message drafting, and Posts.
+- The page presents Teacher Workspace as a connected platform across Student
+  Insights, AI next-step guidance, Message drafting, and Posts. The bursary
+  journey is one worked example of that platform, not the whole product story.
 - The canonical review story is the ticket's bursary near-miss. The synthetic
   student "Xiao Ming" appears in every act under the guardrails in
   [ADR-0001](adr/0001-bursary-care-story-is-canonical.md). The ticket's bursary
@@ -182,12 +183,12 @@ visual proposal.
 Teacher Workspace is the sole public brand. Public capability labels map to
 stable internal IDs:
 
-| Internal ID               | Public label       |
-| ------------------------- | ------------------ |
-| `student-insights`        | Student Insights   |
+| Internal ID               | Public label          |
+| ------------------------- | --------------------- |
+| `student-insights`        | Student Insights      |
 | `contextual-intelligence` | AI next-step guidance |
-| `hey-talia`               | Message drafting   |
-| `posts`                   | Posts              |
+| `hey-talia`               | Message drafting      |
+| `posts`                   | Posts                 |
 
 `Contextual Intelligence` and `HeyTalia` are internal-only names. They must
 not appear in capability labels, public descriptions, or launch-decision copy.

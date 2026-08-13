@@ -64,7 +64,9 @@ assert(
   countMatches(reviewHtml, /<main\b/g) === 1 &&
     countMatches(reviewHtml, /<h1\b/g) === 1 &&
     reviewHtml.includes('<main id="main"') &&
-    reviewHtml.includes("Every student gets the support they qualify for"),
+    reviewHtml.includes(
+      "Bring student support and family communication together"
+    ),
   "The content-review route does not render one main landmark and one H1."
 )
 assert(
@@ -146,7 +148,7 @@ if (contentSource === "static") {
   assert(
     countMatches(homeHtml, /<title>/g) === 1 &&
       homeHtml.includes(
-        "<title>Teacher Workspace | Every student gets the support they qualify for</title>"
+        "<title>Teacher Workspace | Student support and family communication, in one place</title>"
       ) &&
       countMatches(homeHtml, /<main\b/g) === 1 &&
       countMatches(homeHtml, /<h1\b/g) === 1 &&

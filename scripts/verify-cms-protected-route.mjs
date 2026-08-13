@@ -18,12 +18,13 @@ if (!existsSync(serverEntryPath)) {
 
 const serverModule = await import(pathToFileURL(serverEntryPath).href)
 const server = serverModule.default
-assert(typeof server?.fetch === "function", "The built server handler is missing")
+assert(
+  typeof server?.fetch === "function",
+  "The built server handler is missing"
+)
 const origin = "https://cms-preview.test"
 
-const lockedResponse = await server.fetch(
-  new Request(`${origin}/cms-preview`)
-)
+const lockedResponse = await server.fetch(new Request(`${origin}/cms-preview`))
 const lockedHtml = await lockedResponse.text()
 assert(lockedResponse.status === 200, "The locked CMS route did not render")
 assert(
@@ -31,7 +32,9 @@ assert(
   "The CMS route did not stay locked without a capability cookie"
 )
 assert(
-  !lockedHtml.includes("Every student gets the support they qualify for"),
+  !lockedHtml.includes(
+    "Bring student support and family communication together"
+  ),
   "The locked CMS route exposed the stored page"
 )
 
@@ -41,7 +44,9 @@ const lockedComparisonResponse = await server.fetch(
 const lockedComparisonHtml = await lockedComparisonResponse.text()
 assert(
   lockedComparisonResponse.status === 200 &&
-    lockedComparisonHtml.includes("This comparison needs the shared edit link."),
+    lockedComparisonHtml.includes(
+      "This comparison needs the shared edit link."
+    ),
   "The published comparison did not stay locked without a capability cookie"
 )
 
@@ -71,8 +76,12 @@ const readyResponse = await server.fetch(
 const readyHtml = await readyResponse.text()
 assert(readyResponse.status === 200, "The authorised CMS route did not render")
 assert(
-  readyHtml.includes("Every student gets the support they qualify for") &&
-    readyHtml.includes("One student, carried through every moment"),
+  readyHtml.includes(
+    "Bring student support and family communication together"
+  ) &&
+    readyHtml.includes(
+      "One example: how a support need moves through Teacher Workspace"
+    ),
   "The authorised CMS route did not read the imported page"
 )
 assert(
@@ -90,7 +99,9 @@ const comparisonHtmlLower = comparisonHtml.toLowerCase()
 assert(
   comparisonResponse.status === 200 &&
     comparisonHtml.includes("Private CMS comparison") &&
-    comparisonHtml.includes("Every student gets the support they qualify for"),
+    comparisonHtml.includes(
+      "Bring student support and family communication together"
+    ),
   "The private comparison did not render the CMS publication"
 )
 assert(
@@ -129,7 +140,9 @@ if (contentSource === "static") {
   assert(
     publicResponse.status === 200 &&
       publicHtml.includes("data-teacher-preview") &&
-      publicHtml.includes("Every student gets the support they qualify for") &&
+      publicHtml.includes(
+        "Bring student support and family communication together"
+      ) &&
       !publicHtml.includes("paper-page") &&
       !publicHtml.includes("data-review-pin"),
     "The public route did not render the strict CMS publication"

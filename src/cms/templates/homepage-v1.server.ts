@@ -18,10 +18,10 @@ export const homepageV1Contract = {
   pageDocument: {
     page: {
       title:
-        "Teacher Workspace | Every student gets the support they qualify for",
+        "Teacher Workspace | Student support and family communication, in one place",
       path: "/",
       description:
-        "Teacher Workspace puts a student's full picture in one place, shows you what to do next, and keeps your message to the family on the record.",
+        "Teacher Workspace brings student context, next steps, family messages, sent posts and read status together, so teachers can follow through without switching between systems.",
       brand: "Teacher Workspace",
     },
     sections: [
@@ -31,9 +31,9 @@ export const homepageV1Contract = {
         state: "visible",
         fields: {
           eyebrow: null,
-          heading: "Every student gets the support they qualify for",
+          heading: "Bring student support and family communication together",
           body: [
-            "You see the first sign of eligibility, you help the family apply, and all of it stays on the student's record in one place.",
+            "See what is happening with a student, check what to do next, write to the family and see when the message is read.",
           ],
           action: {
             label: "Sign in with Google",
@@ -52,11 +52,12 @@ export const homepageV1Contract = {
         type: "connected-story",
         state: "visible",
         fields: {
-          heading: "One student, carried through every moment",
+          heading:
+            "One example: how a support need moves through Teacher Workspace",
           steps: [
             {
               id: "6561cfb1-bcd0-46e5-a322-7b8ea96ee6cb",
-              label: "A student in your class",
+              label: "Start with the class",
               heading: "Xiao Ming is one of thirty-two students you teach.",
               body: [
                 "His family's circumstances changed last term. The signs sit in separate systems, and none of them raises a hand.",
@@ -70,11 +71,11 @@ export const homepageV1Contract = {
             },
             {
               id: "649d7311-7b87-4efb-8daa-893b4388481e",
-              label: "You notice",
+              label: "See the context",
               heading:
                 "Xiao Ming's family may qualify for support. Nobody has applied.",
               body: [
-                "His profile shows a sibling already receiving financial assistance, household circumstances updated last term, and no bursary on file. You are reading this while the application window is still open.",
+                "His profile brings together three eligibility signals: a sibling already receiving financial assistance, household circumstances updated last term, and no bursary on file. You are reading this while the application window is still open.",
               ],
               screen: {
                 id: "9618e896-adda-4973-95e0-61c45360a2f5",
@@ -85,10 +86,11 @@ export const homepageV1Contract = {
             },
             {
               id: "9d0ccaad-0ad7-45e4-a98b-2c6a4bc8a95b",
-              label: "You know the steps",
-              heading: "The right bursary, and what it needs from the family.",
+              label: "Check the next step",
+              heading:
+                "Teacher Workspace shows the bursary and application steps.",
               body: [
-                "His profile names the scheme that fits his situation, the documents the family has to produce, where to submit them, and when the window closes. You do not have to work through the circulars or ask the teacher down the corridor.",
+                "The guidance names the matching scheme, the documents the family needs, where to submit them and when the window closes. You do not have to work through the circulars or ask another teacher.",
               ],
               screen: {
                 id: "f050b81e-c800-4013-9258-57d991041363",
@@ -104,10 +106,10 @@ export const homepageV1Contract = {
             },
             {
               id: "22bf511c-0da0-48c7-90e1-7028f8d0e49f",
-              label: "The words are ready",
-              heading: "A clear message, already drafted.",
+              label: "Prepare the message",
+              heading: "Start with a draft for the family.",
               body: [
-                "Telling a family they may qualify for support is a delicate note to write. The draft starts from his context and your tone, with the steps and documents set out plainly. You edit every word before it goes out.",
+                "Message drafting starts with Xiao Ming's context, your tone and the application steps. You review and edit every word before it goes out.",
               ],
               screen: {
                 id: "24bef79e-9103-4190-a1ba-9ac4fbfd75c5",
@@ -118,10 +120,11 @@ export const homepageV1Contract = {
             },
             {
               id: "8bb4f6d3-50f5-4e09-8f5a-3a2c932814d2",
-              label: "The family is in the loop. So is the record.",
-              heading: "The family hears from you, and the record shows it.",
+              label: "Send and follow up",
+              heading:
+                "Posts keeps the family message and read status together.",
               body: [
-                "The message reaches the family, and you can see when they have read it. The exchange stays on Xiao Ming's record: you will know when the application goes in, and when it is approved.",
+                "Send the message through Posts and see when the family has read it. You can return to the sent post when you need to follow up.",
               ],
               screen: {
                 id: "d9e36bc7-89b2-48b0-b35e-11867763d44a",
@@ -140,13 +143,13 @@ export const homepageV1Contract = {
         fields: {
           heading: "This is Teacher Workspace.",
           body: [
-            "The care in those four moments was already yours. We took out the chasing, the cross-referencing, and the drafting from scratch that used to sit between them.",
+            "Student Insights helps you understand the situation. AI next-step guidance, Message drafting and Posts help you act and contact the family.",
           ],
           asides: [
             {
               id: "c4e336ce-d699-4e9f-9818-bcfe2bbe4f4e",
               body: [
-                "Now generally available to schools across Singapore, and still shaped by the teachers who use it.",
+                "Now available to schools across Singapore. Teachers continue to shape how it works.",
               ],
             },
           ],
@@ -157,40 +160,39 @@ export const homepageV1Contract = {
         type: "capabilities",
         state: "visible",
         fields: {
-          heading: "The apps, up close",
+          heading: "What you can do in Teacher Workspace",
           items: [
             {
               id: "e3e3e742-0940-4c73-955c-7f9d1fa2eb17",
               label: "Student Insights",
-              heading: "Every signal about a student, in one profile.",
+              heading:
+                "Understand a student without piecing together several systems.",
               body: [
-                "A form teacher opens one profile and sees attendance, wellbeing notes, and family context together, including a sibling already receiving financial assistance and no bursary on file.",
+                "Open one profile to view attendance, behaviour, wellbeing and family context together. Move from the class view to the detail you need.",
               ],
             },
             {
               id: "281042b3-485f-49b4-879b-efc3eecb110a",
               label: "AI next-step guidance",
-              heading:
-                "The right process for this case, on the student's profile.",
+              heading: "Check the next step for the situation in front of you.",
               body: [
-                "A student may qualify for a bursary. The matching scheme, the documents the family needs, where to submit, and when it closes appear on his profile, so you do not have to go through the handbook.",
+                "For a bursary case, the guidance can show the matching scheme, required documents, submission route and closing date.",
               ],
             },
             {
               id: "6c083324-4ddc-4d37-a6f2-3293426df645",
               label: "Message drafting",
-              heading:
-                "A first draft from the student's context, for you to review and edit.",
+              heading: "Start with a family message you can review.",
               body: [
-                "A delicate note telling a family they may qualify for support starts drafted in your tone, with the steps laid out. You edit every word before it goes out.",
+                "Message drafting uses the student's context and your tone to prepare a first draft. You edit every word before it goes out.",
               ],
             },
             {
               id: "830154c5-0487-4ef1-82cd-d00444f27973",
               label: "Posts",
-              heading: "Reach the family and keep the communication on record.",
+              heading: "Send the message and see whether it was read.",
               body: [
-                "The message reaches the family in minutes, you can see when they have read it, and the exchange stays on the student's record.",
+                "Posts carries the message to the family and keeps the sent post, status and recipient read information together.",
               ],
             },
           ],
@@ -201,9 +203,9 @@ export const homepageV1Contract = {
         type: "close",
         state: "visible",
         fields: {
-          heading: "Noticed and handled, before tomorrow's bell.",
+          heading: "Keep the work around each student connected.",
           body: [
-            "One teacher saw the sign, knew the steps, reached the family, and has it on file. Teacher Workspace keeps that whole journey in one place.",
+            "Teacher Workspace brings student context, next-step guidance, family messages and read status into one workflow.",
           ],
           action: {
             label: "Sign in with Google",
@@ -239,17 +241,17 @@ export const homepageV1Contract = {
     targets: {
       "02e79e5c-bd01-47e5-be54-95b7c939c358": {
         designIntent:
-          "Teachers need to understand the page's value within seconds. The opening names one clear outcome, then shows where the work begins.",
+          "Teachers need to understand within seconds that Teacher Workspace covers both student support and family communication. The profile is a familiar starting point, while the copy makes clear that the work continues beyond it.",
         checks: [
-          "Does the opening promise match what Teacher Workspace can deliver today?",
-          "Can a teacher understand the main benefit without reading the rest of the page?",
+          "Does the opening describe the platform rather than one screen or one bursary case?",
+          "Can a teacher see that family communication is part of Teacher Workspace?",
         ],
       },
       "7d2140d1-15e7-4762-b3b3-17e261c85948": {
         designIntent:
-          "The student profile makes the opening promise concrete. It shows the signals, actions, and navigation in one familiar view.",
+          "The student profile is one entry point, not the whole product. It grounds the opening in Student Insights before the story moves through guidance, message drafting and Posts.",
         checks: [
-          "Does the profile support the promise made beside it?",
+          "Does the copy prevent the profile from reading as the whole platform?",
           "Could any name or detail be mistaken for real student data?",
         ],
         decisionNeeded:
@@ -257,11 +259,11 @@ export const homepageV1Contract = {
       },
       "e4a6a36b-bb0a-4977-854b-66f3db071123": {
         designIntent:
-          "One synthetic student gives the page a clear thread, so each step feels connected. The bursary journey shows the hand-off between products without using a real case. It appears before the capability list so each feature has a clear example.",
+          "The synthetic bursary case is one worked example across four parts of Teacher Workspace. It keeps the flow easy to follow without presenting Student Insights as the whole platform. It appears before the capability list so each tool has a concrete example.",
         checks: [
           "Does each step follow naturally from the one before it?",
-          "Could any name, number, or family detail be mistaken for real student data?",
-          "Does the example avoid sensitive groups, including SWaN students?",
+          "Is it clear that this is one example rather than the platform's only use?",
+          "Could any name, number, family detail or sensitive classification be mistaken for real student data?",
         ],
       },
       "74176ccd-fdee-47a2-9308-286146f2366b": {
@@ -314,25 +316,26 @@ export const homepageV1Contract = {
       },
       "fd9a7815-00b4-4a6f-8b69-c83a05b7b90d": {
         designIntent:
-          "The page names Teacher Workspace after the journey has shown its value. This pause turns the example into a clear product idea without interrupting the story early.",
+          "The reveal turns the example into a platform explanation. It names the public capabilities and shows how the work moves from understanding the student to communicating with the family.",
         checks: [
-          "Does the reveal feel earned by the story above it?",
-          "Does it describe the product without making a claim the story has not shown?",
+          "Does the reveal widen the story from one profile to the whole workflow?",
+          "Are the four public capability names accurate?",
         ],
       },
       "c8de156c-516f-4ba6-b7c4-b4ed652cb45d": {
         designIntent:
-          "After the story, this section maps each moment to a product capability. Teachers can read the list with a clear example in mind.",
+          "This section widens from one bursary case to the jobs the platform supports. Each card says what the capability does and uses the case only where it adds clarity.",
         checks: [
-          "Does every capability connect to a moment shown in the story?",
+          "Can a visitor understand that Teacher Workspace includes more than Student Insights?",
+          "Does Posts make the family-facing part of the platform clear?",
           "Are product names and claims accurate for the current release?",
         ],
       },
       "76329aa6-ea3d-4f34-b6a3-3d9a222b2df0": {
         designIntent:
-          "The closing returns to the teacher's outcome and repeats the sign-in action. It comes after the evidence, when a teacher can decide whether to continue.",
+          "The closing returns to the platform promise and repeats the sign-in action. It links student context, guidance and family communication without repeating the bursary story.",
         checks: [
-          "Does the closing reflect the journey shown above?",
+          "Does the closing describe the connected platform in plain language?",
           "Is the sign-in action correct for the release?",
         ],
       },
