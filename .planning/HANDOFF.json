@@ -1,82 +1,96 @@
 {
   "version": "1.0",
-  "timestamp": "2026-08-13T06:12:53.517Z",
+  "timestamp": "2026-08-13T14:21:50Z",
   "context": "default",
-  "phase": "platform-copy-review",
-  "phase_name": "Review and safely apply the platform-wide landing-page copy",
+  "phase": "ga-landing-wayfinder",
+  "phase_name": "Shape the Teacher Workspace GA landing page",
   "phase_dir": null,
-  "plan": null,
+  "plan": "docs/landing-page-ga-spec.md",
   "task": 1,
   "total_tasks": 2,
   "status": "paused",
   "completed_tasks": [
     {
       "id": 1,
-      "name": "Rewrite the landing page around the full Teacher Workspace platform",
+      "name": "Publish the Wayfinder map and encode the approved landing foundation",
       "status": "done",
-      "commit": "394d437"
+      "commit": null
     }
   ],
   "remaining_tasks": [
     {
       "id": 2,
-      "name": "After user approval, apply the copy as a new CMS draft and verify all existing comments remain",
-      "status": "not_started"
+      "name": "After approval inputs clear, append and verify the revised greyscale CMS wireframe",
+      "status": "blocked"
     }
   ],
   "blockers": [
     {
-      "description": "The user must review and approve the local copy before it is applied to the shared CMS candidate.",
+      "description": "GitHub issues #6 through #11 must supply approved GA claims, hero evidence, scenarios, school assurance, Posts proof, and measurement decisions.",
       "type": "human_action",
-      "workaround": "Resume with the local /content-review route or restart the production preview server from the committed branch."
+      "workaround": "Continue the three unblocked frontier tickets #6, #10, and #11 in parallel."
+    },
+    {
+      "description": "CMS_TEST_EDIT_KEY and the CMS test database configuration are not available locally.",
+      "type": "environment",
+      "workaround": "Use the configured test environment when the CMS candidate is ready; never use the shared CMS as a test substitute."
     }
   ],
-  "async_jobs": [],
   "human_actions_pending": [
     {
-      "action": "Review the revised local landing-page copy",
-      "context": "The user explicitly asked to see the copy before it is pushed into the shared CMS draft.",
+      "action": "Confirm the GA claims register with capability owners",
+      "context": "Wayfinder issue #6",
+      "blocking": true
+    },
+    {
+      "action": "Approve one Posts testimonial for public use",
+      "context": "Wayfinder issue #10",
+      "blocking": true
+    },
+    {
+      "action": "Approve anonymous measurement definitions and ownership",
+      "context": "Wayfinder issue #11",
       "blocking": true
     }
   ],
   "decisions": [
     {
-      "decision": "Present Teacher Workspace as a platform spanning Student Insights, AI next-step guidance, Message drafting, and Posts.",
-      "rationale": "The student profile is one entry point, while the landing page must also represent teacher action and family communication.",
-      "phase": "platform-copy-review"
+      "decision": "Use one compact seven-part page led by less scattered work.",
+      "rationale": "Everyday teachers need an outcome and clear task model before capability detail.",
+      "phase": "ga-landing-wayfinder"
     },
     {
-      "decision": "Keep the Xiao Ming bursary journey as one synthetic example rather than the whole product story.",
-      "rationale": "A concrete journey aids understanding without narrowing the platform to one feature or eligibility use case.",
-      "phase": "platform-copy-review"
+      "decision": "Use three separate positive synthetic scenarios after GA claims are confirmed.",
+      "rationale": "Separate scenarios avoid a fictional integrated workflow and improve public-clearance suitability.",
+      "phase": "ga-landing-wayfinder"
     },
     {
-      "decision": "Do not run cms:import, migrations, restore, publish, or a database reset for this copy update.",
-      "rationale": "Colleagues are actively adding comments. The approved copy must be appended as a new draft with the existing stable target IDs.",
-      "phase": "platform-copy-review"
+      "decision": "Reject four challenged claims unless owners record new evidence.",
+      "rationale": "The shared CMS comments challenge circular reading, automatic bursary matching, application outcome tracking, and student-context drafting.",
+      "phase": "ga-landing-wayfinder"
     },
     {
-      "decision": "Keep the released public homepage unchanged.",
-      "rationale": "This branch remains a stakeholder-review candidate until content, security, visual design, and final approval are complete.",
-      "phase": "platform-copy-review"
+      "decision": "Keep the released homepage and current CMS candidate untouched until the gates clear.",
+      "rationale": "This preserves production and all colleague feedback while the team resolves product truth.",
+      "phase": "ga-landing-wayfinder"
     }
   ],
   "uncommitted_files": [],
   "verification": {
-    "tests": "54 files passed, 1 database integration file skipped; 326 tests passed",
+    "tests": "55 files passed, 1 database integration file skipped; 335 tests passed",
     "typecheck": "passed",
-    "lint": "scoped changed TypeScript and tests passed; full lint only reported existing generated .vercel/output parser issues",
-    "format": "passed",
-    "build": "application bundle built; updated content-review route and public-output verifiers passed",
-    "comment_safety": "No stable section, field, item, screen, or review-target IDs changed. Comments are stored outside page snapshots and the repository has a dedicated integration test for retaining them through edits, reorder, archive, and restore. The dedicated local test database is not configured in this checkout."
+    "lint": "scoped changed TypeScript and tests passed",
+    "build": "passed with public-output and route-isolation checks",
+    "cms_read_path": "not run: CMS_TEST_EDIT_KEY is unavailable",
+    "cms_public_source": "not run: CMS test database configuration is unavailable",
+    "comment_safety": "No CMS save, comment write, stable-ID change, publish, restore, import, migration, reset, or production alias change was performed."
   },
   "infrastructure": {
-    "local_preview": "Stop the local preview before restart. Resume with pnpm exec vite preview --port 3000 --host 127.0.0.1 after a successful build.",
-    "preview_route": "http://localhost:3000/content-review",
-    "shared_cms": "Untouched. No import, migration, save, restore, publish, or comment write was performed.",
-    "production": "Untouched. The released homepage remains on the existing source.",
+    "wayfinder_map": "https://github.com/String-dxd/marketing-teacher-workspace/issues/5",
+    "shared_cms": "Untouched",
+    "production": "Untouched",
     "node_note": "Repository requests Node 24.x; verification ran under Node 25.9.0."
   },
-  "next_action": "Ask whether the revised copy is approved. If approved, take a read-only baseline of existing comment IDs, apply the copy through one append-only CMS draft save with the current head and unchanged stable IDs, then prove every baseline comment still exists before deploying a fresh branch preview. Do not run cms:import.",
-  "context_notes": "Humanizer and the TFX copy skill were applied. Source MDX, the CMS homepage template, reviewer rationale, copy tests, and route verification strings are aligned. The shared CMS database still contains the previously saved copy because source template changes do not mutate an existing CMS page."
+  "next_action": "Resolve #6, #10, and #11. Do not edit or save the revised CMS candidate before the approved inputs clear the dependency gates.",
+  "context_notes": "The TFX copy and design guidance shaped the specification. The current bursary candidate remains available only as historical review material with preserved comments."
 }

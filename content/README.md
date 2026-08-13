@@ -1,5 +1,11 @@
 # Landing page content
 
+> **Current review state:** These files still describe the existing CMS
+> candidate so its stable targets and colleague comments remain intact. The
+> next candidate follows `docs/landing-page-ga-spec.md` and must not be written
+> here or saved to the CMS until the GA claims and dependent inputs are
+> approved.
+
 Every word on the Teacher Workspace landing page and on the `/content-review`
 wireframe lives in this folder. Edit the `.mdx` files here and the page follows.
 You never need to touch TypeScript.

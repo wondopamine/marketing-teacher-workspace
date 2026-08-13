@@ -684,14 +684,16 @@ function buildAppendix(
     },
     measurement: {
       providerStrategy: "Provider-neutral",
-      engagementOwner: "Marketing surface",
-      conversionProxyOwner: "Marketing surface",
-      trueConversionOwner: "Product/auth surface",
+      primaryOwner: "Marketing surface",
+      secondaryOwner: "Marketing surface",
       unresolvedDecisions: [
-        "Cross-domain correlation",
+        "CTA conversion denominator",
+        "Section-reach thresholds",
+        "Capability-engagement definition",
+        "Analytics owner",
+        "Reporting cadence",
         "Consent",
         "Retention",
-        "Event delivery",
       ],
       allowedFields:
         landingPageV2MeasurementPlan.payloadPolicy.allowlistedFields.map(

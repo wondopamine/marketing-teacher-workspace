@@ -277,56 +277,32 @@ export type LandingPageV2Publication = {
 }
 
 export type LandingPageV2MeasurementPlan = {
+  readonly status: "pending-approval" | "approved"
   readonly providerStrategy: "provider-neutral"
-  readonly objectives: readonly ["engagement", "conversion"]
-  readonly engagement: {
-    readonly scroll: {
-      readonly event: "scroll-milestone"
+  readonly primary: {
+    readonly objective: "anonymous-sign-in-cta-conversion"
+    readonly event: "primary-cta-selected"
+    readonly owner: "marketing-surface"
+    readonly placements: readonly ["hero", "close"]
+    readonly denominator: string | null
+  }
+  readonly secondary: {
+    readonly sectionReach: {
+      readonly event: "section-reached"
       readonly owner: "marketing-surface"
-      readonly milestones: readonly [25, 50, 75, 100]
+      readonly thresholds: ReadonlyArray<number> | null
     }
-    readonly explorer: {
+    readonly capabilityEngagement: {
+      readonly event: "capability-engaged"
       readonly owner: "marketing-surface"
-      readonly events: readonly [
-        {
-          readonly event: "explorer-scenario-selected"
-          readonly step: "choose-scenario"
-        },
-        {
-          readonly event: "explorer-connected-context-inspected"
-          readonly step: "inspect-connected-context"
-        },
-        {
-          readonly event: "explorer-resulting-action-previewed"
-          readonly step: "preview-resulting-action"
-        },
-      ]
+      readonly definition: string | null
     }
   }
-  readonly conversion: {
-    readonly proxy: {
-      readonly event: "primary-cta-selected"
-      readonly owner: "marketing-surface"
-      readonly classification: "interim-proxy"
-      readonly placements: readonly ["hero", "close"]
-    }
-    readonly true: {
-      readonly event: "product-access-completed"
-      readonly owner: "product-auth-surface"
-      readonly identityProvider: "google"
-      readonly outcomes: readonly ["sign-in", "sign-up"]
-      readonly crossDomainAttribution: {
-        readonly required: true
-        readonly purpose: "associate-product-access-with-landing-journey"
-      }
-    }
-  }
+  readonly analyticsOwner: string | null
+  readonly reportingCadence: string | null
   readonly payloadPolicy: {
-    readonly allowlistedFields: readonly [
-      "journey-id",
-      "placement",
-      "synthetic-scenario-id",
-    ]
+    readonly anonymousOnly: true
+    readonly allowlistedFields: readonly ["anonymous-session-id", "placement"]
     readonly prohibitedFields: readonly [
       "student-data",
       "testimonial-text",
@@ -649,52 +625,32 @@ export const landingPageV2Publication = {
 } as const satisfies LandingPageV2Publication
 
 export const landingPageV2MeasurementPlan = {
+  status: "pending-approval",
   providerStrategy: "provider-neutral",
-  objectives: ["engagement", "conversion"],
-  engagement: {
-    scroll: {
-      event: "scroll-milestone",
+  primary: {
+    objective: "anonymous-sign-in-cta-conversion",
+    event: "primary-cta-selected",
+    owner: "marketing-surface",
+    placements: ["hero", "close"],
+    denominator: null,
+  },
+  secondary: {
+    sectionReach: {
+      event: "section-reached",
       owner: "marketing-surface",
-      milestones: [25, 50, 75, 100],
+      thresholds: null,
     },
-    explorer: {
+    capabilityEngagement: {
+      event: "capability-engaged",
       owner: "marketing-surface",
-      events: [
-        {
-          event: "explorer-scenario-selected",
-          step: "choose-scenario",
-        },
-        {
-          event: "explorer-connected-context-inspected",
-          step: "inspect-connected-context",
-        },
-        {
-          event: "explorer-resulting-action-previewed",
-          step: "preview-resulting-action",
-        },
-      ],
+      definition: null,
     },
   },
-  conversion: {
-    proxy: {
-      event: "primary-cta-selected",
-      owner: "marketing-surface",
-      classification: "interim-proxy",
-      placements: ["hero", "close"],
-    },
-    true: {
-      event: "product-access-completed",
-      owner: "product-auth-surface",
-      identityProvider: "google",
-      outcomes: ["sign-in", "sign-up"],
-      crossDomainAttribution: {
-        required: true,
-        purpose: "associate-product-access-with-landing-journey",
-      },
-    },
-  },
+  analyticsOwner: null,
+  reportingCadence: null,
   payloadPolicy: {
-    allowlistedFields: ["journey-id", "placement", "synthetic-scenario-id"],
+    anonymousOnly: true,
+    allowlistedFields: ["anonymous-session-id", "placement"],
     prohibitedFields: [
       "student-data",
       "testimonial-text",

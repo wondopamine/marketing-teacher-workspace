@@ -1,10 +1,20 @@
 # Landing page v2 foundations
 
-Status: The PM-facing content-review wireframe exists. Launch decisions remain open.
+Status: The PM-facing content-review wireframe exists, but its bursary candidate
+is superseded. Use [the GA landing-page specification](landing-page-ga-spec.md)
+for the next candidate. Launch decisions remain open.
 
 Source: [GitHub issue #3](https://github.com/String-dxd/marketing-teacher-workspace/issues/3)
 
-## What is locked
+## Historical v2 contract
+
+The sections below document the current review candidate and its code
+boundaries. They remain useful for preserving stable IDs and CMS comments, but
+they no longer define the next content direction. ADR-0004 replaces the
+single-student bursary journey with three separate positive scenarios after GA
+claims are confirmed.
+
+## What was locked for the current candidate
 
 - The page presents Teacher Workspace as a connected platform across Student
   Insights, AI next-step guidance, Message drafting, and Posts. The bursary
@@ -262,33 +272,23 @@ or approval.
 
 ## Measurement and integration contract
 
-Measurement should show whether teachers understand the story and reach the
-product. The contract stays independent of any analytics provider.
+Measurement should show whether anonymous visitors understand the page and
+choose the Google sign-in action. The contract stays independent of any
+analytics provider.
 
-| Classification  | Event                                  | Source surface | Required detail                       |
-| --------------- | -------------------------------------- | -------------- | ------------------------------------- |
-| Engagement      | `scroll-milestone`                     | Marketing      | `25`, `50`, `75`, or `100`            |
-| Engagement      | `explorer-scenario-selected`           | Marketing      | Synthetic scenario ID                 |
-| Engagement      | `explorer-connected-context-inspected` | Marketing      | Synthetic scenario ID                 |
-| Engagement      | `explorer-resulting-action-previewed`  | Marketing      | Synthetic scenario ID                 |
-| Interim proxy   | `primary-cta-selected`                 | Marketing      | `hero` or `close` placement           |
-| True conversion | `product-access-completed`             | Product/auth   | Google `sign-in` or `sign-up` outcome |
+| Priority | Event | Source surface | Decision still required |
+| --- | --- | --- | --- |
+| Primary | `primary-cta-selected` | Marketing | Eligible anonymous-session denominator |
+| Secondary | `section-reached` | Marketing | Reach thresholds |
+| Secondary | `capability-engaged` | Marketing | Engagement definition |
 
-CTA selection shows intent on the marketing surface. It is not a completed
-product access event.
-
-The product/auth surface owns `product-access-completed`. Cross-domain
-attribution is required to associate that event with a landing journey.
-
-Before implementation, approve the correlation, consent, retention, and event
-delivery contract. The event pipeline must honour that contract across both
-surfaces.
+Before implementation, approve the analytics owner, reporting cadence,
+consent, retention, denominator, thresholds, and event definitions.
 
 Event payloads may contain only these allowlisted fields:
 
-- journey ID;
-- CTA placement;
-- synthetic scenario ID.
+- anonymous session ID;
+- CTA placement.
 
 Event payloads must never send these values back to the marketing site:
 
@@ -302,9 +302,8 @@ Event payloads must never send these values back to the marketing site:
 The marketing repository consumes the existing product/auth link. It defines
 portable event names, ownership, and integration requirements.
 
-The product/auth system owns OAuth and completed-access emission. Approved
-platform services own cross-domain identity, analytics-provider initialisation,
-persistence, and backend processing.
+The product/auth system owns OAuth and access. Approved platform services own
+analytics-provider initialisation, persistence, and backend processing.
 
 The marketing repository has no auth flow, analytics runtime, endpoint,
 environment variable, persistence, or backend for this contract.

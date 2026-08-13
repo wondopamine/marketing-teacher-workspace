@@ -1,5 +1,10 @@
 # The bursary care story is canonical again
 
+Status: Superseded by [ADR-0004](0004-use-three-positive-ga-verified-scenarios.md) on 2026-08-13.
+
+This file records the earlier decision. Do not use it as the direction for the
+next CMS candidate.
+
 The GA landing page tells issue #3's bursary near-miss story, synthetic student "Xiao Ming", family eligibility spotted before the application window closed, as the canonical five-act narrative. This reverses the 2026-08-04 brainstorm decision that made the positive-growth story canonical and the financial-assistance story non-canonical.
 
 The reversal exists because the original substitution resolved a **data** problem as a **narrative** problem. The real blocker was the ticket's screenshot containing real-looking student names: a publication rule about one asset, which synthetic content already solves. The brainstorm's R9 bans deficit-framed stories (bullying, discipline, crisis) and requires framing through "growth, opportunity, **support**, and potential"; a support-eligibility story is on the allowed list. Meanwhile the growth story structurally could not carry the PM's stated angle, a near-miss averted ("you spotted it before the window closed, not after"), because nothing in it was at risk.

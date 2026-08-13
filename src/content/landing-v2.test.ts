@@ -312,54 +312,34 @@ describe("Landing Page v2 content contract", () => {
     )
   })
 
-  it("defines provider-neutral engagement, proxy, and true-conversion semantics", () => {
+  it("defines provider-neutral anonymous conversion and comprehension semantics", () => {
     expect(landingPageV2MeasurementPlan).toEqual({
+      status: "pending-approval",
       providerStrategy: "provider-neutral",
-      objectives: ["engagement", "conversion"],
-      engagement: {
-        scroll: {
-          event: "scroll-milestone",
+      primary: {
+        objective: "anonymous-sign-in-cta-conversion",
+        event: "primary-cta-selected",
+        owner: "marketing-surface",
+        placements: ["hero", "close"],
+        denominator: null,
+      },
+      secondary: {
+        sectionReach: {
+          event: "section-reached",
           owner: "marketing-surface",
-          milestones: [25, 50, 75, 100],
+          thresholds: null,
         },
-        explorer: {
+        capabilityEngagement: {
+          event: "capability-engaged",
           owner: "marketing-surface",
-          events: [
-            {
-              event: "explorer-scenario-selected",
-              step: "choose-scenario",
-            },
-            {
-              event: "explorer-connected-context-inspected",
-              step: "inspect-connected-context",
-            },
-            {
-              event: "explorer-resulting-action-previewed",
-              step: "preview-resulting-action",
-            },
-          ],
+          definition: null,
         },
       },
-      conversion: {
-        proxy: {
-          event: "primary-cta-selected",
-          owner: "marketing-surface",
-          classification: "interim-proxy",
-          placements: ["hero", "close"],
-        },
-        true: {
-          event: "product-access-completed",
-          owner: "product-auth-surface",
-          identityProvider: "google",
-          outcomes: ["sign-in", "sign-up"],
-          crossDomainAttribution: {
-            required: true,
-            purpose: "associate-product-access-with-landing-journey",
-          },
-        },
-      },
+      analyticsOwner: null,
+      reportingCadence: null,
       payloadPolicy: {
-        allowlistedFields: ["journey-id", "placement", "synthetic-scenario-id"],
+        anonymousOnly: true,
+        allowlistedFields: ["anonymous-session-id", "placement"],
         prohibitedFields: [
           "student-data",
           "testimonial-text",
@@ -926,14 +906,11 @@ describe("Landing Page v2 content contract", () => {
         "preview-resulting-action",
       ]
     >()
-    expectTypeOf(landingPageV2MeasurementPlan.objectives).toEqualTypeOf<
-      readonly ["engagement", "conversion"]
+    expectTypeOf(landingPageV2MeasurementPlan.primary.placements).toEqualTypeOf<
+      readonly ["hero", "close"]
     >()
     expectTypeOf(
-      landingPageV2MeasurementPlan.engagement.scroll.milestones
-    ).toEqualTypeOf<readonly [25, 50, 75, 100]>()
-    expectTypeOf(
-      landingPageV2MeasurementPlan.conversion.true.outcomes
-    ).toEqualTypeOf<readonly ["sign-in", "sign-up"]>()
+      landingPageV2MeasurementPlan.payloadPolicy.allowlistedFields
+    ).toEqualTypeOf<readonly ["anonymous-session-id", "placement"]>()
   })
 })

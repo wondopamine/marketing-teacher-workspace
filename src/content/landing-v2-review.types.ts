@@ -122,9 +122,8 @@ export type ContentReviewAppendixDto = {
   }
   readonly measurement: {
     readonly providerStrategy: string
-    readonly engagementOwner: string
-    readonly conversionProxyOwner: string
-    readonly trueConversionOwner: string
+    readonly primaryOwner: string
+    readonly secondaryOwner: string
     readonly unresolvedDecisions: ReadonlyArray<string>
     readonly allowedFields: ReadonlyArray<string>
     readonly prohibitedFields: ReadonlyArray<string>
