@@ -1,149 +1,82 @@
 {
   "version": "1.0",
-  "timestamp": "2026-08-11T15:31:06Z",
+  "timestamp": "2026-08-13T06:12:53.517Z",
   "context": "default",
-  "phase": "phase-1-replacement-document",
-  "phase_name": "Freeze the replacement teacher-preview document",
+  "phase": "platform-copy-review",
+  "phase_name": "Review and safely apply the platform-wide landing-page copy",
   "phase_dir": null,
-  "plan": "docs/plans/2026-08-11-001-feat-link-shared-content-cms-plan.md",
+  "plan": null,
   "task": 1,
-  "total_tasks": 5,
+  "total_tasks": 2,
   "status": "paused",
   "completed_tasks": [
     {
       "id": 1,
-      "name": "Define a validated teacher-facing document and server-only identities",
-      "status": "done"
-    },
-    {
-      "id": 2,
-      "name": "Refactor /content-review to render through the document adapter",
-      "status": "done"
-    },
-    {
-      "id": 3,
-      "name": "Add recursive projection and public-route boundary tests",
-      "status": "done"
-    },
-    {
-      "id": 4,
-      "name": "Verify the app at 320, 768, and 1280 pixels",
-      "status": "done"
-    },
-    {
-      "id": 5,
-      "name": "Run full tests, typecheck, lint, build, and postbuild guards",
-      "status": "done"
+      "name": "Rewrite the landing page around the full Teacher Workspace platform",
+      "status": "done",
+      "commit": "394d437"
     }
   ],
   "remaining_tasks": [
     {
-      "id": 6,
-      "name": "Add the PostgreSQL/Drizzle snapshot persistence foundation",
-      "status": "not_started"
-    },
-    {
-      "id": 7,
-      "name": "Implement draft save, undo, history, restore, and publish",
-      "status": "not_started"
-    },
-    {
-      "id": 8,
-      "name": "Move direct editing into an immutable editor model",
-      "status": "not_started"
-    },
-    {
-      "id": 9,
-      "name": "Add stable review targets and durable comments",
-      "status": "not_started"
-    },
-    {
-      "id": 10,
-      "name": "Cut over / only after shadow checks pass",
+      "id": 2,
+      "name": "After user approval, apply the copy as a new CMS draft and verify all existing comments remain",
       "status": "not_started"
     }
   ],
   "blockers": [
     {
-      "description": "The saved GitHub CLI token is invalid, so the Wayfinder issue/map could not be published.",
+      "description": "The user must review and approve the local copy before it is applied to the shared CMS candidate.",
       "type": "human_action",
-      "workaround": "Run gh auth login, then publish the Wayfinder map before the next planning review."
-    },
-    {
-      "description": "No PostgreSQL/Drizzle runtime or database credentials are configured in this checkout.",
-      "type": "external",
-      "workaround": "Choose the deployment database/runtime and add validated environment configuration at the start of the persistence phase."
+      "workaround": "Resume with the local /content-review route or restart the production preview server from the committed branch."
     }
   ],
   "async_jobs": [],
   "human_actions_pending": [
     {
-      "action": "Re-authenticate GitHub CLI",
-      "context": "Required only to publish the Wayfinder planning issue/map.",
-      "blocking": false
-    },
-    {
-      "action": "Provide or configure the PostgreSQL deployment database before persistence work",
-      "context": "The next CMS phase needs a real database for migration and concurrency tests.",
+      "action": "Review the revised local landing-page copy",
+      "context": "The user explicitly asked to see the copy before it is pushed into the shared CMS draft.",
       "blocking": true
     }
   ],
   "decisions": [
     {
-      "decision": "Keep the released / route unchanged until the replacement is ready.",
-      "rationale": "The new CMS preview must prove parity and safety before public cutover.",
-      "phase": "phase-1-replacement-document"
+      "decision": "Present Teacher Workspace as a platform spanning Student Insights, AI next-step guidance, Message drafting, and Posts.",
+      "rationale": "The student profile is one entry point, while the landing page must also represent teacher action and family communication.",
+      "phase": "platform-copy-review"
     },
     {
-      "decision": "Render /content-review from one typed teacher-facing document.",
-      "rationale": "Copy, section order, and product screenshots must not come from separate route-local graphs.",
-      "phase": "phase-1-replacement-document"
+      "decision": "Keep the Xiao Ming bursary journey as one synthetic example rather than the whole product story.",
+      "rationale": "A concrete journey aids understanding without narrowing the platform to one feature or eligibility use case.",
+      "phase": "platform-copy-review"
     },
     {
-      "decision": "Keep CMS IDs, review rationale, governance, and destinations server-only.",
-      "rationale": "The teacher preview must contain teacher content only, and hydration must not expose internal identity or reviewer material.",
-      "phase": "phase-1-replacement-document"
+      "decision": "Do not run cms:import, migrations, restore, publish, or a database reset for this copy update.",
+      "rationale": "Colleagues are actively adding comments. The approved copy must be appended as a new draft with the existing stable target IDs.",
+      "phase": "platform-copy-review"
     },
     {
-      "decision": "Pair story copy and screenshots by semantic server-only bindings.",
-      "rationale": "Reordering source records must not silently attach the wrong screen to a story step.",
-      "phase": "phase-1-replacement-document"
-    },
-    {
-      "decision": "Use bounded section layouts rather than a free-form website builder.",
-      "rationale": "This release needs a safe CMS-shaped editing path without making layout authoring a separate product.",
-      "phase": "phase-1-replacement-document"
+      "decision": "Keep the released public homepage unchanged.",
+      "rationale": "This branch remains a stakeholder-review candidate until content, security, visual design, and final approval are complete.",
+      "phase": "platform-copy-review"
     }
   ],
-  "uncommitted_files": [
-    ".continue-here.md",
-    ".planning/HANDOFF.json",
-    "scripts/verify-content-review-public-output.mjs",
-    "scripts/verify-content-review-public-output.boundary.test.mjs",
-    "src/components/content-review/content-review-outline.tsx",
-    "src/components/content-review/content-review-page.test.tsx",
-    "src/components/content-review/content-review-page.tsx",
-    "src/components/content-review/review-annotations.tsx",
-    "src/content/teacher-preview-document.server.test.ts",
-    "src/content/teacher-preview-document.server.ts",
-    "src/content/teacher-preview-document.test.ts",
-    "src/content/teacher-preview-document.ts",
-    "src/content/teacher-preview-screen-catalog.server.ts",
-    "src/routes/-content-review.boundary.test.ts",
-    "src/server/content-review.ts"
-  ],
+  "uncommitted_files": [],
   "verification": {
-    "tests": "233 tests passed",
+    "tests": "54 files passed, 1 database integration file skipped; 326 tests passed",
     "typecheck": "passed",
-    "lint": "passed",
-    "build": "passed",
-    "postbuild": "content-review output and / isolation guards passed",
-    "browser": "No horizontal overflow at 320, 768, or 1280px; one main and one H1; canonical section order present"
+    "lint": "scoped changed TypeScript and tests passed; full lint only reported existing generated .vercel/output parser issues",
+    "format": "passed",
+    "build": "application bundle built; updated content-review route and public-output verifiers passed",
+    "comment_safety": "No stable section, field, item, screen, or review-target IDs changed. Comments are stored outside page snapshots and the repository has a dedicated integration test for retaining them through edits, reorder, archive, and restore. The dedicated local test database is not configured in this checkout."
   },
   "infrastructure": {
-    "dev_server": "Existing workspace server remains available at http://localhost:3000; temporary port 3002 server was stopped.",
-    "node_note": "Repository requests Node 24.x; verification ran under Node 25.9.0 and passed."
+    "local_preview": "Stop the local preview before restart. Resume with pnpm exec vite preview --port 3000 --host 127.0.0.1 after a successful build.",
+    "preview_route": "http://localhost:3000/content-review",
+    "shared_cms": "Untouched. No import, migration, save, restore, publish, or comment write was performed.",
+    "production": "Untouched. The released homepage remains on the existing source.",
+    "node_note": "Repository requests Node 24.x; verification ran under Node 25.9.0."
   },
-  "next_action": "Start the persistence phase by inspecting the deployment database options and adding a validated PostgreSQL/Drizzle schema without touching the released / route.",
-  "context_notes": "The first safe slice is complete. Do not claim Save, undo, version history, restore, publishing, or durable comments exist yet; those are later phases. The existing review panel and direct-edit prototype remain in place while the CMS model is built behind the replacement preview."
+  "next_action": "Ask whether the revised copy is approved. If approved, take a read-only baseline of existing comment IDs, apply the copy through one append-only CMS draft save with the current head and unchanged stable IDs, then prove every baseline comment still exists before deploying a fresh branch preview. Do not run cms:import.",
+  "context_notes": "Humanizer and the TFX copy skill were applied. Source MDX, the CMS homepage template, reviewer rationale, copy tests, and route verification strings are aligned. The shared CMS database still contains the previously saved copy because source template changes do not mutate an existing CMS page."
 }
