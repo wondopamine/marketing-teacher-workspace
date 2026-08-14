@@ -297,8 +297,8 @@ else
     warn "got HTTP $code — if protection was just disabled, wait a moment and re-check"
     SKIPPED+=("verify $NEW_URL/content-review returns 200")
   fi
-  if curl -s --max-time 20 "$NEW_URL/content-review" 2>/dev/null | grep -q "Bring student support and family communication together"; then
-    printf '  %s✓%s the care-journey story is live on this preview\n' "$GREEN" "$RESET"
+  if curl -s --max-time 20 "$NEW_URL/content-review" 2>/dev/null | grep -q "See what is changing. Know what to do next."; then
+    printf '  %s✓%s the seven-part GA narrative is live on this preview\n' "$GREEN" "$RESET"
   fi
   write_env REVIEW_SHARE_URL "$NEW_URL/content-review"
   printf '\n  %sShare this link with reviewers:%s\n' "$BOLD" "$RESET"

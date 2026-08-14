@@ -82,6 +82,11 @@ export const contentReviewChrome = {
   pendingLabel: wireframe.text("pendingLabel"),
   pendingNote: itemBody(wireframe, wireframe.item("pending-note")),
   story: sectionChrome(story),
+  narrative: {
+    noticeHeading: story.text("noticeHeading"),
+    actHeading: story.text("actHeading"),
+    communicateHeading: story.text("communicateHeading"),
+  },
   revealLabel: reveal.text("label"),
   capabilities: sectionChrome(capabilities),
   audiences: {

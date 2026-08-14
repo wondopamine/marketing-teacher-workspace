@@ -16,9 +16,12 @@ export type ReviewAnnotation = {
 
 export const reviewAnnotationBindings = {
   accessSupport: "access-support-overview",
-  capabilities: "capabilities-overview",
+  capabilities: "capability-map-overview",
   heroScreen: "screen-hero",
-  story: "story-overview",
+  notice: "notice-and-understand-overview",
+  act: "act-overview",
+  communicate: "communicate-overview",
+  schoolConsistency: "school-consistency-overview",
   storyScreens: [
     "screen-story-promise",
     "screen-story-notice",
@@ -47,35 +50,68 @@ export const reviewAnnotations: ReadonlyArray<ReviewAnnotation> = [
     contentReviewScreens.hero
   ),
   {
-    id: reviewAnnotationBindings.story,
-    title: contentReviewChrome.story.label ?? "Story rationale",
-    rationale: contentReviewChrome.story.intro ?? "",
-    details: [],
-    pending: null,
+    id: reviewAnnotationBindings.capabilities,
+    title: contentReviewChrome.capabilities.label ?? "Capability map",
+    rationale: contentReviewChrome.capabilities.intro ?? "",
+    details: [
+      "Student Insights",
+      "AI next-step guidance",
+      "Message drafting",
+      "Posts",
+    ],
+    pending: "Capability owners must confirm each public behaviour.",
   },
-  ...contentReviewScreens.story.map((screen, index) =>
-    screenAnnotation(reviewAnnotationBindings.storyScreens[index], screen)
+  {
+    id: reviewAnnotationBindings.notice,
+    title: contentReviewChrome.narrative.noticeHeading,
+    rationale:
+      "Use one positive, synthetic Student Insights moment. A positive tag and recent observations should be the visual focus.",
+    details: ["Positive framing", "Synthetic data", "Teacher interpretation"],
+    pending: "Student Insights must confirm the positive state shown at GA.",
+  },
+  ...contentReviewScreens.story
+    .slice(0, 2)
+    .map((screen, index) =>
+      screenAnnotation(reviewAnnotationBindings.storyScreens[index], screen)
+    ),
+  {
+    id: reviewAnnotationBindings.act,
+    title: contentReviewChrome.narrative.actHeading,
+    rationale:
+      "Use a separate positive task so the page does not invent a hand-off from Student Insights to AI guidance.",
+    details: ["Separate scenario", "Possible next step", "Teacher decision"],
+    pending:
+      "The capability owner must confirm the GA guidance task and output.",
+  },
+  screenAnnotation(
+    reviewAnnotationBindings.storyScreens[2],
+    contentReviewScreens.story[2]
   ),
   {
-    id: reviewAnnotationBindings.capabilities,
-    title: contentReviewChrome.capabilities.label ?? "Capability rationale",
-    rationale: contentReviewChrome.capabilities.intro ?? "",
-    details: [],
-    pending: null,
+    id: reviewAnnotationBindings.communicate,
+    title: contentReviewChrome.narrative.communicateHeading,
+    rationale:
+      "Use a separate positive communication moment. Show teacher review before publishing and only approved Posts delivery information.",
+    details: ["Editable draft", "Teacher review", "Posts delivery state"],
+    pending:
+      "Message drafting and Posts owners must confirm the public GA behaviour. The testimonial remains omitted until approved.",
   },
+  ...contentReviewScreens.story
+    .slice(3, 5)
+    .map((screen, index) =>
+      screenAnnotation(reviewAnnotationBindings.storyScreens[index + 3], screen)
+    ),
   {
-    id: "audiences-overview",
-    title: contentReviewChrome.audiences.label ?? "Audience review",
-    rationale: contentReviewChrome.audiences.pendingNote,
-    details: ["Form Teachers", "Key Personnel", "School Leaders"],
-    pending: "Each audience still needs an approved question and answer.",
-  },
-  {
-    id: "proof-overview",
-    title: contentReviewChrome.proof.label ?? "Proof review",
-    rationale: contentReviewChrome.proof.intro ?? "",
-    details: [],
-    pending: contentReviewChrome.proof.pendingLabel,
+    id: reviewAnnotationBindings.schoolConsistency,
+    title: contentReviewChrome.revealLabel,
+    rationale:
+      "Explain the organisational value for Key Personnel and School Leaders without moving the page away from everyday teachers.",
+    details: [
+      "Consistent school practice",
+      "Teacher professional judgement",
+      "Approved access and data language",
+    ],
+    pending: "Policy, security, and product owners must approve the assurance.",
   },
   {
     id: reviewAnnotationBindings.accessSupport,
@@ -89,6 +125,34 @@ export const reviewAnnotations: ReadonlyArray<ReviewAnnotation> = [
     pending: contentReviewChrome.accessSupport.pendingLabel,
   },
 ]
+
+export const staticReviewTargets = [
+  {
+    sectionId: "",
+    screenIds: [reviewAnnotationBindings.heroScreen],
+  },
+  {
+    sectionId: reviewAnnotationBindings.capabilities,
+    screenIds: [],
+  },
+  {
+    sectionId: reviewAnnotationBindings.notice,
+    screenIds: reviewAnnotationBindings.storyScreens.slice(0, 2),
+  },
+  {
+    sectionId: reviewAnnotationBindings.act,
+    screenIds: reviewAnnotationBindings.storyScreens.slice(2, 3),
+  },
+  {
+    sectionId: reviewAnnotationBindings.communicate,
+    screenIds: reviewAnnotationBindings.storyScreens.slice(3, 5),
+  },
+  {
+    sectionId: reviewAnnotationBindings.schoolConsistency,
+    screenIds: [],
+  },
+  { sectionId: "", screenIds: [] },
+] as const
 
 type ReviewAnnotationContextValue = {
   readonly annotations: ReadonlyMap<string, ReviewAnnotation>

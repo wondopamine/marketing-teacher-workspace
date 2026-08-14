@@ -46,7 +46,7 @@ describe("ContentReviewPage", () => {
     expect(screen.getAllByRole("main")).toHaveLength(1)
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
-      "Bring student support and family communication together"
+      "See what is changing. Know what to do next."
     )
     expect(within(main).queryByRole("contentinfo")).toBeNull()
     expect(footer.closest("[data-teacher-preview]")).toBe(preview)
@@ -65,11 +65,12 @@ describe("ContentReviewPage", () => {
 
     expect(data.document.sections.map((section) => section.kind)).toEqual([
       "promise",
+      "capabilities",
+      "connected-story",
+      "connected-story",
       "connected-story",
       "reveal",
-      "capabilities",
       "close",
-      "access-support",
     ])
     expect(data.document.brand).toBe("Teacher Workspace")
     expect(data.document.footer.brand).toBe("Teacher Workspace")
@@ -83,8 +84,8 @@ describe("ContentReviewPage", () => {
     expect(preview).not.toBeNull()
     if (!preview) return
 
-    expect(preview.textContent).not.toContain("Proposed interface")
-    expect(preview.textContent).not.toContain("Story flow")
+    expect(preview.textContent).toContain("Proposed interface")
+    expect(preview.textContent).not.toContain("Story rationale")
     expect(preview.textContent).not.toContain(
       "The page follows one synthetic student through a single care journey"
     )
@@ -115,49 +116,45 @@ describe("ContentReviewPage", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Xiao Ming's family may qualify for support. Nobody has applied.",
+        name: "A student is contributing with growing confidence.",
       })
     ).not.toBeNull()
     expect(
       screen.getByRole("heading", {
-        name: "Posts keeps the family message and read status together.",
+        name: "Share the approved update through Posts.",
       })
     ).not.toBeNull()
   })
 
-  it("shows six actual product screens with their teacher-facing breadcrumbs", () => {
+  it("shows six aligned interface briefs with their product locations", () => {
     const { container, data } = renderReadyReviewPage()
     const figures = Array.from(
       container.querySelectorAll("[data-product-screen]")
     )
-    const images = Array.from(
-      container.querySelectorAll<HTMLImageElement>("[data-product-screen] img")
+    const briefs = Array.from(
+      container.querySelectorAll("[data-interface-brief]")
     )
     const locations = screen.getAllByRole("navigation", {
       name: "Product location",
     })
-    const fullSizeLinks = screen.getAllByRole("link", {
-      name: /screen at full size$/,
-    })
     const hero = data.document.sections.find(
       (section) => section.kind === "promise"
     )
-    const story = data.document.sections.find(
+    const stories = data.document.sections.filter(
       (section) => section.kind === "connected-story"
     )
-    if (hero?.kind !== "promise" || story?.kind !== "connected-story") {
-      throw new Error("Expected the promise and connected-story sections")
-    }
+    if (hero?.kind !== "promise") throw new Error("Expected the promise")
     const documentScreens = [
       hero.screen,
-      ...story.steps.map((step) => step.screen),
+      ...stories.flatMap((story) => story.steps.map((step) => step.screen)),
     ]
 
     expect(figures).toHaveLength(6)
-    expect(images).toHaveLength(6)
+    expect(briefs).toHaveLength(6)
     expect(locations).toHaveLength(6)
-    expect(fullSizeLinks).toHaveLength(6)
-    expect(container.querySelector("[data-interface-description]")).toBeNull()
+    expect(
+      screen.queryByRole("link", { name: /screen at full size$/ })
+    ).toBeNull()
     expect(documentScreens.map((item) => item.src)).toEqual([
       "/content-review/screens/student-profile.png",
       "/content-review/screens/student-insights-class.png",
@@ -168,9 +165,7 @@ describe("ContentReviewPage", () => {
     ])
 
     documentScreens.forEach((item, index) => {
-      expect(images[index].getAttribute("src")).toBe(item.src)
-      expect(images[index].getAttribute("alt")).toBe(item.alt)
-      expect(fullSizeLinks[index].getAttribute("href")).toBe(item.src)
+      expect(briefs[index].textContent).toContain(item.brief?.heading)
       for (const crumb of item.breadcrumb) {
         expect(locations[index].textContent).toContain(crumb)
       }
@@ -209,7 +204,7 @@ describe("ContentReviewPage", () => {
       expect(button.hasAttribute("aria-expanded")).toBe(true)
     }
 
-    expect(reviewAnnotations).toHaveLength(11)
+    expect(reviewAnnotations).toHaveLength(12)
   })
 
   it("renders the published public document without a review provider or pins", () => {

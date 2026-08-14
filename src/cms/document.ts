@@ -27,6 +27,11 @@ export type CmsScreenDocument = {
   readonly src: string
   readonly alt: string
   readonly breadcrumb: ReadonlyArray<string>
+  readonly brief?: {
+    readonly heading: string
+    readonly body: string
+    readonly keyElements: ReadonlyArray<string>
+  }
 }
 
 type CmsSectionBase<

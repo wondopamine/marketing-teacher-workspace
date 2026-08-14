@@ -56,18 +56,19 @@ describe("CMS public page projection", () => {
   it("omits hidden and archived sections", () => {
     const changed = {
       ...homepageV1Contract.pageDocument,
-      sections: homepageV1Contract.pageDocument.sections.map((section, index) =>
-        index === 1
-          ? { ...section, state: "hidden" as const }
-          : index === 2
-            ? { ...section, state: "archived" as const }
-            : section
+      sections: homepageV1Contract.pageDocument.sections.map(
+        (section, index) =>
+          index === 1
+            ? { ...section, state: "hidden" as const }
+            : index === 2
+              ? { ...section, state: "archived" as const }
+              : section
       ),
     }
 
     const projected = projectCmsPublicPage(changed)
     expect(projected?.document.sections.map((section) => section.kind)).toEqual(
-      ["promise", "capabilities", "close", "access-support"]
+      ["promise", "connected-story", "connected-story", "reveal", "close"]
     )
   })
 

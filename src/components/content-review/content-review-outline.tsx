@@ -1,4 +1,8 @@
-import { ReviewPin, reviewAnnotationBindings } from "./review-annotations"
+import {
+  ReviewPin,
+  reviewAnnotationBindings,
+  staticReviewTargets,
+} from "./review-annotations"
 import { EditableCopy } from "./editor/editable-copy"
 
 import type {
@@ -159,27 +163,57 @@ function ProductScreenFigure({
         {annotationId ? <ReviewPin id={annotationId} /> : null}
       </div>
       <div className="overflow-hidden bg-white">
-        <img
-          alt={screen.alt}
-          className="block h-auto w-full"
-          decoding="async"
-          height="1000"
-          loading="lazy"
-          src={screen.src}
-          width="1600"
-        />
+        {screen.brief ? (
+          <div className="bg-muted p-6 sm:p-8" data-interface-brief>
+            <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+              Proposed interface
+            </p>
+            <p className="mt-3 font-heading text-2xl leading-tight font-semibold">
+              {screen.brief.heading}
+            </p>
+            <p className="mt-4 max-w-[66ch] leading-6 text-muted-foreground">
+              {screen.brief.body}
+            </p>
+            <ul className="mt-6 grid gap-3 sm:grid-cols-3">
+              {screen.brief.keyElements.map((item) => (
+                <li
+                  className="border border-border bg-background p-4 text-sm leading-5"
+                  key={item}
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <img
+            alt={screen.alt}
+            className="block h-auto w-full"
+            decoding="async"
+            height="1000"
+            loading="lazy"
+            src={screen.src}
+            width="1600"
+          />
+        )}
       </div>
       <figcaption className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border px-3 py-2 text-xs text-muted-foreground">
-        <span>Illustrative Teacher Workspace prototype</span>
-        <a
-          href={screen.src}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex min-h-11 items-center font-semibold text-foreground underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
-          aria-label={`Open ${screen.breadcrumb.at(-1) ?? "product"} screen at full size`}
-        >
-          Open full size
-        </a>
+        <span>
+          {screen.brief
+            ? "Content and interface direction for review"
+            : "Illustrative Teacher Workspace prototype"}
+        </span>
+        {screen.brief ? null : (
+          <a
+            href={screen.src}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex min-h-11 items-center font-semibold text-foreground underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:outline-none"
+            aria-label={`Open ${screen.breadcrumb.at(-1) ?? "product"} screen at full size`}
+          >
+            Open full size
+          </a>
+        )}
       </figcaption>
     </figure>
   )
@@ -254,7 +288,8 @@ function HeroSection({
           annotationId={
             reviewTargets === null
               ? undefined
-              : reviewTargets?.screenIds[0] ?? reviewAnnotationBindings.heroScreen
+              : (reviewTargets?.screenIds[0] ??
+                reviewAnnotationBindings.heroScreen)
           }
           location="hero-product-view"
           screen={section.screen}
@@ -285,7 +320,7 @@ function ConnectedStorySection({
         annotationId={
           reviewTargets === null
             ? undefined
-            : reviewTargets?.sectionId ?? reviewAnnotationBindings.story
+            : (reviewTargets?.sectionId ?? reviewAnnotationBindings.notice)
         }
         headingId={headingId}
         title={section.heading}
@@ -352,8 +387,8 @@ function ConnectedStorySection({
               annotationId={
                 reviewTargets === null
                   ? undefined
-                  : reviewTargets?.screenIds[index] ??
-                    reviewAnnotationBindings.storyScreens[index]
+                  : (reviewTargets?.screenIds[index] ??
+                    reviewAnnotationBindings.storyScreens[index])
               }
               location={`story-step-${index + 1}`}
               screen={step.screen}
@@ -465,8 +500,8 @@ function CapabilitiesSection({
         annotationId={
           reviewTargets === null
             ? undefined
-            : reviewTargets?.sectionId ??
-              reviewAnnotationBindings.capabilities
+            : (reviewTargets?.sectionId ??
+              reviewAnnotationBindings.capabilities)
         }
         headingId={headingId}
         title={section.heading}
@@ -558,7 +593,8 @@ function AccessSupportSection({
         annotationId={
           reviewTargets === null
             ? undefined
-            : reviewTargets?.sectionId ?? reviewAnnotationBindings.accessSupport
+            : (reviewTargets?.sectionId ??
+              reviewAnnotationBindings.accessSupport)
         }
         headingId={headingId}
         title={section.heading}
@@ -760,20 +796,23 @@ export function ContentReviewOutline({
 }) {
   return (
     <>
-      {sections.map((section, index) => (
-        <ContentReviewSection
-          headingId={`wireframe-${section.kind}-${index + 1}`}
-          key={`${section.kind}-${index}`}
-          section={section}
-          actionHref={actionHref}
-          reviewTargets={showReviewPins ? reviewTargets?.[index] : null}
-          onChange={
-            editor
-              ? (path, value) => editor.updateSectionText(index, path, value)
-              : undefined
-          }
-        />
-      ))}
+      {sections.map((section, index) => {
+        const targets = reviewTargets?.[index] ?? staticReviewTargets[index]
+        return (
+          <ContentReviewSection
+            headingId={`wireframe-${section.kind}-${index + 1}`}
+            key={`${section.kind}-${index}`}
+            section={section}
+            actionHref={actionHref}
+            reviewTargets={showReviewPins ? targets : null}
+            onChange={
+              editor
+                ? (path, value) => editor.updateSectionText(index, path, value)
+                : undefined
+            }
+          />
+        )
+      })}
     </>
   )
 }

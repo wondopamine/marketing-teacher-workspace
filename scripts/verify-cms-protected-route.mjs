@@ -32,9 +32,7 @@ assert(
   "The CMS route did not stay locked without a capability cookie"
 )
 assert(
-  !lockedHtml.includes(
-    "Bring student support and family communication together"
-  ),
+  !lockedHtml.includes("See what is changing. Know what to do next."),
   "The locked CMS route exposed the stored page"
 )
 
@@ -76,12 +74,8 @@ const readyResponse = await server.fetch(
 const readyHtml = await readyResponse.text()
 assert(readyResponse.status === 200, "The authorised CMS route did not render")
 assert(
-  readyHtml.includes(
-    "Bring student support and family communication together"
-  ) &&
-    readyHtml.includes(
-      "One example: how a support need moves through Teacher Workspace"
-    ),
+  readyHtml.includes("See what is changing. Know what to do next.") &&
+    readyHtml.includes("Notice and understand"),
   "The authorised CMS route did not read the imported page"
 )
 assert(
@@ -99,9 +93,7 @@ const comparisonHtmlLower = comparisonHtml.toLowerCase()
 assert(
   comparisonResponse.status === 200 &&
     comparisonHtml.includes("Private CMS comparison") &&
-    comparisonHtml.includes(
-      "Bring student support and family communication together"
-    ),
+    comparisonHtml.includes("See what is changing. Know what to do next."),
   "The private comparison did not render the CMS publication"
 )
 assert(
@@ -140,9 +132,7 @@ if (contentSource === "static") {
   assert(
     publicResponse.status === 200 &&
       publicHtml.includes("data-teacher-preview") &&
-      publicHtml.includes(
-        "Bring student support and family communication together"
-      ) &&
+      publicHtml.includes("See what is changing. Know what to do next.") &&
       !publicHtml.includes("paper-page") &&
       !publicHtml.includes("data-review-pin"),
     "The public route did not render the strict CMS publication"

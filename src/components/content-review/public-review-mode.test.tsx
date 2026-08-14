@@ -25,7 +25,7 @@ function renderReviewTools() {
       <PublicReviewMode />
       <main>
         <h1>Teacher heading</h1>
-        <ReviewPin id="story-overview" />
+        <ReviewPin id="notice-and-understand-overview" />
       </main>
     </ReviewAnnotationProvider>
   )
@@ -67,18 +67,24 @@ describe("PublicReviewMode", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Show rationale" }))
     expect(panel.hidden).toBe(false)
-    expect(within(panel).getByText("Student profile")).not.toBeNull()
+    expect(
+      within(panel).getByText("Focused product peek at the fold")
+    ).not.toBeNull()
     expect(screen.queryByText("Review notes")).toBeNull()
 
     fireEvent.click(screen.getByRole("button", { name: "Hide rationale" }))
     expect(panel.hidden).toBe(true)
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Review note: Story flow" })
+      screen.getByRole("button", {
+        name: "Review note: Notice and understand",
+      })
     )
     expect(panel.hidden).toBe(false)
-    expect(within(panel).getByText("Story flow")).not.toBeNull()
-    expect(screen.getByText("Section rationale · Story flow")).not.toBeNull()
+    expect(within(panel).getByText("Notice and understand")).not.toBeNull()
+    expect(
+      screen.getByText("Section rationale · Notice and understand")
+    ).not.toBeNull()
 
     fireEvent.change(screen.getByRole("textbox", { name: "Add a note" }), {
       target: { value: "Keep this section comment" },
@@ -135,7 +141,7 @@ describe("PublicReviewMode", () => {
     })
 
     const storyPin = screen.getByRole("button", {
-      name: "Review note: Story flow",
+      name: "Review note: Notice and understand",
     })
     fireEvent.click(storyPin)
     screen.getByRole("textbox", { name: "Add a note" }).focus()
@@ -162,7 +168,9 @@ describe("PublicReviewMode", () => {
       container.querySelector<HTMLElement>("#review-rationale-panel")?.hidden
     ).toBe(true)
     expect(
-      screen.queryByRole("button", { name: "Review note: Story flow" })
+      screen.queryByRole("button", {
+        name: "Review note: Notice and understand",
+      })
     ).toBeNull()
 
     const editableHeading = screen.getByRole("textbox", {
@@ -180,7 +188,9 @@ describe("PublicReviewMode", () => {
       ).toBe("false")
     })
     expect(
-      screen.getByRole("button", { name: "Review note: Story flow" })
+      screen.getByRole("button", {
+        name: "Review note: Notice and understand",
+      })
     ).not.toBeNull()
     expect(
       screen.getAllByText("1 edit and 0 notes ready.").length

@@ -151,7 +151,7 @@ describe("Landing Page v2 content contract", () => {
     expect(getLandingPageV2StructureIssues()).toEqual([])
   })
 
-  it("tells the ticket's bursary care journey with one student carried through", () => {
+  it("uses three separate positive scenario moments without rejected claims", () => {
     const narrative = [
       landingPageV2Content.seoDraft.description,
       landingPageV2Content.hero.headline,
@@ -170,18 +170,23 @@ describe("Landing Page v2 content contract", () => {
     ].join("\n")
     const lowered = narrative.toLowerCase()
 
-    // The canonical story is issue #3's near-miss care journey again; see
-    // docs/adr/0001-bursary-care-story-is-canonical.md.
-    expect(lowered).toContain("xiao ming")
-    expect(lowered).toContain("bursary")
-    expect(lowered).toContain("eligibility")
+    expect(lowered).toContain("positive tag")
+    expect(lowered).toContain("possible next step")
+    expect(lowered).toContain("positive class moment")
+    expect(lowered).toContain("you decide")
 
-    // The abbreviation stays out of public copy; it is spelled out instead,
-    // and the eligibility signal never comes from the student's own conduct.
-    expect(lowered).not.toMatch(/(^|\s)fas(\s|\.|,|$)/)
-    expect(lowered).toContain("financial assistance")
-    for (const conductTerm of ["offence", "counselling", "conduct grade"]) {
-      expect(lowered).not.toContain(conductTerm)
+    for (const rejectedTerm of [
+      "xiao ming",
+      "bursary",
+      "eligibility",
+      "financial assistance",
+      "offence",
+      "counselling",
+      "conduct grade",
+      "application window",
+      "circular",
+    ]) {
+      expect(lowered).not.toContain(rejectedTerm)
     }
 
     expect(landingPageV2Content.journey.map((act) => act.capabilityId)).toEqual(

@@ -172,7 +172,18 @@ describe("CMS editor model", () => {
   })
 
   it("supports section duplicate, reorder, hide, archive, and undo as documents", () => {
-    const source = homepageV1Contract.pageDocument.sections[1]
+    const source = homepageV1Contract.pageDocument.sections.find(
+      (
+        section
+      ): section is Extract<
+        (typeof homepageV1Contract.pageDocument.sections)[number],
+        { readonly type: "connected-story" }
+      > => section.type === "connected-story"
+    )
+    if (!source) throw new Error("Expected a connected-story source section")
+    const sourceIndex = homepageV1Contract.pageDocument.sections.findIndex(
+      (section) => section.id === source.id
+    )
     const ids = Array.from(
       { length: 20 },
       (_, i) => `10000000-0000-4000-8000-${String(i).padStart(12, "0")}`
@@ -182,7 +193,7 @@ describe("CMS editor model", () => {
       source.id,
       () => ids.shift() ?? ""
     )
-    const copied = duplicate.pageDocument.sections[2]
+    const copied = duplicate.pageDocument.sections[sourceIndex + 1]
     expect(copied.id).not.toBe(source.id)
     if (copied.type === "connected-story") {
       expect(copied.fields.steps[0].id).not.toBe(source.fields.steps[0].id)
@@ -195,24 +206,26 @@ describe("CMS editor model", () => {
       expect(
         duplicate.reviewDocument.targets[copied.fields.steps[0].screen.id]
       ).toEqual(
-        homepageV1Contract.reviewDocument.targets[
-          source.fields.steps[0].screen.id
-        ]
+        Object.entries(homepageV1Contract.reviewDocument.targets).find(
+          ([targetId]) => targetId === source.fields.steps[0].screen.id
+        )?.[1]
       )
     }
 
     const moved = moveCmsSection(homepageV1Contract, source.id, 1)
-    expect(moved.pageDocument.sections[2].id).toBe(source.id)
-    expect(moveCmsSection(homepageV1Contract, source.id, -1)).toBe(
-      homepageV1Contract
-    )
+    expect(moved.pageDocument.sections[sourceIndex + 1]?.id).toBe(source.id)
+    expect(
+      moveCmsSection(homepageV1Contract, source.id, -1).pageDocument.sections[
+        sourceIndex - 1
+      ]?.id
+    ).toBe(source.id)
     expect(
       setCmsSectionState(homepageV1Contract, source.id, "hidden").pageDocument
-        .sections[1].state
+        .sections[sourceIndex]?.state
     ).toBe("hidden")
     expect(
       setCmsSectionState(homepageV1Contract, source.id, "archived").pageDocument
-        .sections[1].id
+        .sections[sourceIndex]?.id
     ).toBe(source.id)
     expect(
       setCmsSectionState(
@@ -255,27 +268,27 @@ describe("CMS editor model", () => {
     expect(addCmsSection(added, "promise", createId)).toBe(added)
   })
 
-  it.each([
-    "connected-story",
-    "reveal",
-    "capabilities",
-    "close",
-    "access-support",
-  ] as const)("adds and projects the approved %s section", (type) => {
-    let nextId = 0
-    const added = addCmsSection(
-      homepageV1Contract,
-      type,
-      () => `30000000-0000-4000-8000-${String(nextId++).padStart(12, "0")}`
-    )
-
-    expect(added).not.toBe(homepageV1Contract)
-    expect(isCmsVersionContract(added)).toBe(true)
-    expect(projectCmsPageDocumentForEditor(added.pageDocument)).not.toBeNull()
-    expect(
-      added.pageDocument.sections.filter(
-        (section) => section.type === type && section.state === "visible"
+  it.each(["connected-story", "reveal", "capabilities", "close"] as const)(
+    "adds and projects the approved %s section",
+    (type) => {
+      let nextId = 0
+      const visibleBefore = homepageV1Contract.pageDocument.sections.filter(
+        (section) => section.type === type
+      ).length
+      const added = addCmsSection(
+        homepageV1Contract,
+        type,
+        () => `30000000-0000-4000-8000-${String(nextId++).padStart(12, "0")}`
       )
-    ).toHaveLength(2)
-  })
+
+      expect(added).not.toBe(homepageV1Contract)
+      expect(isCmsVersionContract(added)).toBe(true)
+      expect(projectCmsPageDocumentForEditor(added.pageDocument)).not.toBeNull()
+      expect(
+        added.pageDocument.sections.filter(
+          (section) => section.type === type && section.state === "visible"
+        )
+      ).toHaveLength(visibleBefore + 1)
+    }
+  )
 })

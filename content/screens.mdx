@@ -1,98 +1,89 @@
 ---
-# Reviewer rationale for the captured product screens shown in the teacher
-# preview. Each block has a `##` heading, one paragraph of intent, then exactly
-# three bullets naming what a reviewer should verify on that screen.
-#
-# Every screen below is a real surface in the product prototype
-# (String-dxd/design-teacher-workspace): the Profiles student table, the
-# student profile and its Family section, the recommended-action banner and
-# the guidance page it opens, and the Posts composer and read tracking.
-# Do not introduce a screen that does not exist there.
-#
-# Guardrail for a future story-state capture: the featured student is synthetic
-# ("Xiao Ming"), carries no attention, conduct, offence, or counselling marker,
-# and the eligibility signal comes from household context and a sibling's
-# record. Current pattern captures must state where they differ from that brief.
-label: Proposed interface
+# Interface briefs for the greyscale wireframe. Each block explains what the
+# final product image or interface state should communicate. It uses no real
+# student, family, or teacher data.
+label: Interface brief
 
 # Where the story claims an interface the product does not have yet, the
 # annotation carries a question for the PM. Add one by writing
 # "pendingInterface-<item id>:" with the question as its value.
-pendingInterfaceLabel: Interface not built yet
-pendingInterface-story-promise: "The current prototype uses a different synthetic class list and includes attention tags for other students. A Xiao Ming story-state capture still needs to be built."
-pendingInterface-story-notice: "The built Family section shows household, contact, sibling-count, and assistance fields. It does not yet show the sibling assistance record or last-term household update described in the story."
-pendingInterface-story-next-steps: "The recommended-action banner and its guidance page exist today. Question for the PM: matching a bursary scheme to the documents, submission point, and closing date does not. Is this planned for the GA build?"
-pendingInterface-story-family-and-record: "Question for the PM: Posts tracks reads per post today. A communication record on the student's profile, and updates when the application goes in and is approved, do not exist yet. Are these planned for the GA build?"
+pendingInterfaceLabel: Owner confirmation needed
+pendingInterface-hero: "Choose the approved GA screen and crop after the capability owner confirms the represented state."
+pendingInterface-story-promise: "Confirm whether Student Insights supports the proposed positive tag and observation summary at GA."
+pendingInterface-story-notice: "Confirm which positive observations and dates may appear in the public synthetic state."
+pendingInterface-story-next-steps: "Confirm the approved AI guidance task, output, and teacher-review language for GA."
+pendingInterface-story-words: "Confirm the Message drafting entry point and the controls that make teacher review visible."
+pendingInterface-story-family-and-record: "Confirm the exact delivery information Posts may describe publicly at GA."
 ---
 
 <Item id="hero">
 
-## Student profile
+## Focused product peek at the fold
 
-The built Student Insights profile shows the student header, section cards, and route into Family. The capture does not include the bursary-specific profile state. Later annotations separate the built pattern from the proposed story state.
+Show one approved Teacher Workspace state rather than a fictional home screen. The crop should make one everyday teacher task understandable within seconds.
 
-- Synthetic student header and class context
-- Attendance, behaviour, wellbeing, and academic cards
-- Family destination in the profile navigation
+- One approved capability and task
+- Synthetic, non-sensitive information only
+- Enough interface context to identify the product location
 
 </Item>
 
 <Item id="story-promise">
 
-## Profiles student table
+## Student Insights class view with a positive tag
 
-The built Student Insights class table is the story's starting point. It shows the class-level view, columns, and row pattern. The proposed Xiao Ming row is not present, and other synthetic rows carry attention tags.
+Highlight one synthetic student whose recent participation is improving. The positive tag must be the focal point, with no conduct, risk, or deficit framing.
 
-- Secondary 3 class view
-- Search, filter, and student table controls
-- Synthetic student rows with class and support columns
+- Positive tag such as “Contributing with confidence”
+- Student row and class context
+- Route to recent positive observations
 
 </Item>
 
 <Item id="story-notice">
 
-## Family section of the profile
+## Positive observation detail
 
-The Family capture sits within a student's profile and shows the household fields that exist now. It does not yet contain every eligibility signal named in the story.
+Show the recent observations behind the positive tag. Dates and short notes help the teacher understand the change without turning the student into a case.
 
-- Financial-assistance status
-- Housing and ownership fields
-- Primary contact and sibling count
+- Two or three positive classroom observations
+- Clear dates or sequence
+- Teacher-owned interpretation and follow-up
 
 </Item>
 
 <Item id="story-next-steps">
 
-## Guidance opened from the profile banner
+## AI next-step guidance for a separate task
 
-The recommended action opens the built guidance pattern shown here. The example covers behavioural support, not financial assistance. The layout has three parts; the bursary match described in the story is still proposed.
+Use a separate synthetic classroom-planning moment so the page does not imply an automatic hand-off from Student Insights. Present one possible next step for teacher review.
 
-- Student context beside the guidance
-- Prioritised next steps in the main panel
-- Related resources in a separate panel
+- Short description of the teacher's task
+- One suggested next step with its basis
+- Visible choice to use, adapt, or leave the suggestion
 
 </Item>
 
 <Item id="story-words">
 
-## Post composer with the draft
+## Message draft for a positive class update
 
-Keep the teacher in control of a delicate note. The Posts composer holds the draft built from the student's context, in the rich-text editor, visibly editable and not yet sent.
+Show a separate positive class moment in an editable draft. The interface must make clear that the teacher reviews the message before it is shared.
 
-- Draft family message in the composer
-- Steps and documents laid out in the draft body
-- Editable, unsent state before the send confirmation
+- Positive class-update subject and body
+- Editing controls and unsent status
+- Explicit teacher review before publishing
 
 </Item>
 
 <Item id="story-family-and-record">
 
-## Post delivery and read tracking
+## Posts delivery overview
 
-The built Posts capture shows a sent term letter with posted status and recipient-level read data. The proposed financial-assistance message still needs its own capture.
+Show the same class update after the teacher publishes it through Posts. Include only the delivery information approved for public GA copy.
 
-- Posted status on the sent message
-- Recipient table with read and unread states
-- Post detail shown beside the delivery record
+- Published message status
+- Approved delivery or read information
+- Route back to the sent post for follow-up
 
 </Item>

@@ -7,6 +7,16 @@ export const teacherPreviewSectionKinds = [
   "access-support",
 ] as const
 
+export const canonicalTeacherPreviewSectionKinds = [
+  "promise",
+  "capabilities",
+  "connected-story",
+  "connected-story",
+  "connected-story",
+  "reveal",
+  "close",
+] as const satisfies ReadonlyArray<TeacherPreviewSectionKind>
+
 export type TeacherPreviewSectionKind =
   (typeof teacherPreviewSectionKinds)[number]
 
@@ -19,6 +29,11 @@ export type TeacherPreviewScreenDto = {
   readonly src: string
   readonly alt: string
   readonly breadcrumb: ReadonlyArray<string>
+  readonly brief: {
+    readonly heading: string
+    readonly body: string
+    readonly keyElements: ReadonlyArray<string>
+  } | null
 }
 
 export type TeacherPreviewPromiseSectionDto = {
@@ -152,13 +167,21 @@ export function isTeacherPreviewScreenDto(
 ): value is TeacherPreviewScreenDto {
   return (
     isRecord(value) &&
-    hasExactKeys(value, ["src", "alt", "breadcrumb"]) &&
+    hasExactKeys(value, ["src", "alt", "breadcrumb", "brief"]) &&
     typeof value.src === "string" &&
     /^\/content-review\/screens\/[a-z0-9][a-z0-9._-]*$/.test(value.src) &&
     isNonBlank(value.alt) &&
     Array.isArray(value.breadcrumb) &&
     value.breadcrumb.length > 0 &&
-    value.breadcrumb.every((crumb) => isNonBlank(crumb))
+    value.breadcrumb.every((crumb) => isNonBlank(crumb)) &&
+    (value.brief === null ||
+      (isRecord(value.brief) &&
+        hasExactKeys(value.brief, ["heading", "body", "keyElements"]) &&
+        isNonBlank(value.brief.heading) &&
+        isNonBlank(value.brief.body) &&
+        Array.isArray(value.brief.keyElements) &&
+        value.brief.keyElements.length === 3 &&
+        value.brief.keyElements.every((item) => isNonBlank(item))))
   )
 }
 
@@ -191,7 +214,8 @@ function isConnectedStorySection(
     value.kind !== "connected-story" ||
     !isNonBlank(value.heading) ||
     !Array.isArray(value.steps) ||
-    value.steps.length !== 5
+    value.steps.length < 1 ||
+    value.steps.length > 5
   ) {
     return false
   }
@@ -342,21 +366,24 @@ export function isCanonicalTeacherPreviewDocumentDto(
 ): value is TeacherPreviewDocumentDto {
   if (
     !isTeacherPreviewDocumentDto(value) ||
-    value.sections.length !== teacherPreviewSectionKinds.length ||
+    value.sections.length !== canonicalTeacherPreviewSectionKinds.length ||
     !value.sections.every(
-      (section, index) => section.kind === teacherPreviewSectionKinds[index]
+      (section, index) =>
+        section.kind === canonicalTeacherPreviewSectionKinds[index]
     )
   ) {
     return false
   }
 
   const promise = value.sections[0]
-  const story = value.sections[1]
-  if (promise.kind !== "promise" || story.kind !== "connected-story")
-    return false
+  if (promise.kind !== "promise") return false
   const screenSources = [
     promise.screen.src,
-    ...story.steps.map((step) => step.screen.src),
+    ...value.sections.flatMap((section) =>
+      section.kind === "connected-story"
+        ? section.steps.map((step) => step.screen.src)
+        : []
+    ),
   ]
-  return new Set(screenSources).size === 6
+  return screenSources.length === 6 && new Set(screenSources).size === 6
 }

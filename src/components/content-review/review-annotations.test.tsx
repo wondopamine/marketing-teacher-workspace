@@ -11,7 +11,7 @@ function Harness() {
   const { panelOpen, selectedId, setPinsVisible } = useReviewAnnotations()
   return (
     <>
-      <ReviewPin id="story-overview" />
+      <ReviewPin id="notice-and-understand-overview" />
       <output>{panelOpen ? `Open: ${selectedId}` : "Closed"}</output>
       <button type="button" onClick={() => setPinsVisible(false)}>
         Pause pins
@@ -28,13 +28,17 @@ describe("review annotations", () => {
       </ReviewAnnotationProvider>
     )
 
-    const pin = screen.getByRole("button", { name: "Review note: Story flow" })
+    const pin = screen.getByRole("button", {
+      name: "Review note: Notice and understand",
+    })
     expect(pin.getAttribute("aria-expanded")).toBe("false")
     expect(screen.getByText("Closed")).not.toBeNull()
 
     fireEvent.click(pin)
     expect(pin.getAttribute("aria-expanded")).toBe("true")
-    expect(screen.getByText("Open: story-overview")).not.toBeNull()
+    expect(
+      screen.getByText("Open: notice-and-understand-overview")
+    ).not.toBeNull()
 
     fireEvent.click(pin)
     expect(pin.getAttribute("aria-expanded")).toBe("false")
@@ -51,7 +55,9 @@ describe("review annotations", () => {
     fireEvent.click(screen.getByRole("button", { name: "Pause pins" }))
 
     expect(
-      screen.queryByRole("button", { name: "Review note: Story flow" })
+      screen.queryByRole("button", {
+        name: "Review note: Notice and understand",
+      })
     ).toBeNull()
   })
 })

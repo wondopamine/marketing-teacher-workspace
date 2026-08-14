@@ -102,9 +102,14 @@ function isAction(value: unknown): value is CmsActionDocument | null {
 }
 
 function isScreen(value: unknown): value is CmsScreenDocument {
+  const validKeys =
+    isRecord(value) &&
+    (hasExactKeys(value, ["id", "src", "alt", "breadcrumb"]) ||
+      hasExactKeys(value, ["id", "src", "alt", "breadcrumb", "brief"]))
+  const brief = isRecord(value) ? value.brief : undefined
   return (
     isRecord(value) &&
-    hasExactKeys(value, ["id", "src", "alt", "breadcrumb"]) &&
+    validKeys &&
     isCmsStableId(value.id) &&
     typeof value.src === "string" &&
     /^\/content-review\/screens\/[a-z0-9][a-z0-9._-]*$/.test(value.src) &&
@@ -112,7 +117,15 @@ function isScreen(value: unknown): value is CmsScreenDocument {
     Array.isArray(value.breadcrumb) &&
     value.breadcrumb.length > 0 &&
     value.breadcrumb.length <= 6 &&
-    value.breadcrumb.every((crumb) => isNonBlankString(crumb, 100))
+    value.breadcrumb.every((crumb) => isNonBlankString(crumb, 100)) &&
+    (brief === undefined ||
+      (isRecord(brief) &&
+        hasExactKeys(brief, ["heading", "body", "keyElements"]) &&
+        isNonBlankString(brief.heading, 240) &&
+        isNonBlankString(brief.body, 1_000) &&
+        Array.isArray(brief.keyElements) &&
+        brief.keyElements.length === 3 &&
+        brief.keyElements.every((item) => isNonBlankString(item, 240))))
   )
 }
 
@@ -163,7 +176,8 @@ function isSection(value: unknown): value is CmsSectionDocument {
       hasExactKeys(fields, ["heading", "steps"]) &&
       isNonBlankString(fields.heading, 240) &&
       Array.isArray(fields.steps) &&
-      fields.steps.length === 5 &&
+      fields.steps.length >= 1 &&
+      fields.steps.length <= 5 &&
       fields.steps.every(
         (step) =>
           isRecord(step) &&
@@ -421,7 +435,7 @@ function projectSection(
 }
 
 function withoutId({ id: _id, ...screen }: CmsScreenDocument) {
-  return screen
+  return { ...screen, brief: screen.brief ?? null }
 }
 
 export function projectCmsPageDocument(

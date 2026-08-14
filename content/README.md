@@ -1,10 +1,10 @@
 # Landing page content
 
-> **Current review state:** These files still describe the existing CMS
-> candidate so its stable targets and colleague comments remain intact. The
-> next candidate follows `docs/landing-page-ga-spec.md` and must not be written
-> here or saved to the CMS until the GA claims and dependent inputs are
-> approved.
+> **Current review state:** These files describe the provisional seven-part GA
+> wireframe in `docs/landing-page-ga-spec.md`. The wireframe is a communication
+> artifact, not approved public copy. Capability claims, scenarios, proof, and
+> assurance language still need their named approvals before a CMS save or
+> publication.
 
 Every word on the Teacher Workspace landing page and on the `/content-review`
 wireframe lives in this folder. Edit the `.mdx` files here and the page follows.
@@ -53,13 +53,13 @@ Files in `landing/` are numbered in the order they appear down the page.
 | ------------------------------- | ------------------------------------------------- |
 | `landing/01-meta.mdx`           | Browser-tab title and search-result description   |
 | `landing/02-hero.mdx`           | Opening headline, opening copy, and the button    |
-| `landing/03-story.mdx`          | One five-act example across the platform          |
-| `landing/04-reveal.mdx`         | The "This is Teacher Workspace" moment            |
-| `landing/05-capabilities.mdx`   | The four product capabilities                     |
+| `landing/03-story.mdx`          | Three separate positive scenario moments          |
+| `landing/04-reveal.mdx`         | The school-consistency assurance                   |
+| `landing/05-capabilities.mdx`   | The compact four-capability map                    |
 | `landing/07-audiences.mdx`      | Who the page is written for                       |
 | `landing/08-proof.mdx`          | The testimonial section framing                   |
-| `landing/09-access-support.mdx` | How teachers get in, and where support comes from |
-| `landing/10-close.mdx`          | The closing headline and copy                     |
+| `landing/09-access-support.mdx` | Support inputs kept outside the current page       |
+| `landing/10-close.mdx`          | The closing headline, access note, and action      |
 | `landing/11-footer.mdx`         | Copyright line and feedback link label            |
 | `screens.mdx`                   | Reviewer rationale for each product screen        |
 | `wireframe.mdx`                 | Labels used only by the review workspace          |
@@ -136,11 +136,11 @@ You see one student's full picture without opening four systems.
 ```
 
 **The GA launch line**: in `landing/04-reveal.mdx`, put your line after
-`launchLine:`.
+`launchLine:`. The current wireframe does not foreground this line.
 
 The remaining pending slots (testimonials and the public support route) are
-waiting on approvals rather than wording. They stay in the review workspace
-until those decisions are made in code.
+waiting on approvals rather than wording. They remain outside the teacher
+preview until those approvals are recorded.
 
 ## If something goes wrong
 

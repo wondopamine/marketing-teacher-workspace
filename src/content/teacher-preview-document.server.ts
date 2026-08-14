@@ -326,8 +326,13 @@ function createScreenIndex(
   }
 
   const screenIndex = new Map<TeacherPreviewScreenId, TeacherPreviewScreenDto>()
-  for (const { id, src, alt, breadcrumb } of screens) {
-    const publicScreen = { src, alt, breadcrumb: [...breadcrumb] }
+  for (const { id, src, alt, breadcrumb, brief } of screens) {
+    const publicScreen = {
+      src,
+      alt,
+      breadcrumb: [...breadcrumb],
+      brief,
+    }
     if (!isTeacherPreviewScreenDto(publicScreen)) return null
     screenIndex.set(id, publicScreen)
   }
@@ -390,7 +395,6 @@ function buildDocument(
   )
   const heroScreen = screenIndex.get("hero")
   const revealCopy = projectedContent(projectionIndex, "reveal.copy")
-  const launchLine = projectedContent(projectionIndex, "reveal.ga-launch-line")
   const closeCopy = projectedContent(projectionIndex, "close.copy")
   const closeAction = actionFrom(
     projectedContent(projectionIndex, "destination.cta.close")
@@ -456,25 +460,6 @@ function buildDocument(
         screen: heroScreen,
       },
       {
-        kind: "connected-story",
-        heading: landingDocuments.story.requireHeading(),
-        steps: storySteps.map((step) => {
-          if (!step) throw new Error("A validated story binding disappeared")
-          return {
-            label: step.entry.label,
-            heading: step.entry.heading,
-            body: [...step.entry.body],
-            screen: step.screen,
-          }
-        }),
-      },
-      {
-        kind: "reveal",
-        heading: revealCopy.heading,
-        body: [...revealCopy.body],
-        asides: launchLine ? [{ body: [...launchLine.body] }] : [],
-      },
-      {
         kind: "capabilities",
         heading: landingDocuments.capabilities.requireHeading(),
         items: capabilityEntries.map((entry) => {
@@ -488,19 +473,49 @@ function buildDocument(
           }
         }),
       },
+      ...[
+        {
+          heading: landingDocuments.story.text("noticeHeading"),
+          steps: storySteps.slice(0, 2),
+        },
+        {
+          heading: landingDocuments.story.text("actHeading"),
+          steps: storySteps.slice(2, 3),
+        },
+        {
+          heading: landingDocuments.story.text("communicateHeading"),
+          steps: storySteps.slice(3, 5),
+        },
+      ].map(({ heading, steps }) => ({
+        kind: "connected-story" as const,
+        heading,
+        steps: steps.map((step) => {
+          if (!step) throw new Error("A validated story binding disappeared")
+          return {
+            label: step.entry.label,
+            heading: step.entry.heading,
+            body: [...step.entry.body],
+            screen: step.screen,
+          }
+        }),
+      })),
+      {
+        kind: "reveal",
+        heading: revealCopy.heading,
+        body: [...revealCopy.body],
+        asides: [
+          {
+            body: [
+              "Teachers review and decide before guidance or drafted content is used.",
+            ],
+          },
+        ],
+      },
       {
         kind: "close",
         heading: closeCopy.heading,
         body: [...closeCopy.body],
         action: closeAction,
-      },
-      {
-        kind: "access-support",
-        heading: landingDocuments.accessSupport.requireHeading(),
-        accessHeading: landingDocuments.accessSupport.text("accessHeading"),
-        methodLabel: landingDocuments.accessSupport.text("accessMethodLabel"),
-        method: heroAction.label,
-        accountNote: heroAction.note,
       },
     ],
     footer: {

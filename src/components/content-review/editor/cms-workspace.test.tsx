@@ -182,9 +182,7 @@ describe("CMS workspace", () => {
 
     fireEvent.keyDown(window, { key: "z", metaKey: true })
     expect(
-      screen.getByText(
-        "Bring student support and family communication together"
-      )
+      screen.getByText("See what is changing. Know what to do next.")
     ).not.toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "Redo" }))
     expect(screen.getByText("A clearer opening")).not.toBeNull()
@@ -257,23 +255,25 @@ describe("CMS workspace", () => {
     renderWorkspace()
     fireEvent.click(screen.getByRole("button", { name: "Edit content" }))
 
-    const editable = screen.getByRole("textbox", {
+    const editable = screen.getAllByRole("textbox", {
       name: "Edit story step 2 heading",
-    })
+    })[0]
     editable.focus()
     editable.textContent = "X"
     fireEvent.input(editable)
 
-    const afterFirstInput = screen.getByRole("textbox", {
+    const afterFirstInput = screen.getAllByRole("textbox", {
       name: "Edit story step 2 heading",
-    })
+    })[0]
     expect(afterFirstInput).toBe(editable)
     expect(document.activeElement).toBe(editable)
 
-    editable.textContent = "Xiao"
+    editable.textContent = "Recent"
     fireEvent.input(editable)
     expect(
-      screen.getByRole("textbox", { name: "Edit story step 2 heading" })
+      screen.getAllByRole("textbox", {
+        name: "Edit story step 2 heading",
+      })[0]
     ).toBe(editable)
     expect(document.activeElement).toBe(editable)
 
@@ -666,9 +666,10 @@ describe("CMS workspace", () => {
     expect(order()).toEqual([
       "promise",
       "connected-story",
+      "connected-story",
+      "connected-story",
       "reveal",
       "close",
-      "access-support",
       "footer-feedback",
     ])
 
@@ -676,9 +677,10 @@ describe("CMS workspace", () => {
     expect(order()).toEqual([
       "promise",
       "connected-story",
+      "connected-story",
+      "connected-story",
       "close",
       "reveal",
-      "access-support",
       "footer-feedback",
     ])
   })
@@ -695,13 +697,13 @@ describe("CMS workspace", () => {
     })
 
     const moveReveal = screen.getByRole("button", {
-      name: "Move Reveal down",
+      name: "Move Reveal up",
     })
     moveReveal.focus()
     fireEvent.click(moveReveal)
     await waitFor(() => {
       expect(document.activeElement).toBe(
-        screen.getByRole("button", { name: "Move Reveal down" })
+        screen.getByRole("button", { name: "Move Reveal up" })
       )
     })
 

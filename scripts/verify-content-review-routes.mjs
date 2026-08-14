@@ -64,9 +64,7 @@ assert(
   countMatches(reviewHtml, /<main\b/g) === 1 &&
     countMatches(reviewHtml, /<h1\b/g) === 1 &&
     reviewHtml.includes('<main id="main"') &&
-    reviewHtml.includes(
-      "Bring student support and family communication together"
-    ),
+    reviewHtml.includes("See what is changing. Know what to do next."),
   "The content-review route does not render one main landmark and one H1."
 )
 assert(
@@ -84,12 +82,12 @@ assert(
 assert(
   countMatches(reviewHtml, /data-product-screen/g) === 6 &&
     countMatches(reviewHtml, /aria-label="Product location"/g) === 6 &&
-    countMatches(reviewHtml, /<img[^>]+content-review\/screens\//g) === 6 &&
-    countMatches(reviewHtml, /data-interface-description/g) === 0 &&
+    countMatches(reviewHtml, /data-interface-brief/g) === 6 &&
+    countMatches(reviewHtml, /<img[^>]+content-review\/screens\//g) === 0 &&
     countMatches(reviewHtml, /Question for the PM:/g) === 0 &&
     reviewHtml.includes("Student Insights") &&
-    reviewHtml.includes("Read tracking"),
-  "The content-review route lost its product screenshots or breadcrumb map."
+    reviewHtml.includes("Delivery"),
+  "The content-review route lost its interface briefs or breadcrumb map."
 )
 
 const prohibitedReviewOutput = [
@@ -148,7 +146,7 @@ if (contentSource === "static") {
   assert(
     countMatches(homeHtml, /<title>/g) === 1 &&
       homeHtml.includes(
-        "<title>Teacher Workspace | Student support and family communication, in one place</title>"
+        "<title>Teacher Workspace | See what is changing</title>"
       ) &&
       countMatches(homeHtml, /<main\b/g) === 1 &&
       countMatches(homeHtml, /<h1\b/g) === 1 &&

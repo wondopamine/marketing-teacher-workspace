@@ -46,7 +46,7 @@ describe("Landing Page v2 content-review projection", () => {
     expect(getContentReviewStructureIssues()).toEqual([])
   })
 
-  it("projects the care story without raw review or internal source data", () => {
+  it("projects the positive scenario copy without raw review or internal source data", () => {
     const result = buildReviewDraftProjection()
 
     expect(result.ok).toBe(true)
@@ -55,12 +55,11 @@ describe("Landing Page v2 content-review projection", () => {
     const serialised = JSON.stringify(result.projection)
     const lowercase = serialised.toLowerCase()
 
-    // The canonical story is the bursary care journey again; the student and
-    // the vehicle are reviewable copy, while internal names, the FAS
-    // abbreviation, raw source URLs, and review fields stay out.
-    expect(lowercase).toContain("xiao ming")
-    expect(lowercase).toContain("bursary")
-    expect(lowercase).not.toMatch(/(^|[^a-z])fas([^a-z]|$)/)
+    expect(lowercase).toContain("positive tag")
+    expect(lowercase).toContain("possible next step")
+    expect(lowercase).toContain("positive class moment")
+    expect(lowercase).not.toContain("xiao ming")
+    expect(lowercase).not.toContain("bursary")
     for (const prohibitedValue of [
       "contextual-intelligence",
       "hey-talia",

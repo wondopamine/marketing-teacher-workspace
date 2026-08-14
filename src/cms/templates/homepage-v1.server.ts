@@ -5,23 +5,42 @@ import {
   cmsReviewSchemaVersion,
   cmsSectionLibraryVersion,
 } from "../document"
+import { teacherPreviewScreenCatalog } from "../../content/teacher-preview-screen-catalog.server"
 
-import type { CmsVersionContract } from "../document"
+import type { CmsScreenDocument, CmsVersionContract } from "../document"
+import type { TeacherPreviewScreenId } from "../../content/teacher-preview-screen-catalog.server"
 
 export const cmsHomepagePageId = "b7a1e972-1758-4815-87b9-9697a324a667"
 export const cmsHomepageImportAttemptId = "2f0cc277-91aa-4c30-9070-cd8a755cb90f"
 
+function cmsScreen(
+  sourceId: TeacherPreviewScreenId,
+  id: string
+): CmsScreenDocument {
+  const source = teacherPreviewScreenCatalog.find(
+    (candidate) => candidate.id === sourceId
+  )
+  if (!source) throw new Error(`Missing Teacher Workspace screen: ${sourceId}`)
+  const { id: _sourceId, ...screen } = source
+  return { id, ...screen }
+}
+
+/**
+ * Repository fallback for the GA review candidate. Existing section, item,
+ * and screen IDs are retained so a later append-only CMS save can preserve
+ * every colleague comment. This contract is not imported or published by a
+ * deployment.
+ */
 export const homepageV1Contract = {
   pageSchemaVersion: cmsPageSchemaVersion,
   reviewSchemaVersion: cmsReviewSchemaVersion,
   sectionLibraryVersion: cmsSectionLibraryVersion,
   pageDocument: {
     page: {
-      title:
-        "Teacher Workspace | Student support and family communication, in one place",
+      title: "Teacher Workspace | See what is changing",
       path: "/",
       description:
-        "Teacher Workspace brings student context, next steps, family messages, sent posts and read status together, so teachers can follow through without switching between systems.",
+        "Understand students, review possible next steps, prepare messages, and communicate with families through Teacher Workspace.",
       brand: "Teacher Workspace",
     },
     sections: [
@@ -31,128 +50,15 @@ export const homepageV1Contract = {
         state: "visible",
         fields: {
           eyebrow: null,
-          heading: "Bring student support and family communication together",
+          heading: "See what is changing. Know what to do next.",
           body: [
-            "See what is happening with a student, check what to do next, write to the family and see when the message is read.",
+            "Use Teacher Workspace to understand students, get help with next steps, draft messages, and communicate with families.",
           ],
           action: {
             label: "Sign in with Google",
             note: "Use your @edu.gov.sg account.",
           },
-          screen: {
-            id: "7d2140d1-15e7-4762-b3b3-17e261c85948",
-            src: "/content-review/screens/student-profile.png",
-            alt: "Teacher Workspace student profile with attendance, behaviour, wellbeing, and family navigation.",
-            breadcrumb: ["Student Insights", "Student profile"],
-          },
-        },
-      },
-      {
-        id: "e4a6a36b-bb0a-4977-854b-66f3db071123",
-        type: "connected-story",
-        state: "visible",
-        fields: {
-          heading:
-            "One example: how a support need moves through Teacher Workspace",
-          steps: [
-            {
-              id: "6561cfb1-bcd0-46e5-a322-7b8ea96ee6cb",
-              label: "Start with the class",
-              heading: "Xiao Ming is one of thirty-two students you teach.",
-              body: [
-                "His family's circumstances changed last term. The signs sit in separate systems, and none of them raises a hand.",
-              ],
-              screen: {
-                id: "74176ccd-fdee-47a2-9308-286146f2366b",
-                src: "/content-review/screens/student-insights-class.png",
-                alt: "Teacher Workspace Student Insights table for a Secondary 3 class.",
-                breadcrumb: ["Student Insights", "Class 3A"],
-              },
-            },
-            {
-              id: "649d7311-7b87-4efb-8daa-893b4388481e",
-              label: "See the context",
-              heading:
-                "Xiao Ming's family may qualify for support. Nobody has applied.",
-              body: [
-                "His profile brings together three eligibility signals: a sibling already receiving financial assistance, household circumstances updated last term, and no bursary on file. You are reading this while the application window is still open.",
-              ],
-              screen: {
-                id: "9618e896-adda-4973-95e0-61c45360a2f5",
-                src: "/content-review/screens/student-profile-family.png",
-                alt: "Family section of a synthetic student profile in Teacher Workspace.",
-                breadcrumb: ["Student Insights", "Student profile", "Family"],
-              },
-            },
-            {
-              id: "9d0ccaad-0ad7-45e4-a98b-2c6a4bc8a95b",
-              label: "Check the next step",
-              heading:
-                "Teacher Workspace shows the bursary and application steps.",
-              body: [
-                "The guidance names the matching scheme, the documents the family needs, where to submit them and when the window closes. You do not have to work through the circulars or ask another teacher.",
-              ],
-              screen: {
-                id: "f050b81e-c800-4013-9258-57d991041363",
-                src: "/content-review/screens/guidance.png",
-                alt: "Teacher Workspace student-support guidance opened from a recommended action.",
-                breadcrumb: [
-                  "Student Insights",
-                  "Student profile",
-                  "Recommended action",
-                  "Guidance",
-                ],
-              },
-            },
-            {
-              id: "22bf511c-0da0-48c7-90e1-7028f8d0e49f",
-              label: "Prepare the message",
-              heading: "Start with a draft for the family.",
-              body: [
-                "Message drafting starts with Xiao Ming's context, your tone and the application steps. You review and edit every word before it goes out.",
-              ],
-              screen: {
-                id: "24bef79e-9103-4190-a1ba-9ac4fbfd75c5",
-                src: "/content-review/screens/post-composer.png",
-                alt: "Teacher Workspace Posts composer with a draft financial-assistance message and parent preview.",
-                breadcrumb: ["Posts", "New post"],
-              },
-            },
-            {
-              id: "8bb4f6d3-50f5-4e09-8f5a-3a2c932814d2",
-              label: "Send and follow up",
-              heading:
-                "Posts keeps the family message and read status together.",
-              body: [
-                "Send the message through Posts and see when the family has read it. You can return to the sent post when you need to follow up.",
-              ],
-              screen: {
-                id: "d9e36bc7-89b2-48b0-b35e-11867763d44a",
-                src: "/content-review/screens/post-read-tracking.png",
-                alt: "Teacher Workspace sent post with posted status and recipient read tracking.",
-                breadcrumb: ["Posts", "Sent post", "Read tracking"],
-              },
-            },
-          ],
-        },
-      },
-      {
-        id: "fd9a7815-00b4-4a6f-8b69-c83a05b7b90d",
-        type: "reveal",
-        state: "visible",
-        fields: {
-          heading: "This is Teacher Workspace.",
-          body: [
-            "Student Insights helps you understand the situation. AI next-step guidance, Message drafting and Posts help you act and contact the family.",
-          ],
-          asides: [
-            {
-              id: "c4e336ce-d699-4e9f-9818-bcfe2bbe4f4e",
-              body: [
-                "Now available to schools across Singapore. Teachers continue to shape how it works.",
-              ],
-            },
-          ],
+          screen: cmsScreen("hero", "7d2140d1-15e7-4762-b3b3-17e261c85948"),
         },
       },
       {
@@ -160,69 +66,165 @@ export const homepageV1Contract = {
         type: "capabilities",
         state: "visible",
         fields: {
-          heading: "What you can do in Teacher Workspace",
+          heading: "Four ways to move everyday work forward",
           items: [
             {
               id: "e3e3e742-0940-4c73-955c-7f9d1fa2eb17",
               label: "Student Insights",
-              heading:
-                "Understand a student without piecing together several systems.",
+              heading: "Notice and understand changes around a student.",
               body: [
-                "Open one profile to view attendance, behaviour, wellbeing and family context together. Move from the class view to the detail you need.",
+                "Review the student information available to you and recognise patterns worth following up.",
               ],
             },
             {
               id: "281042b3-485f-49b4-879b-efc3eecb110a",
               label: "AI next-step guidance",
-              heading: "Check the next step for the situation in front of you.",
+              heading: "Review a possible next step.",
               body: [
-                "For a bursary case, the guidance can show the matching scheme, required documents, submission route and closing date.",
+                "Consider guidance for the task in front of you before deciding what fits.",
               ],
             },
             {
               id: "6c083324-4ddc-4d37-a6f2-3293426df645",
               label: "Message drafting",
-              heading: "Start with a family message you can review.",
+              heading: "Prepare an editable first draft.",
               body: [
-                "Message drafting uses the student's context and your tone to prepare a first draft. You edit every word before it goes out.",
+                "Start from a draft, then review and edit every word before sharing it.",
               ],
             },
             {
               id: "830154c5-0487-4ef1-82cd-d00444f27973",
               label: "Posts",
-              heading: "Send the message and see whether it was read.",
+              heading: "Communicate with families.",
               body: [
-                "Posts carries the message to the family and keeps the sent post, status and recipient read information together.",
+                "Publish an approved message and check the delivery information available to you.",
               ],
+            },
+          ],
+        },
+      },
+      {
+        id: "e4a6a36b-bb0a-4977-854b-66f3db071123",
+        type: "connected-story",
+        state: "visible",
+        fields: {
+          heading: "Notice and understand",
+          steps: [
+            {
+              id: "6561cfb1-bcd0-46e5-a322-7b8ea96ee6cb",
+              label: "Notice a positive change",
+              heading: "A student is contributing with growing confidence.",
+              body: [
+                "A positive tag brings recent classroom observations into view, so you can recognise the progress and encourage it.",
+              ],
+              screen: cmsScreen(
+                "story-promise",
+                "74176ccd-fdee-47a2-9308-286146f2366b"
+              ),
+            },
+            {
+              id: "649d7311-7b87-4efb-8daa-893b4388481e",
+              label: "Understand the pattern",
+              heading: "Recent observations show what has changed.",
+              body: [
+                "Review the positive observations and when they happened. You decide what the progress means and how to build on it.",
+              ],
+              screen: cmsScreen(
+                "story-notice",
+                "9618e896-adda-4973-95e0-61c45360a2f5"
+              ),
+            },
+          ],
+        },
+      },
+      {
+        id: "fd9a7815-00b4-4a6f-8b69-c83a05b7b90d",
+        type: "connected-story",
+        state: "visible",
+        fields: {
+          heading: "Act with your judgement",
+          steps: [
+            {
+              id: "9d0ccaad-0ad7-45e4-a98b-2c6a4bc8a95b",
+              label: "Review a possible next step",
+              heading: "A practical next step is ready for your review.",
+              body: [
+                "In a separate classroom-planning moment, AI next-step guidance presents an option to consider. You decide whether it fits your student and context.",
+              ],
+              screen: cmsScreen(
+                "story-next-steps",
+                "f050b81e-c800-4013-9258-57d991041363"
+              ),
+            },
+          ],
+        },
+      },
+      {
+        id: "c091f7ce-49db-4acc-89ed-91613e7e475a",
+        type: "connected-story",
+        state: "visible",
+        fields: {
+          heading: "Communicate with care",
+          steps: [
+            {
+              id: "22bf511c-0da0-48c7-90e1-7028f8d0e49f",
+              label: "Prepare a class update",
+              heading: "Start with an editable draft.",
+              body: [
+                "For a separate positive class moment, Message drafting helps prepare an update for families. You review and edit every word.",
+              ],
+              screen: cmsScreen(
+                "story-words",
+                "24bef79e-9103-4190-a1ba-9ac4fbfd75c5"
+              ),
+            },
+            {
+              id: "8bb4f6d3-50f5-4e09-8f5a-3a2c932814d2",
+              label: "Publish when it is ready",
+              heading: "Share the approved update through Posts.",
+              body: [
+                "Publish the update after your review. Return to the sent post to check the delivery information available to you.",
+              ],
+              screen: cmsScreen(
+                "story-family-and-record",
+                "d9e36bc7-89b2-48b0-b35e-11867763d44a"
+              ),
             },
           ],
         },
       },
       {
         id: "76329aa6-ea3d-4f34-b6a3-3d9a222b2df0",
+        type: "reveal",
+        state: "visible",
+        fields: {
+          heading: "Help teachers follow the same school practices.",
+          body: [
+            "Shared guidance and teacher-reviewed drafts can support more consistent everyday work. Teachers keep professional judgement and final review.",
+          ],
+          asides: [
+            {
+              id: "c4e336ce-d699-4e9f-9818-bcfe2bbe4f4e",
+              body: [
+                "Teachers review and decide before guidance or drafted content is used.",
+              ],
+            },
+          ],
+        },
+      },
+      {
+        id: "a118f80c-9180-4fd6-b163-3fce876b9871",
         type: "close",
         state: "visible",
         fields: {
-          heading: "Keep the work around each student connected.",
+          heading: "Start with the work in front of you.",
           body: [
-            "Teacher Workspace brings student context, next-step guidance, family messages and read status into one workflow.",
+            "See what has changed, review the next step, and decide what to do.",
           ],
           action: {
             label: "Sign in with Google",
             note: "Use your @edu.gov.sg account.",
           },
-        },
-      },
-      {
-        id: "c091f7ce-49db-4acc-89ed-91613e7e475a",
-        type: "access-support",
-        state: "visible",
-        fields: {
-          heading: "Access and support",
-          accessHeading: "Teacher access",
-          methodLabel: "Access method",
-          method: "Sign in with Google",
-          accountNote: "Use your @edu.gov.sg account.",
         },
       },
       {
@@ -241,120 +243,134 @@ export const homepageV1Contract = {
     targets: {
       "02e79e5c-bd01-47e5-be54-95b7c939c358": {
         designIntent:
-          "Teachers need to understand within seconds that Teacher Workspace covers both student support and family communication. The profile is a familiar starting point, while the copy makes clear that the work continues beyond it.",
+          "Lead with the teacher's outcome and one primary action. The headline should make the page useful before it names the capabilities.",
         checks: [
-          "Does the opening describe the platform rather than one screen or one bursary case?",
-          "Can a teacher see that family communication is part of Teacher Workspace?",
+          "Can an everyday teacher understand the value within seconds?",
+          "Does the opening avoid implying one automated workflow?",
         ],
       },
       "7d2140d1-15e7-4762-b3b3-17e261c85948": {
         designIntent:
-          "The student profile is one entry point, not the whole product. It grounds the opening in Student Insights before the story moves through guidance, message drafting and Posts.",
+          "Use one focused, approved product state at the fold. Do not invent a Teacher Workspace home screen or app shelf.",
         checks: [
-          "Does the copy prevent the profile from reading as the whole platform?",
-          "Could any name or detail be mistaken for real student data?",
+          "Does the state show one clear teacher task?",
+          "Is every visible detail synthetic and safe for public review?",
         ],
         decisionNeeded:
-          "Replace this capture if the approved student profile changes before launch.",
+          "Choose the approved GA screen, state, and crop with the capability owner.",
+      },
+      "c8de156c-516f-4ba6-b7c4-b4ed652cb45d": {
+        designIntent:
+          "Orient teachers to four related capabilities without presenting four separate brands or a fictional integrated workflow.",
+        checks: [
+          "Are the four functional names accurate?",
+          "Does each line describe a distinct teacher job?",
+          "Has each behaviour been confirmed for GA?",
+        ],
       },
       "e4a6a36b-bb0a-4977-854b-66f3db071123": {
         designIntent:
-          "The synthetic bursary case is one worked example across four parts of Teacher Workspace. It keeps the flow easy to follow without presenting Student Insights as the whole platform. It appears before the capability list so each tool has a concrete example.",
+          "Use a positive, synthetic Student Insights scenario. The teacher notices progress, reviews recent observations, and decides what it means.",
         checks: [
-          "Does each step follow naturally from the one before it?",
-          "Is it clear that this is one example rather than the platform's only use?",
-          "Could any name, number, family detail or sensitive classification be mistaken for real student data?",
+          "Is the positive moment the focal point?",
+          "Does the scenario avoid risk, deficit, and SWaN framing?",
+          "Does the teacher remain the decision-maker?",
         ],
       },
       "74176ccd-fdee-47a2-9308-286146f2366b": {
         designIntent:
-          "The story starts in a familiar class list before moving into one profile. Teachers can recognise the setting before the support journey begins.",
+          "Show a class view with one positive synthetic tag, not an attention or conduct marker.",
         checks: [
-          "Does the class list look familiar to a form teacher?",
-          "Are all student names and details clearly synthetic?",
+          "Is the tag visibly positive?",
+          "Are the student and class details clearly synthetic?",
         ],
         decisionNeeded:
-          "Create a clean story-state capture without unrelated attention tags.",
+          "Confirm whether the proposed positive tag exists at GA.",
       },
       "9618e896-adda-4973-95e0-61c45360a2f5": {
         designIntent:
-          "The family section shows why a teacher may notice a support need. Its signals are invented and do not describe a real student.",
+          "Show the observations behind the positive tag so a teacher can understand the change without turning the student into a case.",
         checks: [
-          "Do the visible fields support the eligibility claim in the story?",
-          "Does the example avoid unnecessary family or financial detail?",
+          "Do the observations support the positive tag?",
+          "Is unnecessary sensitive detail excluded?",
         ],
         decisionNeeded:
-          "Confirm which bursary eligibility signals the approved product will show.",
-      },
-      "f050b81e-c800-4013-9258-57d991041363": {
-        designIntent:
-          "Guidance follows the eligibility signal so the page answers the teacher's next question: what should I do now?",
-        checks: [
-          "Does the guidance follow directly from the signal shown before it?",
-          "Can a teacher tell which steps still need product approval?",
-        ],
-        decisionNeeded:
-          "Confirm whether bursary matching, documents, submission details, and closing dates are planned for launch.",
-      },
-      "24bef79e-9103-4190-a1ba-9ac4fbfd75c5": {
-        designIntent:
-          "The draft appears after the teacher understands the case. Showing an editable message makes the teacher's review and control clear.",
-        checks: [
-          "Is the message visibly editable before it is sent?",
-          "Does the draft avoid claiming that AI can send a message without teacher approval?",
-        ],
-      },
-      "d9e36bc7-89b2-48b0-b35e-11867763d44a": {
-        designIntent:
-          "Read tracking closes the journey. It shows that the family received the message and that the action stays on record.",
-        checks: [
-          "Does the screen show delivery and read status clearly?",
-          "Does the page distinguish current product behaviour from the proposed student record?",
-        ],
-        decisionNeeded:
-          "Confirm whether application updates will appear on the student's record at launch.",
+          "Confirm which positive observations and dates may appear in the synthetic state.",
       },
       "fd9a7815-00b4-4a6f-8b69-c83a05b7b90d": {
         designIntent:
-          "The reveal turns the example into a platform explanation. It names the public capabilities and shows how the work moves from understanding the student to communicating with the family.",
+          "Use a separate classroom task for AI guidance. The section must not imply an automatic hand-off from Student Insights.",
         checks: [
-          "Does the reveal widen the story from one profile to the whole workflow?",
-          "Are the four public capability names accurate?",
+          "Is this scenario independent from the Student Insights story?",
+          "Does the teacher review the possible next step?",
         ],
+        decisionNeeded:
+          "Confirm the approved AI guidance task, output, and teacher-review language.",
       },
-      "c8de156c-516f-4ba6-b7c4-b4ed652cb45d": {
+      "f050b81e-c800-4013-9258-57d991041363": {
         designIntent:
-          "This section widens from one bursary case to the jobs the platform supports. Each card says what the capability does and uses the case only where it adds clarity.",
+          "Show one possible next step with enough context for the teacher to judge it. Do not claim circular reading or scheme matching.",
         checks: [
-          "Can a visitor understand that Teacher Workspace includes more than Student Insights?",
-          "Does Posts make the family-facing part of the platform clear?",
-          "Are product names and claims accurate for the current release?",
+          "Can the teacher use, adapt, or leave the suggestion?",
+          "Does the state avoid rejected claims?",
         ],
-      },
-      "76329aa6-ea3d-4f34-b6a3-3d9a222b2df0": {
-        designIntent:
-          "The closing returns to the platform promise and repeats the sign-in action. It links student context, guidance and family communication without repeating the bursary story.",
-        checks: [
-          "Does the closing describe the connected platform in plain language?",
-          "Is the sign-in action correct for the release?",
-        ],
+        decisionNeeded:
+          "Replace the current capture with the GA-approved guidance task.",
       },
       "c091f7ce-49db-4acc-89ed-91613e7e475a": {
         designIntent:
-          "Access details sit after the main story so setup does not interrupt it. Teachers still get the sign-in requirement before reaching the footer.",
+          "Use a separate positive communication scenario. Show Message drafting and Posts as related capabilities without claiming an automatic hand-off.",
         checks: [
-          "Is the access method correct?",
-          "Can a teacher tell which account to use?",
+          "Is teacher review explicit before publishing?",
+          "Does the Posts state use only approved delivery language?",
+          "Is unapproved testimonial proof omitted?",
+        ],
+      },
+      "24bef79e-9103-4190-a1ba-9ac4fbfd75c5": {
+        designIntent:
+          "Show an editable class-update draft with the teacher clearly in control.",
+        checks: [
+          "Is the draft visibly editable and unsent?",
+          "Does the copy avoid claiming that student context created the draft?",
         ],
         decisionNeeded:
-          "Confirm the support route and final access wording before launch.",
+          "Confirm the Message drafting entry point and review controls at GA.",
+      },
+      "d9e36bc7-89b2-48b0-b35e-11867763d44a": {
+        designIntent:
+          "Show the class update after publishing through Posts. Limit the public claim to approved delivery information.",
+        checks: [
+          "Does the screen avoid application tracking or student-record claims?",
+          "Is the represented delivery state approved for GA?",
+        ],
+        decisionNeeded:
+          "Confirm the exact Posts delivery or read state that may be described publicly.",
+      },
+      "76329aa6-ea3d-4f34-b6a3-3d9a222b2df0": {
+        designIntent:
+          "Explain the organisational value for Key Personnel and School Leaders while keeping everyday teachers primary.",
+        checks: [
+          "Does the section lead with more consistent school practice?",
+          "Does it preserve teacher judgement and review?",
+          "Are access, control, and data assurances approved?",
+        ],
+        decisionNeeded:
+          "PM, capability owners, policy, and security must approve this assurance.",
+      },
+      "a118f80c-9180-4fd6-b163-3fce876b9871": {
+        designIntent:
+          "Close on the teacher's next action, repeat the single Google sign-in CTA, and keep access guidance brief.",
+        checks: [
+          "Is the sign-in action correct?",
+          "Can a teacher tell which account to use?",
+        ],
       },
       "54fd7d5c-8c75-456e-abc7-5835ed93a3c1": {
         designIntent:
-          "The footer ends with product ownership and a feedback route. It stays brief because the main decision has already been made above.",
+          "End with product ownership and the existing feedback route without adding another marketing section.",
         checks: [
           "Are the owner, year, and feedback route correct?",
-          "Does the footer avoid repeating the access section?",
+          "Does the footer stay brief?",
         ],
       },
     },

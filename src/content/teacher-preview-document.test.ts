@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  canonicalTeacherPreviewSectionKinds,
   isCanonicalTeacherPreviewDocumentDto,
   isTeacherPreviewDocumentDto,
-  teacherPreviewSectionKinds,
 } from "./teacher-preview-document"
 import { buildTeacherPreviewPageData } from "./teacher-preview-document.server"
 
@@ -16,13 +16,13 @@ function readyDocument() {
 }
 
 describe("teacher-preview document contract", () => {
-  it("keeps the imported source on the six canonical sections in exact order", () => {
+  it("keeps the imported source on the seven canonical sections in exact order", () => {
     const document = readyDocument()
 
     expect(isTeacherPreviewDocumentDto(document)).toBe(true)
     expect(isCanonicalTeacherPreviewDocumentDto(document)).toBe(true)
     expect(document.sections.map((section) => section.kind)).toEqual(
-      teacherPreviewSectionKinds
+      canonicalTeacherPreviewSectionKinds
     )
 
     const reordered = {
@@ -42,12 +42,12 @@ describe("teacher-preview document contract", () => {
       ...document,
       sections: [
         document.sections[0],
-        document.sections[3],
         document.sections[2],
-        document.sections[1],
+        document.sections[2],
+        document.sections[3],
         document.sections[4],
         document.sections[5],
-        document.sections[2],
+        document.sections[6],
       ],
     }
 
@@ -105,15 +105,16 @@ describe("teacher-preview document contract", () => {
       })
     ).toBe(false)
 
-    const story = document.sections[1]
+    const story = document.sections[2]
     if (story.kind !== "connected-story") {
-      throw new Error("Expected the second section to be the connected story")
+      throw new Error("Expected the third section to be the connected story")
     }
     expect(
       isTeacherPreviewDocumentDto({
         ...document,
         sections: [
           promise,
+          document.sections[1],
           {
             ...story,
             steps: [
@@ -124,7 +125,7 @@ describe("teacher-preview document contract", () => {
               ...story.steps.slice(1),
             ],
           },
-          ...document.sections.slice(2),
+          ...document.sections.slice(3),
         ],
       })
     ).toBe(true)
@@ -133,6 +134,7 @@ describe("teacher-preview document contract", () => {
         ...document,
         sections: [
           promise,
+          document.sections[1],
           {
             ...story,
             steps: [
@@ -143,7 +145,7 @@ describe("teacher-preview document contract", () => {
               ...story.steps.slice(1),
             ],
           },
-          ...document.sections.slice(2),
+          ...document.sections.slice(3),
         ],
       })
     ).toBe(false)

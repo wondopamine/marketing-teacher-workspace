@@ -42,11 +42,12 @@ describe("teacher-preview server adapter", () => {
     ])
     expect(result.document.sections.map((section) => section.kind)).toEqual([
       "promise",
+      "capabilities",
+      "connected-story",
+      "connected-story",
       "connected-story",
       "reveal",
-      "capabilities",
       "close",
-      "access-support",
     ])
 
     const keys = collectObjectKeys(result)
@@ -66,13 +67,11 @@ describe("teacher-preview server adapter", () => {
       "src",
       "alt",
       "breadcrumb",
+      "brief",
+      "keyElements",
       "steps",
       "asides",
       "items",
-      "accessHeading",
-      "methodLabel",
-      "method",
-      "accountNote",
       "feedbackLabel",
     ])
     expect([...keys].filter((key) => !allowedKeys.has(key))).toEqual([])
@@ -130,15 +129,19 @@ describe("teacher-preview server adapter", () => {
     if (result.kind !== "ready") return
 
     const promise = result.document.sections[0]
-    const story = result.document.sections[1]
+    const stories = result.document.sections.filter(
+      (section) => section.kind === "connected-story"
+    )
     expect(promise.kind).toBe("promise")
-    expect(story.kind).toBe("connected-story")
-    if (promise.kind !== "promise" || story.kind !== "connected-story") return
+    expect(stories).toHaveLength(3)
+    if (promise.kind !== "promise") return
 
     expect(promise.screen.src).toBe(
       "/content-review/screens/student-profile.png"
     )
-    expect(story.steps.map((step) => step.screen.src)).toEqual([
+    expect(
+      stories.flatMap((story) => story.steps.map((step) => step.screen.src))
+    ).toEqual([
       "/content-review/screens/student-insights-class.png",
       "/content-review/screens/student-profile-family.png",
       "/content-review/screens/guidance.png",
@@ -146,11 +149,15 @@ describe("teacher-preview server adapter", () => {
       "/content-review/screens/post-read-tracking.png",
     ])
     expect(
-      [promise.screen, ...story.steps.map((step) => step.screen)].every(
+      [
+        promise.screen,
+        ...stories.flatMap((story) => story.steps.map((step) => step.screen)),
+      ].every(
         (screen) =>
           screen.src.startsWith("/content-review/screens/") &&
           screen.alt.trim().length > 0 &&
-          screen.breadcrumb.length > 0
+          screen.breadcrumb.length > 0 &&
+          screen.brief?.keyElements.length === 3
       )
     ).toBe(true)
   })
