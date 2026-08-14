@@ -151,7 +151,7 @@ describe("Landing Page v2 content contract", () => {
     expect(getLandingPageV2StructureIssues()).toEqual([])
   })
 
-  it("uses three separate positive scenario moments without rejected claims", () => {
+  it("uses audited prototype moments without rejected claims", () => {
     const narrative = [
       landingPageV2Content.seoDraft.description,
       landingPageV2Content.hero.headline,
@@ -170,10 +170,10 @@ describe("Landing Page v2 content contract", () => {
     ].join("\n")
     const lowered = narrative.toLowerCase()
 
-    expect(lowered).toContain("positive tag")
-    expect(lowered).toContain("possible next step")
-    expect(lowered).toContain("positive class moment")
-    expect(lowered).toContain("you decide")
+    expect(lowered).toContain("no attention tag")
+    expect(lowered).toContain("positive guidance state")
+    expect(lowered).toContain("term update letter")
+    expect(lowered).toContain("does not invent")
 
     for (const rejectedTerm of [
       "xiao ming",

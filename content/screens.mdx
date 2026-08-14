@@ -1,89 +1,89 @@
 ---
-# Interface briefs for the greyscale wireframe. Each block explains what the
-# final product image or interface state should communicate. It uses no real
-# student, family, or teacher data.
-label: Interface brief
+# Prototype evidence for the greyscale wireframe. Every existing state below
+# was checked against the Teacher Workspace design prototype. The named people
+# and records are synthetic prototype data.
+label: Prototype evidence
 
 # Where the story claims an interface the product does not have yet, the
 # annotation carries a question for the PM. Add one by writing
 # "pendingInterface-<item id>:" with the question as its value.
 pendingInterfaceLabel: Owner confirmation needed
-pendingInterface-hero: "Choose the approved GA screen and crop after the capability owner confirms the represented state."
-pendingInterface-story-promise: "Confirm whether Student Insights supports the proposed positive tag and observation summary at GA."
-pendingInterface-story-notice: "Confirm which positive observations and dates may appear in the public synthetic state."
-pendingInterface-story-next-steps: "Confirm the approved AI guidance task, output, and teacher-review language for GA."
-pendingInterface-story-words: "Confirm the Message drafting entry point and the controls that make teacher review visible."
+pendingInterface-hero: "Approve the existing Rachel Wong Mei Ling profile and crop for the hero product peek."
+pendingInterface-story-promise: "Approve the existing Class 3B list and Rachel Wong Mei Ling row for public synthetic use."
+pendingInterface-story-notice: "Approve the existing Rachel Wong Mei Ling profile fields and crop for public synthetic use."
+pendingInterface-story-next-steps: "Identify an existing, public-safe positive guidance screen. If none is available, omit this product peek."
+pendingInterface-story-words: "Confirm that the existing Term Update Letter AI Draft state represents GA behaviour and is cleared for public use."
 pendingInterface-story-family-and-record: "Confirm the exact delivery information Posts may describe publicly at GA."
 ---
 
-<Item id="hero">
+<Item id="hero" label="Existing prototype screen">
 
-## Focused product peek at the fold
+## Student Insights profile for Rachel Wong Mei Ling
 
-Show one approved Teacher Workspace state rather than a fictional home screen. The crop should make one everyday teacher task understandable within seconds.
+Use the existing synthetic profile for Rachel Wong Mei Ling. It is already a positive, non-support example in the prototype and does not require a new dashboard, tag, or content state.
 
-- One approved capability and task
-- Synthetic, non-sensitive information only
-- Enough interface context to identify the product location
-
-</Item>
-
-<Item id="story-promise">
-
-## Student Insights class view with a positive tag
-
-Highlight one synthetic student whose recent participation is improving. The positive tag must be the focal point, with no conduct, risk, or deficit framing.
-
-- Positive tag such as “Contributing with confidence”
-- Student row and class context
-- Route to recent positive observations
+- Rachel Wong Mei Ling, Class 3B, Swimming
+- 47 of 47 days present, Excellent conduct, and 91% overall
+- Attendance, Behaviour, Wellbeing, Academic, and Family sections
 
 </Item>
 
-<Item id="story-notice">
+<Item id="story-promise" label="Existing prototype screen">
 
-## Positive observation detail
+## Student Insights class list filtered to Class 3B
 
-Show the recent observations behind the positive tag. Dates and short notes help the teacher understand the change without turning the student into a case.
+Use the existing class list and Rachel Wong Mei Ling's existing row. The prototype does not have the proposed positive attention tag or a route to recent positive observations, so neither should appear in the landing-page screen.
 
-- Two or three positive classroom observations
-- Clear dates or sequence
-- Teacher-owned interpretation and follow-up
-
-</Item>
-
-<Item id="story-next-steps">
-
-## AI next-step guidance for a separate task
-
-Use a separate synthetic classroom-planning moment so the page does not imply an automatic hand-off from Student Insights. Present one possible next step for teacher review.
-
-- Short description of the teacher's task
-- One suggested next step with its basis
-- Visible choice to use, adapt, or leave the suggestion
+- Existing class or level selector, search, and filters
+- Rachel Wong Mei Ling row: Class 3B, Swimming, no attention tag
+- Existing row action opens the student's profile
 
 </Item>
 
-<Item id="story-words">
+<Item id="story-notice" label="Existing prototype screen">
 
-## Message draft for a positive class update
+## Rachel Wong Mei Ling's Student Insights profile
 
-Show a separate positive class moment in an editable draft. The interface must make clear that the teacher reviews the message before it is shared.
+Open Rachel's existing profile from the class list. This is the positive state already available in Student Insights; there is no separate recent-observations panel in the prototype.
 
-- Positive class-update subject and body
-- Editing controls and unsent status
-- Explicit teacher review before publishing
+- Student header: Rachel Wong Mei Ling, Class 3B, Swimming
+- Attendance: 47 of 47 days present; conduct: Excellent
+- Academic result: 91%; no attention tag or learning support
 
 </Item>
 
-<Item id="story-family-and-record">
+<Item id="story-next-steps" label="Prototype gap — do not invent">
 
-## Posts delivery overview
+## No matching positive AI-guidance screen exists
 
-Show the same class update after the teacher publishes it through Posts. Include only the delivery information approved for public GA copy.
+The prototype's authored guidance screens are for student-support scenarios. It does not currently contain guidance for Rachel or another positive student without support tags, so this wireframe must not specify a new screen.
 
-- Published message status
-- Approved delivery or read information
-- Route back to the sent post for follow-up
+- Existing guidance is authored for two student-support scenarios
+- No existing guidance state matches this landing page's positive-story guardrail
+- Landing treatment: omit the screen until an existing approved state is available
+
+</Item>
+
+<Item id="story-words" label="Existing prototype screen">
+
+## AI Draft with the Term Update Letter template
+
+Use the existing AI Draft flow in the Posts composer. Choosing Term Update Letter fills the existing title “Start of Term 3: What to Expect” and marks the result as example content for teacher review.
+
+- AI Draft template picker with Term Update Letter selected
+- Editable title and details: “Start of Term 3: What to Expect”
+- “Drafted with AI · Example content” and review-before-posting note
+
+</Item>
+
+<Item id="story-family-and-record" label="Existing prototype screen">
+
+## Posted Term 4 Letter to Parents
+
+Use the existing posted view for “Term 4 Letter to Parents”. It already shows the post, attachment, enquiry contact, staff-in-charge, and recipient read status.
+
+- Posted status and Overview showing 2 of 3 read, with 1 unread
+- Recipient table with Read or Unread status and Read At time
+- “Term 4 Parent Letter 2026.pdf” and the post's contact details
 
 </Item>

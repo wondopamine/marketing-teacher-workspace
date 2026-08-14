@@ -166,7 +166,7 @@ function ProductScreenFigure({
         {screen.brief ? (
           <div className="bg-muted p-6 sm:p-8" data-interface-brief>
             <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-              Proposed interface
+              {screen.brief.label}
             </p>
             <p className="mt-3 font-heading text-2xl leading-tight font-semibold">
               {screen.brief.heading}
@@ -200,7 +200,7 @@ function ProductScreenFigure({
       <figcaption className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border px-3 py-2 text-xs text-muted-foreground">
         <span>
           {screen.brief
-            ? "Content and interface direction for review"
+            ? "Checked against the existing Teacher Workspace prototype"
             : "Illustrative Teacher Workspace prototype"}
         </span>
         {screen.brief ? null : (

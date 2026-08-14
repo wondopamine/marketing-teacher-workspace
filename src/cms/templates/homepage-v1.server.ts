@@ -112,10 +112,10 @@ export const homepageV1Contract = {
           steps: [
             {
               id: "6561cfb1-bcd0-46e5-a322-7b8ea96ee6cb",
-              label: "Notice a positive change",
-              heading: "A student is contributing with growing confidence.",
+              label: "Open the class list",
+              heading: "Start with a student already in Student Insights.",
               body: [
-                "A positive tag brings recent classroom observations into view, so you can recognise the progress and encourage it.",
+                "The existing class list brings school information into one view. Open Rachel Wong Mei Ling, a synthetic Class 3B student whose prototype record has no attention tag.",
               ],
               screen: cmsScreen(
                 "story-promise",
@@ -124,10 +124,10 @@ export const homepageV1Contract = {
             },
             {
               id: "649d7311-7b87-4efb-8daa-893b4388481e",
-              label: "Understand the pattern",
-              heading: "Recent observations show what has changed.",
+              label: "Review the profile",
+              heading: "See the positive information already available.",
               body: [
-                "Review the positive observations and when they happened. You decide what the progress means and how to build on it.",
+                "Rachel's existing profile shows 47 of 47 days present, Excellent conduct, and 91% overall alongside attendance, behaviour, wellbeing, academic, and family information.",
               ],
               screen: cmsScreen(
                 "story-notice",
@@ -146,10 +146,11 @@ export const homepageV1Contract = {
           steps: [
             {
               id: "9d0ccaad-0ad7-45e4-a98b-2c6a4bc8a95b",
-              label: "Review a possible next step",
-              heading: "A practical next step is ready for your review.",
+              label: "Screen gap",
+              heading:
+                "Use an existing positive guidance state—or omit this step.",
               body: [
-                "In a separate classroom-planning moment, AI next-step guidance presents an option to consider. You decide whether it fits your student and context.",
+                "The current guidance prototype only contains student-support scenarios. It does not yet have a positive example that fits this landing page, so this wireframe does not invent one.",
               ],
               screen: cmsScreen(
                 "story-next-steps",
@@ -168,10 +169,10 @@ export const homepageV1Contract = {
           steps: [
             {
               id: "22bf511c-0da0-48c7-90e1-7028f8d0e49f",
-              label: "Prepare a class update",
-              heading: "Start with an editable draft.",
+              label: "Prepare a term update",
+              heading: "Start with the existing Term Update Letter draft.",
               body: [
-                "For a separate positive class moment, Message drafting helps prepare an update for families. You review and edit every word.",
+                "In Posts, choose AI Draft and the Term Update Letter template. It fills “Start of Term 3: What to Expect” for you to review and edit before posting.",
               ],
               screen: cmsScreen(
                 "story-words",
@@ -180,10 +181,10 @@ export const homepageV1Contract = {
             },
             {
               id: "8bb4f6d3-50f5-4e09-8f5a-3a2c932814d2",
-              label: "Publish when it is ready",
-              heading: "Share the approved update through Posts.",
+              label: "Check the published post",
+              heading: "Return to the existing Term 4 letter.",
               body: [
-                "Publish the update after your review. Return to the sent post to check the delivery information available to you.",
+                "The posted view shows 2 of 3 recipients have read it, one remains unread, and when each recipient read the post.",
               ],
               screen: cmsScreen(
                 "story-family-and-record",

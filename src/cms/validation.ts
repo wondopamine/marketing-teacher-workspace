@@ -107,6 +107,10 @@ function isScreen(value: unknown): value is CmsScreenDocument {
     (hasExactKeys(value, ["id", "src", "alt", "breadcrumb"]) ||
       hasExactKeys(value, ["id", "src", "alt", "breadcrumb", "brief"]))
   const brief = isRecord(value) ? value.brief : undefined
+  const validBriefKeys =
+    isRecord(brief) &&
+    (hasExactKeys(brief, ["heading", "body", "keyElements"]) ||
+      hasExactKeys(brief, ["label", "heading", "body", "keyElements"]))
   return (
     isRecord(value) &&
     validKeys &&
@@ -120,7 +124,8 @@ function isScreen(value: unknown): value is CmsScreenDocument {
     value.breadcrumb.every((crumb) => isNonBlankString(crumb, 100)) &&
     (brief === undefined ||
       (isRecord(brief) &&
-        hasExactKeys(brief, ["heading", "body", "keyElements"]) &&
+        validBriefKeys &&
+        (brief.label === undefined || isNonBlankString(brief.label, 120)) &&
         isNonBlankString(brief.heading, 240) &&
         isNonBlankString(brief.body, 1_000) &&
         Array.isArray(brief.keyElements) &&
@@ -435,7 +440,16 @@ function projectSection(
 }
 
 function withoutId({ id: _id, ...screen }: CmsScreenDocument) {
-  return { ...screen, brief: screen.brief ?? null }
+  if (!screen.brief) return { ...screen, brief: null }
+  return {
+    ...screen,
+    brief: {
+      label: screen.brief.label ?? "Prototype screen to verify",
+      heading: screen.brief.heading,
+      body: screen.brief.body,
+      keyElements: screen.brief.keyElements,
+    },
+  }
 }
 
 export function projectCmsPageDocument(

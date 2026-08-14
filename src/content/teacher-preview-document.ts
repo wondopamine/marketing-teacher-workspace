@@ -30,6 +30,7 @@ export type TeacherPreviewScreenDto = {
   readonly alt: string
   readonly breadcrumb: ReadonlyArray<string>
   readonly brief: {
+    readonly label: string
     readonly heading: string
     readonly body: string
     readonly keyElements: ReadonlyArray<string>
@@ -176,7 +177,13 @@ export function isTeacherPreviewScreenDto(
     value.breadcrumb.every((crumb) => isNonBlank(crumb)) &&
     (value.brief === null ||
       (isRecord(value.brief) &&
-        hasExactKeys(value.brief, ["heading", "body", "keyElements"]) &&
+        hasExactKeys(value.brief, [
+          "label",
+          "heading",
+          "body",
+          "keyElements",
+        ]) &&
+        isNonBlank(value.brief.label) &&
         isNonBlank(value.brief.heading) &&
         isNonBlank(value.brief.body) &&
         Array.isArray(value.brief.keyElements) &&

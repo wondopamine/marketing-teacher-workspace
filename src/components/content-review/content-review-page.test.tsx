@@ -76,7 +76,7 @@ describe("ContentReviewPage", () => {
     expect(data.document.footer.brand).toBe("Teacher Workspace")
   })
 
-  it("keeps reviewer rationale and pending decisions out of the teacher copy", () => {
+  it("shows prototype fidelity without leaking reviewer rationale into the preview", () => {
     const { container } = renderReadyReviewPage()
     const preview = container.querySelector<HTMLElement>(
       "[data-teacher-preview]"
@@ -84,7 +84,8 @@ describe("ContentReviewPage", () => {
     expect(preview).not.toBeNull()
     if (!preview) return
 
-    expect(preview.textContent).toContain("Proposed interface")
+    expect(preview.textContent).toContain("Existing prototype screen")
+    expect(preview.textContent).toContain("Prototype gap — do not invent")
     expect(preview.textContent).not.toContain("Story rationale")
     expect(preview.textContent).not.toContain(
       "The page follows one synthetic student through a single care journey"
@@ -116,14 +117,18 @@ describe("ContentReviewPage", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "A student is contributing with growing confidence.",
+        name: "Start with a student already in Student Insights.",
       })
     ).not.toBeNull()
     expect(
       screen.getByRole("heading", {
-        name: "Share the approved update through Posts.",
+        name: "Return to the existing Term 4 letter.",
       })
     ).not.toBeNull()
+    expect(preview.textContent).not.toContain("Contributing with confidence")
+    expect(preview.textContent).not.toContain(
+      "Recent observations show what has changed"
+    )
   })
 
   it("shows six aligned interface briefs with their product locations", () => {

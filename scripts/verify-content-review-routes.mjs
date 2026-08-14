@@ -86,7 +86,9 @@ assert(
     countMatches(reviewHtml, /<img[^>]+content-review\/screens\//g) === 0 &&
     countMatches(reviewHtml, /Question for the PM:/g) === 0 &&
     reviewHtml.includes("Student Insights") &&
-    reviewHtml.includes("Delivery"),
+    reviewHtml.includes("Existing prototype screen") &&
+    reviewHtml.includes("Prototype gap") &&
+    reviewHtml.includes("Term 4 Letter to Parents"),
   "The content-review route lost its interface briefs or breadcrumb map."
 )
 

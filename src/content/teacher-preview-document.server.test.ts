@@ -107,7 +107,7 @@ describe("teacher-preview server adapter", () => {
     }
   })
 
-  it("embeds all six safe local screens in their semantic story moments", () => {
+  it("embeds six audited prototype references in their semantic story moments", () => {
     const registry = [...createContentReviewRegistry()]
     const storyEntryIndexes = registry.flatMap((entry, index) =>
       entry.role === "entry" && entry.sectionKind === "connected-story"
@@ -157,7 +157,9 @@ describe("teacher-preview server adapter", () => {
           screen.src.startsWith("/content-review/screens/") &&
           screen.alt.trim().length > 0 &&
           screen.breadcrumb.length > 0 &&
-          screen.brief?.keyElements.length === 3
+          screen.brief !== null &&
+          screen.brief.label.trim().length > 0 &&
+          screen.brief.keyElements.length === 3
       )
     ).toBe(true)
   })

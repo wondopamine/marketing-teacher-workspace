@@ -68,7 +68,9 @@ describe("PublicReviewMode", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show rationale" }))
     expect(panel.hidden).toBe(false)
     expect(
-      within(panel).getByText("Focused product peek at the fold")
+      within(panel).getByText(
+        "Student Insights profile for Rachel Wong Mei Ling"
+      )
     ).not.toBeNull()
     expect(screen.queryByText("Review notes")).toBeNull()
 

@@ -28,6 +28,8 @@ export type CmsScreenDocument = {
   readonly alt: string
   readonly breadcrumb: ReadonlyArray<string>
   readonly brief?: {
+    /** Optional for backwards compatibility with saved v1 CMS drafts. */
+    readonly label?: string
     readonly heading: string
     readonly body: string
     readonly keyElements: ReadonlyArray<string>

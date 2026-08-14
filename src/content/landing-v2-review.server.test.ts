@@ -46,7 +46,7 @@ describe("Landing Page v2 content-review projection", () => {
     expect(getContentReviewStructureIssues()).toEqual([])
   })
 
-  it("projects the positive scenario copy without raw review or internal source data", () => {
+  it("projects audited prototype copy without raw review or internal source data", () => {
     const result = buildReviewDraftProjection()
 
     expect(result.ok).toBe(true)
@@ -55,9 +55,10 @@ describe("Landing Page v2 content-review projection", () => {
     const serialised = JSON.stringify(result.projection)
     const lowercase = serialised.toLowerCase()
 
-    expect(lowercase).toContain("positive tag")
-    expect(lowercase).toContain("possible next step")
-    expect(lowercase).toContain("positive class moment")
+    expect(lowercase).toContain("no attention tag")
+    expect(lowercase).toContain("positive guidance state")
+    expect(lowercase).toContain("term update letter")
+    expect(lowercase).toContain("does not invent")
     expect(lowercase).not.toContain("xiao ming")
     expect(lowercase).not.toContain("bursary")
     for (const prohibitedValue of [
