@@ -1,7 +1,8 @@
 ---
 # Prototype evidence for the greyscale wireframe. Every existing state below
-# was checked against the Teacher Workspace design prototype. The named people
-# and records are synthetic prototype data.
+# was checked against the Teacher Workspace design prototype by driving the
+# running prototype, and each brief records the build state its capture came
+# from. The named people and records are synthetic prototype data.
 label: Prototype evidence
 
 # Where the story claims an interface the product does not have yet, the
@@ -9,81 +10,81 @@ label: Prototype evidence
 # "pendingInterface-<item id>:" with the question as its value.
 pendingInterfaceLabel: Owner confirmation needed
 pendingInterface-hero: "Approve the existing Rachel Wong Mei Ling profile and crop for the hero product peek."
-pendingInterface-story-promise: "Approve the existing Class 3B list and Rachel Wong Mei Ling row for public synthetic use."
-pendingInterface-story-notice: "Approve the existing Rachel Wong Mei Ling profile fields and crop for public synthetic use."
-pendingInterface-story-next-steps: "Identify an existing, public-safe positive guidance screen. If none is available, omit this product peek."
-pendingInterface-story-words: "Confirm that the existing Term Update Letter AI Draft state represents GA behaviour and is cleared for public use."
-pendingInterface-story-family-and-record: "Confirm the exact delivery information Posts may describe publicly at GA."
+pendingInterface-story-promise: "Approve publishing an observation note and its positive tag. The capture is the default build, so no flag decision is needed."
+pendingInterface-story-notice: "Approve the existing Rachel Wong Mei Ling wellbeing fields and crop for public synthetic use."
+pendingInterface-story-next-steps: "This screen needs a Release 2 capability flag, so teachers will not have it at GA. Confirm whether the landing page may show it, and with what wording."
+pendingInterface-story-words: "Confirm that the existing AI Draft template picker represents GA behaviour and is cleared for public use."
+pendingInterface-story-family-and-record: "Confirm the exact delivery information Posts may describe publicly at GA. The capture is the overview tile only; the recipient table holds parent contact details and is excluded."
 ---
 
-<Item id="hero" label="Existing prototype screen">
+<Item id="hero" label="Existing screen · default build">
 
 ## Student Insights profile for Rachel Wong Mei Ling
 
-Use the existing synthetic profile for Rachel Wong Mei Ling. It is already a positive, non-support example in the prototype and does not require a new dashboard, tag, or content state.
+Use the existing synthetic profile for Rachel Wong Mei Ling. It is already a positive, non-support example and needs no new dashboard, tag, or content state. The capture is the default build, so every field shown is one a teacher has today.
 
-- Rachel Wong Mei Ling, Class 3B, Swimming
-- 47 of 47 days present, Excellent conduct, and 91% overall
+- Rachel Wong Mei Ling, Class 3B, Swimming; attendance 100%, conduct Excellent
 - Attendance, Behaviour, Wellbeing, Academic, and Family sections
+- Overall % and the trend tiles are excluded: both need a capability flag
 
 </Item>
 
-<Item id="story-promise" label="Existing prototype screen">
+<Item id="story-promise" label="Existing screen · default build">
 
-## Student Insights class list filtered to Class 3B
+## An observation a colleague already recorded
 
-Use the existing class list and Rachel Wong Mei Ling's existing row. The prototype does not have the proposed positive attention tag or a route to recent positive observations, so neither should appear in the landing-page screen.
+Open the Observations panel on the existing profile. It is present in the default build and already carries a positive tag and a colleague's note, so the story does not need an invented attention tag or a new panel.
 
-- Existing class or level selector, search, and filters
-- Rachel Wong Mei Ling row: Class 3B, Swimming, no attention tag
-- Existing row action opens the student's profile
-
-</Item>
-
-<Item id="story-notice" label="Existing prototype screen">
-
-## Rachel Wong Mei Ling's Student Insights profile
-
-Open Rachel's existing profile from the class list. This is the positive state already available in Student Insights; there is no separate recent-observations panel in the prototype.
-
-- Student header: Rachel Wong Mei Ling, Class 3B, Swimming
-- Attendance: 47 of 47 days present; conduct: Excellent
-- Academic result: 91%; no attention tag or learning support
+- Observations panel: 1 observation, 1 teacher, 1 context
+- Positive tag “Collaboration”, attributed to the recording teacher
+- “Add my observation” action for the teacher reading the profile
 
 </Item>
 
-<Item id="story-next-steps" label="Prototype gap — do not invent">
+<Item id="story-notice" label="Existing screen · default build">
 
-## No matching positive AI-guidance screen exists
+## Wellbeing signals already on the profile
 
-The prototype's authored guidance screens are for student-support scenarios. It does not currently contain guidance for Rachel or another positive student without support tags, so this wireframe must not specify a new screen.
+The wellbeing section brings signals that today sit in separate systems into one view. Every field is in the default build; none is a projection.
 
-- Existing guidance is authored for two student-support scenarios
-- No existing guidance state matches this landing page's positive-story guardrail
-- Landing treatment: omit the screen until an existing approved state is available
-
-</Item>
-
-<Item id="story-words" label="Existing prototype screen">
-
-## AI Draft with the Term Update Letter template
-
-Use the existing AI Draft flow in the Posts composer. Choosing Term Update Letter fills the existing title “Start of Term 3: What to Expect” and marks the result as example content for teacher review.
-
-- AI Draft template picker with Term Update Letter selected
-- Editable title and details: “Start of Term 3: What to Expect”
-- “Drafted with AI · Example content” and review-before-posting note
+- TCI risk indicators, shown as a count out of five
+- Low mood flagged across two or more terms
+- Social links, the student's recorded peer connections
 
 </Item>
 
-<Item id="story-family-and-record" label="Existing prototype screen">
+<Item id="story-next-steps" label="Existing screen · needs a Release 2 flag">
 
-## Posted Term 4 Letter to Parents
+## A suggested next step, written as encouragement
 
-Use the existing posted view for “Term 4 Letter to Parents”. It already shows the post, attachment, enquiry contact, staff-in-charge, and recipient read status.
+This guidance screen exists and is authored, but it only opens when a Release 2 capability flag is on, so teachers will not have it at general availability. The capture is one card; the surrounding screen frames the student through support classifications and is excluded.
 
-- Posted status and Overview showing 2 of 3 read, with 1 unread
-- Recipient table with Read or Unread status and Read At time
-- “Term 4 Parent Letter 2026.pdf” and the post's contact details
+- Suggested action with the reasoning that produced it
+- Named colleague to contact, and the reference guide behind the step
+- Framed as progress to sustain, not a deficit to correct
+
+</Item>
+
+<Item id="story-words" label="Existing screen · default build">
+
+## AI Draft offers a template, the teacher keeps the pen
+
+Use the existing AI Draft picker in the Posts composer. It offers four authored templates and states plainly that the draft is for the teacher to review and edit before posting. It works from a template, not from a student's record.
+
+- Four templates, each with the response it asks parents for
+- “We'll draft the post for you to review and edit before posting”
+- Cancel and Draft post actions; nothing sends without the teacher
+
+</Item>
+
+<Item id="story-family-and-record" label="Existing screen · default build">
+
+## The post is delivered, and reading is visible
+
+Use the overview tile from the existing posted letter. It shows what Posts can honestly claim: the message reached families and some have opened it. It does not claim any step beyond delivery.
+
+- Overview showing 2 of 3 read, with 1 unread
+- No claim about what a family does after reading
+- The recipient table is excluded: it holds parent contact details
 
 </Item>

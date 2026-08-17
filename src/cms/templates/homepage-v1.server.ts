@@ -112,10 +112,10 @@ export const homepageV1Contract = {
           steps: [
             {
               id: "6561cfb1-bcd0-46e5-a322-7b8ea96ee6cb",
-              label: "Open the class list",
-              heading: "Start with a student already in Student Insights.",
+              label: "Read what a colleague noticed",
+              heading: "Someone already wrote down what they saw.",
               body: [
-                "The existing class list brings school information into one view. Open Rachel Wong Mei Ling, a synthetic Class 3B student whose prototype record has no attention tag.",
+                "An observation another teacher recorded sits on the student's profile, tagged for what it showed. Nobody had to ask around the staff room to find it.",
               ],
               screen: cmsScreen(
                 "story-promise",
@@ -125,9 +125,9 @@ export const homepageV1Contract = {
             {
               id: "649d7311-7b87-4efb-8daa-893b4388481e",
               label: "Review the profile",
-              heading: "See the positive information already available.",
+              heading: "See the signals that usually sit apart.",
               body: [
-                "Rachel's existing profile shows 47 of 47 days present, Excellent conduct, and 91% overall alongside attendance, behaviour, wellbeing, academic, and family information.",
+                "Attendance, CCA attendance, risk indicators, and recorded peer connections appear together on one profile — a synthetic record with no attention tag. Today each of those signals lives in a different system.",
               ],
               screen: cmsScreen(
                 "story-notice",
@@ -146,11 +146,10 @@ export const homepageV1Contract = {
           steps: [
             {
               id: "9d0ccaad-0ad7-45e4-a98b-2c6a4bc8a95b",
-              label: "Screen gap",
-              heading:
-                "Use an existing positive guidance state—or omit this step.",
+              label: "Behind a Release 2 flag",
+              heading: "Read a suggested next step before deciding.",
               body: [
-                "The current guidance prototype only contains student-support scenarios. It does not yet have a positive example that fits this landing page, so this wireframe does not invent one.",
+                "An authored guidance screen exists and frames its suggestion as progress to sustain. It opens only when a Release 2 capability flag is on, so teachers will not have it at general availability.",
               ],
               screen: cmsScreen(
                 "story-next-steps",
@@ -184,7 +183,7 @@ export const homepageV1Contract = {
               label: "Check the published post",
               heading: "Return to the existing Term 4 letter.",
               body: [
-                "The posted view shows 2 of 3 recipients have read it, one remains unread, and when each recipient read the post.",
+                "The posted view shows 2 of 3 recipients have read it and one remains unread. It does not claim anything about what a family does next.",
               ],
               screen: cmsScreen(
                 "story-family-and-record",

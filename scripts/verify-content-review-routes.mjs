@@ -79,17 +79,21 @@ assert(
     !reviewHtmlLower.includes('rel="preload"'),
   "The content-review route published canonical, social-image, or preload metadata."
 )
+// Each of the six screens ships a verified capture and a one-line build state
+// in its caption. The full rationale lives in the reviewer note, which mounts
+// after hydration and so is deliberately absent from this server-rendered HTML.
 assert(
   countMatches(reviewHtml, /data-product-screen/g) === 6 &&
     countMatches(reviewHtml, /aria-label="Product location"/g) === 6 &&
-    countMatches(reviewHtml, /data-interface-brief/g) === 6 &&
-    countMatches(reviewHtml, /<img[^>]+content-review\/screens\//g) === 0 &&
+    countMatches(reviewHtml, /data-capture-provenance/g) === 6 &&
+    countMatches(reviewHtml, /data-interface-brief/g) === 0 &&
+    countMatches(reviewHtml, /<img[^>]+content-review\/screens\//g) === 6 &&
     countMatches(reviewHtml, /Question for the PM:/g) === 0 &&
     reviewHtml.includes("Student Insights") &&
-    reviewHtml.includes("Existing prototype screen") &&
-    reviewHtml.includes("Prototype gap") &&
+    reviewHtml.includes("Existing screen · default build") &&
+    reviewHtml.includes("Existing screen · needs a Release 2 flag") &&
     reviewHtml.includes("Term 4 Letter to Parents"),
-  "The content-review route lost its interface briefs or breadcrumb map."
+  "The content-review route lost its captures, build-state captions, or breadcrumb map."
 )
 
 const prohibitedReviewOutput = [

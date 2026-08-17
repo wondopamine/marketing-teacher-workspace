@@ -2,10 +2,14 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
 import {
+  ReviewAnnotationDetails,
   ReviewAnnotationProvider,
   ReviewPin,
+  reviewAnnotationBindings,
+  reviewAnnotations,
   useReviewAnnotations,
 } from "./review-annotations"
+import { contentReviewScreens } from "./content-review-chrome"
 
 function Harness() {
   const { panelOpen, selectedId, setPinsVisible } = useReviewAnnotations()
@@ -58,6 +62,38 @@ describe("review annotations", () => {
       screen.queryByRole("button", {
         name: "Review note: Notice and understand",
       })
+    ).toBeNull()
+  })
+
+  it("carries a screen's build state and rationale in its reviewer note", () => {
+    const hero = reviewAnnotations.find(
+      (annotation) => annotation.id === reviewAnnotationBindings.heroScreen
+    )
+    if (!hero) throw new Error("Expected the hero screen annotation")
+
+    render(<ReviewAnnotationDetails annotation={hero} />)
+
+    // The rationale that used to sit inline under the capture now lives here.
+    expect(screen.getByText("Reviewer note")).not.toBeNull()
+    expect(screen.getByText(contentReviewScreens.hero.provenance)).not.toBeNull()
+    expect(screen.getByText(contentReviewScreens.hero.heading)).not.toBeNull()
+    expect(screen.getByText(contentReviewScreens.hero.body)).not.toBeNull()
+    for (const element of contentReviewScreens.hero.keyElements) {
+      expect(screen.getByText(element)).not.toBeNull()
+    }
+  })
+
+  it("omits the build state on section notes, which have no capture", () => {
+    const section = reviewAnnotations.find(
+      (annotation) => annotation.id === reviewAnnotationBindings.notice
+    )
+    if (!section) throw new Error("Expected the notice section annotation")
+
+    const { container } = render(<ReviewAnnotationDetails annotation={section} />)
+
+    expect(section.provenance).toBeUndefined()
+    expect(
+      container.querySelector("[data-review-annotation-provenance]")
     ).toBeNull()
   })
 })

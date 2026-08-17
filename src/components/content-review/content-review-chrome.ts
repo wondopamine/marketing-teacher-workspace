@@ -35,6 +35,12 @@ export type SectionChrome = {
 }
 
 export type ContentReviewScreen = {
+  /**
+   * Which build state the capture came from, e.g. "Existing screen · default
+   * build". Shown on the figure caption so a reader can tell a screen teachers
+   * already have from one behind a capability flag.
+   */
+  readonly provenance: string
   readonly heading: string
   readonly body: string
   readonly keyElements: ReadonlyArray<string>
@@ -65,6 +71,9 @@ function screen(id: string): ContentReviewScreen {
   }
   const question = screens.optionalText(`pendingInterface-${id}`)
   return {
+    provenance:
+      item.label ??
+      screens.fail(`<Item id="${id}"> needs a prototype-status label.`),
     heading: itemHeading(screens, item),
     body: itemBody(screens, item),
     keyElements: item.bullets,

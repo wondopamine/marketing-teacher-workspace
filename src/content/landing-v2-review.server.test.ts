@@ -56,9 +56,11 @@ describe("Landing Page v2 content-review projection", () => {
     const lowercase = serialised.toLowerCase()
 
     expect(lowercase).toContain("no attention tag")
-    expect(lowercase).toContain("positive guidance state")
     expect(lowercase).toContain("term update letter")
-    expect(lowercase).toContain("does not invent")
+    // The guidance screen exists but is flag-gated, so the projection must
+    // disclaim its availability rather than claim it as a GA capability.
+    expect(lowercase).toContain("release 2 capability flag")
+    expect(lowercase).toContain("will not have it at general availability")
     expect(lowercase).not.toContain("xiao ming")
     expect(lowercase).not.toContain("bursary")
     for (const prohibitedValue of [

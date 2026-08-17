@@ -142,7 +142,7 @@ describe("teacher-preview server adapter", () => {
     expect(
       stories.flatMap((story) => story.steps.map((step) => step.screen.src))
     ).toEqual([
-      "/content-review/screens/student-insights-class.png",
+      "/content-review/screens/observations.png",
       "/content-review/screens/student-profile-family.png",
       "/content-review/screens/guidance.png",
       "/content-review/screens/post-composer.png",

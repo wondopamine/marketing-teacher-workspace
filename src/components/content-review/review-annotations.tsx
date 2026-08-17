@@ -12,6 +12,8 @@ export type ReviewAnnotation = {
   readonly rationale: string
   readonly details: ReadonlyArray<string>
   readonly pending: string | null
+  /** Build state of a screen capture. Absent on section notes. */
+  readonly provenance?: string
 }
 
 export const reviewAnnotationBindings = {
@@ -41,6 +43,7 @@ function screenAnnotation(
     rationale: screen.body,
     details: screen.keyElements,
     pending: screen.pendingInterface?.question ?? null,
+    provenance: screen.provenance,
   }
 }
 
@@ -277,6 +280,14 @@ export function ReviewAnnotationDetails({
       >
         {annotation.title}
       </p>
+      {annotation.provenance ? (
+        <p
+          className="mt-1 text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase"
+          data-review-annotation-provenance
+        >
+          {annotation.provenance}
+        </p>
+      ) : null}
       {annotation.rationale ? (
         <p className="mt-2 max-w-[66ch] leading-6 text-muted-foreground">
           {annotation.rationale}

@@ -84,8 +84,12 @@ describe("ContentReviewPage", () => {
     expect(preview).not.toBeNull()
     if (!preview) return
 
-    expect(preview.textContent).toContain("Existing prototype screen")
-    expect(preview.textContent).toContain("Prototype gap — do not invent")
+    // Each capture states the build state it came from, so a reader can tell a
+    // screen teachers already have from one that needs a capability flag.
+    expect(preview.textContent).toContain("Existing screen · default build")
+    expect(preview.textContent).toContain(
+      "Existing screen · needs a Release 2 flag"
+    )
     expect(preview.textContent).not.toContain("Story rationale")
     expect(preview.textContent).not.toContain(
       "The page follows one synthetic student through a single care journey"
@@ -117,7 +121,7 @@ describe("ContentReviewPage", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Start with a student already in Student Insights.",
+        name: "Someone already wrote down what they saw.",
       })
     ).not.toBeNull()
     expect(
@@ -131,14 +135,23 @@ describe("ContentReviewPage", () => {
     )
   })
 
-  it("shows six aligned interface briefs with their product locations", () => {
+  it("shows six captures with their build state and product locations", () => {
     const { container, data } = renderReadyReviewPage()
     const figures = Array.from(
       container.querySelectorAll("[data-product-screen]")
     )
-    const briefs = Array.from(
-      container.querySelectorAll("[data-interface-brief]")
+    // The rationale moved to the reviewer note; the figure keeps only a
+    // one-line build state so a reader can still tell a screen teachers have
+    // from one behind a capability flag.
+    const provenance = Array.from(
+      container.querySelectorAll("[data-capture-provenance]")
     )
+    const captures = Array.from(
+      container.querySelectorAll('img[src^="/content-review/screens/"]')
+    )
+    expect(
+      container.querySelectorAll("[data-interface-brief]")
+    ).toHaveLength(0)
     const locations = screen.getAllByRole("navigation", {
       name: "Product location",
     })
@@ -155,14 +168,15 @@ describe("ContentReviewPage", () => {
     ]
 
     expect(figures).toHaveLength(6)
-    expect(briefs).toHaveLength(6)
+    expect(provenance).toHaveLength(6)
+    expect(captures).toHaveLength(6)
     expect(locations).toHaveLength(6)
     expect(
       screen.queryByRole("link", { name: /screen at full size$/ })
     ).toBeNull()
     expect(documentScreens.map((item) => item.src)).toEqual([
       "/content-review/screens/student-profile.png",
-      "/content-review/screens/student-insights-class.png",
+      "/content-review/screens/observations.png",
       "/content-review/screens/student-profile-family.png",
       "/content-review/screens/guidance.png",
       "/content-review/screens/post-composer.png",
@@ -170,7 +184,8 @@ describe("ContentReviewPage", () => {
     ])
 
     documentScreens.forEach((item, index) => {
-      expect(briefs[index].textContent).toContain(item.brief?.heading)
+      expect(provenance[index].textContent).toBe(item.brief?.label)
+      expect(captures[index].getAttribute("src")).toBe(item.src)
       for (const crumb of item.breadcrumb) {
         expect(locations[index].textContent).toContain(crumb)
       }

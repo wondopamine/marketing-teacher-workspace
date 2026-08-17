@@ -171,9 +171,11 @@ describe("Landing Page v2 content contract", () => {
     const lowered = narrative.toLowerCase()
 
     expect(lowered).toContain("no attention tag")
-    expect(lowered).toContain("positive guidance state")
     expect(lowered).toContain("term update letter")
-    expect(lowered).toContain("does not invent")
+    // The guidance screen exists but is flag-gated, so the narrative must
+    // disclaim its availability rather than claim it as a GA capability.
+    expect(lowered).toContain("release 2 capability flag")
+    expect(lowered).toContain("will not have it at general availability")
 
     for (const rejectedTerm of [
       "xiao ming",

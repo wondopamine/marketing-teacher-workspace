@@ -163,29 +163,11 @@ function ProductScreenFigure({
         {annotationId ? <ReviewPin id={annotationId} /> : null}
       </div>
       <div className="overflow-hidden bg-white">
-        {screen.brief ? (
-          <div className="bg-muted p-6 sm:p-8" data-interface-brief>
-            <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-              {screen.brief.label}
-            </p>
-            <p className="mt-3 font-heading text-2xl leading-tight font-semibold">
-              {screen.brief.heading}
-            </p>
-            <p className="mt-4 max-w-[66ch] leading-6 text-muted-foreground">
-              {screen.brief.body}
-            </p>
-            <ul className="mt-6 grid gap-3 sm:grid-cols-3">
-              {screen.brief.keyElements.map((item) => (
-                <li
-                  className="border border-border bg-background p-4 text-sm leading-5"
-                  key={item}
-                >
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
+        {/* The figure carries the capture only. Its rationale — heading, why
+            this state was chosen, and the key elements — lives in the reviewer
+            note behind the pin, so the wireframe reads as a page rather than as
+            an annotated audit. */}
+        {screen.src ? (
           <img
             alt={screen.alt}
             className="block h-auto w-full"
@@ -195,12 +177,12 @@ function ProductScreenFigure({
             src={screen.src}
             width="1600"
           />
-        )}
+        ) : null}
       </div>
       <figcaption className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border px-3 py-2 text-xs text-muted-foreground">
-        <span>
+        <span data-capture-provenance>
           {screen.brief
-            ? "Checked against the existing Teacher Workspace prototype"
+            ? screen.brief.label
             : "Illustrative Teacher Workspace prototype"}
         </span>
         {screen.brief ? null : (
