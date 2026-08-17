@@ -26,3 +26,24 @@ The existing local image files were made from older prototype states. In particu
 ## Consequence
 
 The content-review route is less visually complete in the AI-guidance section, but it is product-faithful. A capability owner must supply an already-designed, public-safe positive guidance state before that screen can be added. The landing-page project does not create that product state.
+
+## Amendment, 17 August 2026 — flag state was not recorded
+
+This audit read the prototype without recording which **feature flags** were on. The prototype has 24 flags (`/flags`, `src/lib/feature-flags/`), each with its own `defaultValue`, so "not present" and "present but flagged off" are different findings. Re-audited at the same commit `80a895b` by driving the running prototype. Three findings above do not hold.
+
+- **The observations route is not invented.** `section#observations` is present on `/students/12` in the **default build**, already carrying the positive tag "Collaboration" and a colleague's note. Only the tag name `Contributing with confidence` was invented. The panel and the route were not.
+- **The AI-guidance screen exists; it is flag-gated, not missing.** `/glow/3` does not load at all on the default build — it redirects to `/students/3` — and opens only with `lta-intervention`, a **Release 2** flag. Its cards are explicitly positive, one reading "keeps the conversation about momentum rather than deficit". The guardrail concern is real but is a cropping problem: the surrounding frame carries support classifications, the cards do not.
+- **The hero-peek evidence mixed a flagged field into the base build.** There is no "47 of 47 days" field; attendance reads `Attendance (%) 100`. `91% overall` requires `overall-percentage`, which is **off by default**. "Teacher remarks and next steps are hidden in the base view" was correct.
+
+### What replaced this decision
+
+Per the product owner on 17 August 2026, a screen behind a **Release 2** flag may appear, provided it is aligned with the GA capabilities named in issue #3 and is labelled as not yet available to teachers. Experiment-stage fields stay off the page.
+
+Each of the six screens now ships a **verified capture together with its brief**, and the brief states the build state the capture came from — `Existing screen · default build` or `Existing screen · needs a Release 2 flag`. The captured-image caveat below is therefore discharged for the five screens recaptured on 17 August; the class-list capture was **not** replaced, because every class in the fixture contains a student with poor conduct and recorded offences, and three carry financial-assistance status. That slot moved to the observations panel instead.
+
+Two constraints found while recapturing, both now enforced by crop:
+
+- `/announcements/pg-1` holds parent names and phone numbers in its recipient table. Only the overview tile is published.
+- The second guidance card's Resources row names an internal programme. Only the first card is published.
+
+See `docs/prototype-flag-audit-2026-08-17.md` for the full evidence.
