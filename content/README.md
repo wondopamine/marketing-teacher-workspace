@@ -1,9 +1,11 @@
 # Landing page content
 
-> **Current review state:** These files describe the provisional seven-part GA
-> wireframe in `docs/landing-page-ga-spec.md`. The wireframe is a communication
-> artifact, not approved public copy. Capability claims, scenarios, proof, and
-> assurance language still need their named approvals before a CMS save or
+> **Current review state:** These files carry issue #3's seven-part GA
+> narrative and now feed two surfaces: the `/content-review` wireframe and the
+> designed GA landing page at `/` (branch `ga-landing-design`; see
+> `docs/decisions/ga-landing-page.md`). Every line is proposed copy, not
+> approved public copy. Capability claims, scenarios, testimonial publication,
+> and assurance language still need their named approvals before a CMS save or
 > publication.
 
 Every word on the Teacher Workspace landing page and on the `/content-review`
