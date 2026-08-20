@@ -57,14 +57,15 @@ N/A: LAY-1 (no declared grid — no `.dx/design.json`); CMP-2/CMP-3/A11Y-11/CMP-
 
 ## Waivers granted
 
+No waivers were requested or granted this run.
+
 | Control | Tier | Reason | Approver | Where recorded |
 |---------|------|--------|----------|----------------|
-| — none — | | | | |
 
 **Calibration notes (not waivers):**
 
-- **COL-1:** primary actions use the repo's locked brand token `--cta-blue #245adb`, not the harness table's TW `#0064FF`. The visual system is locked by CLAUDE.md; drift flagged here, not changed.
-- **TYP-1/TYP-3 (memo card, wordmark):** the extracted v1 `MemoCard` keeps its shipped sizes (22/15/13px) and the header wordmark its 13px two-line lockup — registered v1 conventions under the locked visual system; drift flagged, not restyled. The memo numeral did change `font-mono` → Inter `tabular-nums` (revert: restore `font-mono` class in `memo-card.tsx`).
+- **COL-1:** the filled primary uses the repo's `--primary` token (`#0066ff`, effectively the registered TW blue `#0064FF`), consistent with the v1 siblings. The close CTA's *text and border* use `--cta-blue #245adb` because `#0066ff` as 16px text on the paper ground measures 4.36:1 and fails AA (review round 1, finding 5). An earlier version of this note misnamed the filled CTA's token; corrected 2026-08-20.
+- **TYP-1/TYP-3 (memo card, wordmark):** after review round 1 the inherited off-scale sizes moved onto the Tailwind scale (memo quote 22→20px, body 15→16px, attribution 13→14px; wordmark/footer 13→14px) rather than carrying an L1 waiver, and the memo numeral changed `font-mono` → Inter `tabular-nums`. Revert: restore the previous classes in `memo-card.tsx`, `ga-header.tsx`, `footer.tsx`. The dead `@fontsource-variable/geist` import was removed from `src/styles.css` (TYP-1 dead-import clause).
 - **TYP-2 line-height findings** from `type-scan` are display headings, not body (static scan cannot classify); body copy runs 1.6–1.7. Verified manually.
 - **CNT-13 "color" findings** are Tailwind `text-[color:var(--…)]` syntax, not copy. False positives; copy proofread manually (Singapore English).
 - **CNT-6 "This is"** — "This is Teacher Workspace" is issue #3's verbatim reveal line; the naming moment is the point. Deliberate (L2 rationale).
@@ -86,7 +87,7 @@ N/A: LAY-1 (no declared grid — no `.dx/design.json`); CMP-2/CMP-3/A11Y-11/CMP-
 
 ## Verify verdict
 
-- **Screenshots:** `docs/design-evidence/ga-landing-page/` — 1280 (hero, act-promise, act-next-steps, act-words, act-family, reveal, apps, audiences, schools, close), 768 (hero, journey stacked), 360 (hero, schools), 320 (reflow), reduced-motion at 1280 (hero, journey), focus states (skip link, nav).
+- **Screenshots:** `docs/design-evidence/ga-landing-page` — 1280 (hero, act-promise, act-next-steps, act-words, act-family, reveal, apps, audiences, schools, close), 768 (hero, journey stacked), 360 (hero, schools), 320 (reflow), reduced-motion at 1280 (hero, journey), focus states (skip link, nav).
 - **CMP-3 evidence:** N/A — no async actions on the page.
 - **Token block line range:** tokens live in `src/styles.css:100–135` (pre-existing); no new raw values outside it.
 - **Dark mode:** N/A — the public landing page has no dark mode (the paper world is deliberately light; no theme toggle on the marketing site).
@@ -95,23 +96,103 @@ N/A: LAY-1 (no declared grid — no `.dx/design.json`); CMP-2/CMP-3/A11Y-11/CMP-
   | Control | Method | Evidence |
   |---------|--------|----------|
   | TOK-1..3 | script | `checks/token-audit.py` clean on `landing-ga/`, `landing-ga-page.ts`, `memo-card.tsx` |
-  | A11Y-1 | script + manual | `checks/contrast.py --tokens src/styles.css` clean; ink #1a1a1a / muted #5f6f76 on paper grounds inspected in frames |
-  | A11Y-2 | script + manual | `checks/a11y-static.py` clean; tab traversal operated — skip link and nav focus rings photographed |
-  | A11Y-5 / MOT-3 | manual | reduced-motion frames: stacked presentation, no animation, zero information loss |
+  | A11Y-1 | manual | `checks/contrast.py --tokens src/styles.css` clean; ink #1a1a1a / muted #5f6f76 on paper grounds inspected in frames |
+  | A11Y-2 | manual | `checks/a11y-static.py` clean; tab traversal operated — skip link and nav focus rings photographed |
+  | A11Y-5 | manual | reduced-motion frames: stacked presentation, no animation, zero information loss |
   | A11Y-6 | manual | captures `aria-hidden` inside labelled `role="img"` figures; decorative sketches `aria-hidden` |
   | A11Y-7/9/10 | manual | accessibility snapshot: skip link first, landmarks, h1→h2→h3 hierarchy, GA title from 01-meta.mdx |
   | TYP-1 | script | `type-scan --rules TYP-1` clean after mono→Inter fix |
-  | TYP-2/3 | script + manual | remaining findings are headings / inherited v1 memo sizes (calibration notes above) |
-  | CNT set | script + manual | `content-lint` findings triaged (false positives + one deliberate line, above); copy proofread |
-  | CMP-1 | asserted | no manifest — composed from existing repo components (Button, RevealOnScroll, MemoCard, SiteFooter, MastheadSg, SkipLink) |
-  | CMP-5 | test | `ga-landing-page.test.tsx` asserts exactly one filled primary ("Sign in with Google") |
+  | TYP-2/3 | manual | remaining findings are headings / inherited v1 memo sizes (calibration notes above) |
+  | CNT set | manual | `content-lint` findings triaged (false positives + one deliberate line, above); copy proofread |
+  | CMP-1 | manual | CMP-1: asserted, no manifest — manifest absent for tw. Evidence source (a): reviewed the product codebase directly; composed from Button, RevealOnScroll, MemoCard, SiteFooter, MastheadSg, SkipLink |
+  | CMP-5 | script | `ga-landing-page.test.tsx` asserts exactly one filled primary ("Sign in with Google") |
   | LAY-2 | manual | 320px frame: single column, no horizontal scroll |
   | SLP-1..9,11 | manual | no gradients/glow/nested cards; apps grid cells are interactive links with distinct evidence |
   | Output isolation | script | build-time `verify-content-review-public-output.mjs` + `verify-content-review-routes.mjs` clean; unpublished quotes, internal ids, reviewer notes absent from public bundle (public-safe module + sync test) |
-  | Suite | script | 347/347 vitest, tsc clean, production build green (`pnpm lint` broken pre-existing — eslint not a direct dep on either lineage) |
+  | Test suite | script | 347/347 vitest, tsc clean, production build green (`pnpm lint` broken pre-existing — eslint not a direct dep on either lineage) |
 
-- **Evaluator verdict:** _pending — dx-design-review dispatch below._
+- **Evaluator verdict:**
+
+  VERDICT: fail (round 1 — full verbatim verdict in "Design review — round 1" below, findings 1–12 blocking, all addressed; re-check pending with the same reviewer)
+
+  QUALITY GRADES: Design quality — acceptable. Originality — strong. Craft — acceptable. Functionality — weak (pre-fix). Dark mode — N/A: product has no dark mode on this surface.
 
 ## Ratchet
 
 _To be completed at Phase 6 after the review verdict and user acceptance._
+
+## Design review — round 1 (2026-08-20, dx-design-review)
+
+> Verdict pasted verbatim per `procedures/design-review.md`. Shared-limit note:
+> the reviewer runs the same model on the same standards — a second read, not a
+> fully independent one; split findings and non-mechanical checks remain
+> candidates for human review.
+
+### Verbatim verdict
+
+VERDICT: fail
+
+Two L0 controls fail, sprint-contract criteria 4 and 5 are not met, and the page's single primary action is invisible without JavaScript.
+
+Standing overrides: none (no `.dx/design.json`, no `DESIGN.md`; LAY-1 correctly N/A).
+
+BLOCKING (must fix before ship)
+
+1. Conduct, offences, counselling and SEN data render on the public page (contract criterion 4 guardrail; CNT-4). The student-profile capture is used twice — hero peek and act 2 — and visibly contains "Conduct grade · Excellent (2025, Overall)", "Offences · 0", "Counselling · 0", "Special Educational Needs (SEN)". Fix the capture, not the copy.
+2. Without JavaScript the hero — including "Sign in with Google" — never becomes visible (contract criterion 5; MOT-3). Server HTML ships `opacity:0` on the hero copy block, hero peek, reveal, section headings, the entire close section, and all three memo cards; no `<noscript>` fallback. Related gap: `vitest.setup.ts` stubs `matchMedia` with `matches: true` for every query, so all 347 tests run in the reduced-motion branch.
+3. Focus indicators at 1.3–1.8:1, far below the 3:1 non-text floor (A11Y-1 / A11Y-2, both L0): `ring-primary/40` (header, apps, footer) measured 1.81:1; `ring-ring/50` on the two Buttons 1.31:1 (hero, on sky) and 1.44:1 (close). Only the skip link and footer feedback link pass.
+4. Audience block labels fail AA (A11Y-1, L0): `text-[color:var(--paper-ink)]/60` at 14px semibold measures 4.28/4.15/4.16:1 on cream/mint/sky (needs 4.5:1).
+5. Close CTA label fails AA (A11Y-1, L0): `text-primary` #0066ff on paper #f6f3eb = 4.36:1 at 16px/600. With `--cta-blue #245adb` the same pairing measures 5.32:1 and passes.
+6. The header wordmark link has no accessible name below 640px (A11Y-8, L1); the footer's identical pattern carries `aria-label` (CMP-7 divergence).
+7. Interactive targets below the size floor (A11Y-4, L1; no ledger row): footer feedback link 18px vs 24px floor; header wordmark 36px and footer wordmark 28px vs 44px mobile floor.
+8. In-page navigation deleted below 768px with no equivalent (LAY-2, L1); the 320/360 captures predate three late fixes, so the current 320 reflow is unverified — re-capture required.
+9. Off-scale type sizes with no waiver on file (TYP-3, L1): 13px header/footer; 22/15/13px memo card. L1 needs a documented waiver with a named approver or on-scale sizes.
+10. A dead font import ships on this page (TYP-1, L1): `@fontsource-variable/geist` imported in styles.css, referenced by nothing; `type-scan` does not implement the dead-import clause.
+11. The ≥1024px fallback collapses the gap between acts to zero (SLP-7, L1): `lg:gap-y-0` with no padding in the non-enhanced branch — capability sign-off sits ~20px above the next act's eyebrow.
+12. Two binding decision-record gates still open while the page renders as if cleared: ADR-0003 "Nothing renders until `publicationApproved` is recorded" vs three rendered quotes at `publicationApproved: false` (and the landing-map acceptance table says one quote, the build ships three, labelled "Verified quotes"); "Capability-owner-confirmed GA claims only" vs act 3's Release-2 flag-gated capability beside "Now available to schools across Singapore." Ticket #6 remains the merge gate.
+
+ADVISORY (should fix)
+
+- Illustrative labelling incomplete (CNT-4): synthetic disclosure beside the journey frame only; hero peek unlabelled; flag-gated capability has neither owner sign-off nor in-product label.
+- Capability naming internally inconsistent (CNT-12/CNT-10 close call): "Student Insights" Title Case beside sentence-case peers; "Message drafting" (card) vs "AI Draft" (act 4 copy/capture).
+- Memo-card motion overshoots and runs long (MOT-1; SLP-8 close call): 950ms overshoot keyframes, underdamped cursor spring; judged decorative narrative content, worth a human call.
+- The record misstates the CTA colour (COL-1): says `--cta-blue #245adb`, code uses `--primary #0066ff`.
+- Header anchors suppress native fragment focus: `preventDefault` + `scrollIntoView` with no focus move.
+- The decision record fails `checks/audit-record.py` (11 errors: ledger method vocabulary, missing fixed-form CMP-1 line, placeholder waiver row); the ledger claims the hero CTA's focus state was photographed but the frame shows a nav link.
+- Two rendered strings bypass the MDX copy layer (reveal eyebrow, schools lede).
+- Raw shadow values beside existing tokens (ga-header, memo-card).
+- The launch line appears twice (hero pill and reveal).
+- Identical 4-up card grid as the discovery layout (SLP-5, close call, reasoned).
+- The fixed translucent pill sits on top of running copy at 360 and 1280.
+- Minor A11Y-6: literal "→" announced; sticky frame aria-label concatenates five sentences.
+- Publication judgment on one verbatim ("faster than Facebook and Instagram") — a PM call.
+- Inter is delivered by accident (imported only via the content-review route's chunk attached to the root entry).
+
+QUALITY GRADES: Design quality — acceptable. Originality — strong. Craft — acceptable. Functionality — weak. Dark mode — N/A.
+
+UNCOVERED (feed the ratchet): no control requires a no-JS/hydration-failure baseline; no control governs marketing claim accuracy/availability; no control governs what a product screenshot discloses; a project matchMedia stub can silence a whole rendering branch; `type-scan` lacks TYP-1's dead-import clause; `contrast.py` cannot resolve Tailwind `/opacity` modifiers.
+
+(Full judgment-control notes and the reviewer's verification ledger are preserved in the design ticket run record, String-dxd/marketing-teacher-workspace#14.)
+
+### Fixes applied after round 1 (commit pending re-check)
+
+1. **Capture data leak** → new cropped asset `student-profile-attendance.png` (2050×980: breadcrumb, name card, attendance card only — no behaviour/counselling/SEN fields, no jump-rail); used by the hero peek and act 2. Fixed, re-captured.
+2. **No-JS opacity:0** → hero entrances rewritten as pure CSS keyframes (`ga-fade-up`); `RevealOnScroll` and `MemoCard` now server-render the settled state and only arm their entrance after hydration for elements still below the viewport. New regression test: `renderToStaticMarkup(<GaLandingPage/>)` must contain no `opacity:0` and must contain the CTA. Fixed.
+3. **Focus contrast** → all `/40`–`/50` ring modifiers replaced with full-opacity `ring-primary`; the two Buttons add `ring-offset-2`. Fixed, hero-CTA focus frame captured this time.
+4. **Audience labels** → `/60` → `/70` (computed ≥5.8:1 on all three tints). Fixed.
+5. **Close CTA text** → `--cta-blue` text/border (5.32:1). Fixed.
+6. **Wordmark accessible name** → `aria-label="Teacher Workspace"` on the header link. Fixed.
+7. **Hit areas** → `min-h-11` on header/footer wordmarks; feedback link `min-h-11 sm:min-h-6`. Fixed.
+8. **Mobile navigation** → in-flow "Page sections" anchor row under the hero, `md:hidden`; 320px re-verified (scrollWidth = 320, no overflow). Fixed.
+9. **Off-scale sizes** → moved onto the scale (see calibration note) instead of a waiver. Fixed.
+10. **Dead Geist import** → removed from `src/styles.css`; zero `geist` references in served output. Fixed.
+11. **Stacked act rhythm** → non-enhanced acts column carries `gap-y-16`. Fixed, re-captured.
+12. **Governance gates** → ADR-0003 amended with a scoped addendum (proposed rendering on unmerged review builds; `publicationApproved` remains the merge gate); act-3/claims posture already recorded — tickets #6 and #10 stay the merge gates. Recorded, not code.
+
+Advisory items also applied: hero peek now carries the synthetic-record label; anchor jumps move focus to the target section; "→" is `aria-hidden`; the frame `aria-label` is a single composed sentence; reveal eyebrow and schools lede moved into MDX frontmatter (`04-reveal.mdx`, `08-proof.mdx`); schools h2 weight aligned to siblings; record compliance errors fixed. Deliberately not changed (with reasons): launch line appears in hero and reveal (issue #3's IA places a mark in both); memo-card entrance overshoot (v1's designed narrative motion, reduced-motion safe — flagged for a human call); 4-up card grid (reasoned in plan); translucent pill (v1 sibling convention); "faster than Facebook and Instagram" verbatim (PM publication call, ticket #10); "Message drafting" vs "AI Draft" (capability vs control name — flagged to PM).
+
+CMP-1: asserted, no manifest — manifest absent for tw
+
+### Re-check status
+
+_Pending: same reviewer, new screenshots._

@@ -82,11 +82,14 @@ const actScreens = {
       "An observation another teacher recorded on the student's profile, tagged Collaboration.",
   },
   notice: {
-    src: "/content-review/screens/student-profile.png",
-    width: 2888,
-    height: 1468,
+    // Cropped from student-profile.png to the attendance region only: the
+    // full capture surfaces behaviour, counselling, and SEN fields that the
+    // scenario guardrails keep off the public page (design review 2026-08-20).
+    src: "/content-review/screens/student-profile-attendance.png",
+    width: 2050,
+    height: 980,
     depicts:
-      "A student profile showing attendance, CCA attendance, and observations together.",
+      "A student profile showing attendance and CCA attendance together.",
   },
   "next-steps": {
     src: "/content-review/screens/guidance.png",
@@ -273,7 +276,7 @@ export const gaPageCopy = {
     syntheticNote: storyDocument.text("syntheticNote"),
   },
   reveal: {
-    eyebrow: "This is Teacher Workspace",
+    eyebrow: revealDocument.text("eyebrow"),
     headline: revealDocument.requireHeading(),
     body: revealDocument.requireBody(),
     launchLine: revealDocument.optionalText("launchLine"),
@@ -287,7 +290,7 @@ export const gaPageCopy = {
   },
   schools: {
     heading: proofDocument.requireHeading(),
-    lede: "What school staff say about reaching families through Posts. Verified quotes, shown with role and school level.",
+    lede: proofDocument.text("publicLede"),
   },
   close: {
     headline: closeDocument.requireHeading(),

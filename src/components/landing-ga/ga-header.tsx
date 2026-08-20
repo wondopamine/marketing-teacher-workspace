@@ -4,7 +4,7 @@ import { gaNavItems } from "@/content/landing-ga-page"
 
 // Instant (not smooth) hash jumps so anchor travel never strands users
 // mid-flight inside the pinned journey — same rationale as SiteHeader.
-function handleHashClick(
+export function handleHashClick(
   event: ReactMouseEvent<HTMLAnchorElement>,
   href: string
 ) {
@@ -16,6 +16,10 @@ function handleHashClick(
   if (!target) return
   event.preventDefault()
   target.scrollIntoView({ behavior: "instant", block: "start" })
+  // Move focus with the jump so the next Tab continues inside the section
+  // instead of from the nav (A11Y-2 at flow scope).
+  target.tabIndex = -1
+  target.focus({ preventScroll: true })
   if (typeof history !== "undefined") {
     history.replaceState(null, "", href)
   }
@@ -35,7 +39,8 @@ export function GaHeader() {
         className="nav-pill pointer-events-auto mx-auto flex w-full max-w-[940px] items-center justify-between gap-6 rounded-full py-2.5 pr-5 pl-5 shadow-[0_0_0_1px_rgb(15_23_42/0.04),0_2px_6px_-1px_rgb(15_23_42/0.06)] sm:gap-12"
       >
         <a
-          className="flex items-center gap-2.5 rounded-full font-heading text-[color:var(--paper-ink)] transition-opacity duration-200 hover:opacity-80 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary/40"
+          aria-label="Teacher Workspace"
+          className="flex min-h-11 items-center gap-2.5 rounded-full p-1 font-heading text-[color:var(--paper-ink)] transition-opacity duration-200 hover:opacity-80 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary"
           href="/"
         >
           <img
@@ -44,7 +49,7 @@ export function GaHeader() {
             className="size-9 select-none"
             src="/hero/tw-icon.png"
           />
-          <span className="hidden text-[13px] leading-[1.05] font-medium sm:flex sm:flex-col">
+          <span className="hidden text-sm leading-4 font-medium sm:flex sm:flex-col">
             <span>Teacher</span>
             <span>Workspace</span>
           </span>
@@ -53,7 +58,7 @@ export function GaHeader() {
         <div className="hidden items-center gap-8 text-sm font-semibold text-[color:var(--paper-ink)] md:flex">
           {gaNavItems.map((item) => (
             <a
-              className="inline-flex h-10 items-center rounded-sm transition-colors duration-200 ease-out hover:text-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary/40"
+              className="inline-flex h-10 items-center rounded-sm transition-colors duration-200 ease-out hover:text-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary"
               href={item.href}
               key={item.label}
               onClick={(event) => handleHashClick(event, item.href)}

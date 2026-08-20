@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
 @import "@fontsource-variable/plus-jakarta-sans";
 @import "@radix-ui/colors/mauve.css";
 @import "@radix-ui/colors/mauve-dark.css";
@@ -294,4 +293,26 @@
   .scroll-choreography-only {
     display: none !important;
   }
+}
+
+/* GA landing hero entrance — pure CSS so the server-rendered state is never
+   hidden: without JS the animation still plays to the settled composition,
+   and the global reduced-motion reset above disables it entirely. */
+@keyframes ga-fade-up {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.ga-fade-up {
+  animation: ga-fade-up 200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.ga-fade-up-late {
+  animation: ga-fade-up 300ms cubic-bezier(0.4, 0, 0.2, 1) 100ms both;
 }

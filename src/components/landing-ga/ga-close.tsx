@@ -30,7 +30,7 @@ export function GaClose() {
           <div className="mt-2 flex flex-col items-center gap-3">
             <Button
               asChild
-              className="h-12 rounded-full border-primary bg-transparent px-7 text-base font-semibold text-primary transition-[background-color,scale] duration-200 ease-out hover:bg-primary/[0.06] active:scale-[0.96]"
+              className="h-12 rounded-full border-[color:var(--cta-blue)] bg-transparent px-7 text-base font-semibold text-[color:var(--cta-blue)] transition-[background-color,scale] duration-200 ease-out hover:bg-primary/5 focus-visible:ring-[3px] focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.96]"
               variant="outline"
             >
               <a href={TEACHER_WORKSPACE_APP_URL} rel="noreferrer">

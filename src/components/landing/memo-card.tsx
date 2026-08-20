@@ -6,7 +6,7 @@ import {
   useSpring,
   useTransform,
 } from "motion/react"
-import { useRef, useState } from "react"
+import { useLayoutEffect, useRef, useState } from "react"
 
 import type { MouseEvent as ReactMouseEvent } from "react"
 
@@ -73,6 +73,24 @@ export function MemoCard({ memo, index }: MemoCardProps) {
   // entered: gates the cursor-tilt handoff. Reduced-motion users start entered
   // so we don't strand them mid-flip.
   const [entered, setEntered] = useState(reduced)
+  // The server renders the SETTLED card (never opacity:0), so no-JS readers
+  // see the quotes. After hydration, only a card still below the viewport is
+  // armed to play the flip entrance; a card already on screen stays settled.
+  const [armed, setArmed] = useState(false)
+
+  useLayoutEffect(() => {
+    if (reduced) {
+      setEntered(true)
+      return
+    }
+    const element = articleRef.current
+    if (!element || typeof window === "undefined") return
+    if (element.getBoundingClientRect().top > window.innerHeight) {
+      setArmed(true)
+    } else {
+      setEntered(true)
+    }
+  }, [reduced])
 
   const finalTilt = CARD_TILT_DEG[index] ?? 0
   const delay = FLIP_DELAY_MS[index] ?? 0
@@ -114,12 +132,12 @@ export function MemoCard({ memo, index }: MemoCardProps) {
 
   // Designed keyframe entrance: -78° drop, +9° overshoot, -3° backswing,
   // +1° tiny rebound, settle. The Z tilt also overshoots to amplify the
-  // "weight" of the paper landing.
-  const initial = reduced
-    ? false
-    : { rotateX: -78, rotateZ: finalTilt * 0.3, opacity: 0 }
-  const animate =
-    reduced || inView
+  // "weight" of the paper landing. Plays only for a card that was armed
+  // (below the viewport at hydration); everyone else gets the settled card.
+  const settled = { rotateX: 0, rotateZ: finalTilt, opacity: 1 }
+  const animate = !armed
+    ? settled
+    : inView
       ? {
           rotateX: [-78, 9, -3, 1, 0],
           rotateZ: [
@@ -132,15 +150,16 @@ export function MemoCard({ memo, index }: MemoCardProps) {
           opacity: [0, 1, 1, 1, 1],
         }
       : { rotateX: -78, rotateZ: finalTilt * 0.3, opacity: 0 }
-  const transition = reduced
-    ? { duration: 0 }
-    : {
-        duration: ENTRANCE_DURATION_S,
-        times: [0, 0.55, 0.78, 0.9, 1],
-        ease: "easeOut" as const,
-        delay: delay / 1000,
-        opacity: { duration: 0.3, delay: delay / 1000 },
-      }
+  const transition =
+    !armed || (armed && !inView)
+      ? { duration: 0 }
+      : {
+          duration: ENTRANCE_DURATION_S,
+          times: [0, 0.55, 0.78, 0.9, 1],
+          ease: "easeOut" as const,
+          delay: delay / 1000,
+          opacity: { duration: 0.3, delay: delay / 1000 },
+        }
 
   // After entrance, style.rotateX/Y take over and follow the cursor. rotateZ
   // stays at finalTilt (animate's last value persists because style omits it).
@@ -157,8 +176,8 @@ export function MemoCard({ memo, index }: MemoCardProps) {
       />
       <motion.article
         animate={animate}
+        initial={false}
         className="relative flex h-full flex-col rounded-[4px] border border-black/5 bg-[color:var(--memo-bg)] px-9 pt-14 pb-9 shadow-[0_18px_40px_-22px_rgb(15_23_42/0.30)] [transform-origin:50%_0%] will-change-transform"
-        initial={initial}
         onAnimationComplete={() => {
           if (!reduced) setEntered(true)
         }}
@@ -171,18 +190,18 @@ export function MemoCard({ memo, index }: MemoCardProps) {
         <p className="font-body text-[12px] leading-[16px] font-medium tracking-[0.02em] text-[color:var(--paper-muted)] tabular-nums">
           {memo.number}
         </p>
-        <p className="mt-5 text-[22px] leading-[32px] font-medium tracking-[-0.01em] text-[color:var(--paper-ink)] italic">
+        <p className="mt-5 text-xl leading-[30px] font-medium tracking-[-0.01em] text-[color:var(--paper-ink)] italic">
           {memo.quote}
         </p>
         {memo.body === undefined ? null : (
-          <p className="mt-5 text-[15px] leading-[24px] text-[color:var(--paper-ink)]/85">
+          <p className="mt-5 text-base leading-6 text-[color:var(--paper-ink)]/85">
             {memo.body}
           </p>
         )}
         <p className="mt-6 text-sm leading-5 font-semibold text-[color:var(--paper-ink)]">
           {memo.role}
         </p>
-        <p className="mt-0.5 text-[13px] leading-5 text-[color:var(--paper-muted)] italic">
+        <p className="mt-0.5 text-sm leading-5 text-[color:var(--paper-muted)] italic">
           {memo.school}
         </p>
       </motion.article>

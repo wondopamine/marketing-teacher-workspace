@@ -20,7 +20,7 @@ export function GaSchools() {
         <RevealOnScroll>
           <div className="mx-auto max-w-2xl text-center">
             <h2
-              className="font-heading text-[clamp(1.75rem,4vw,3.5rem)] leading-[1.08] font-medium tracking-tight text-balance text-[color:var(--paper-ink)]"
+              className="font-heading text-[clamp(1.75rem,4vw,3.5rem)] leading-[1.08] font-semibold tracking-tight text-balance text-[color:var(--paper-ink)]"
               id="ga-schools-title"
             >
               {gaPageCopy.schools.heading}

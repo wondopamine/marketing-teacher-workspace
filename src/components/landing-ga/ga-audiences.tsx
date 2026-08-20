@@ -45,7 +45,7 @@ export function GaAudiences() {
                 key={audience.id}
                 style={{ backgroundColor: AUDIENCE_BG[audience.id] }}
               >
-                <p className="text-sm leading-5 font-semibold text-[color:var(--paper-ink)]/60">
+                <p className="text-sm leading-5 font-semibold text-[color:var(--paper-ink)]/70">
                   {audience.label}
                 </p>
                 <h3 className="mt-3 font-heading text-xl leading-[1.3] font-semibold text-balance text-[color:var(--paper-ink)]">

@@ -37,7 +37,7 @@ export function GaApps() {
           {gaCapabilities.map((capability, index) => (
             <li className="flex" key={capability.copyId}>
               <a
-                className="group flex flex-1 flex-col rounded-xl border border-[color:var(--paper-rule)] bg-[color:var(--paper-card)] p-6 shadow-[var(--paper-shadow-card)] transition-[translate,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-[var(--paper-shadow-card-hover)] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary/40"
+                className="group flex flex-1 flex-col rounded-xl border border-[color:var(--paper-rule)] bg-[color:var(--paper-card)] p-6 shadow-[var(--paper-shadow-card)] transition-[translate,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-[var(--paper-shadow-card-hover)] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary"
                 href={`#${capability.actAnchor}`}
               >
                 <span className="font-body text-xs leading-4 font-medium text-[color:var(--paper-muted)] tabular-nums">
@@ -53,7 +53,7 @@ export function GaApps() {
                   {capability.scenario}
                 </p>
                 <span className="mt-5 text-sm leading-5 font-semibold text-primary transition-transform duration-200 ease-out group-hover:translate-x-0.5">
-                  See it in the journey →
+                  See it in the journey <span aria-hidden>→</span>
                 </span>
               </a>
             </li>

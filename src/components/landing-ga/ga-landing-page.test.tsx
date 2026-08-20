@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { render, screen, within } from "@testing-library/react"
+import { renderToStaticMarkup } from "react-dom/server"
 
 import { GaLandingPage } from "./ga-landing-page"
 
@@ -75,6 +76,17 @@ describe("GaLandingPage", () => {
       // The two PG-named quotes stay unpublished on this page.
       expect(testimonial.quote).not.toContain("PG")
     }
+  })
+
+  it("server-renders the settled composition — nothing ships hidden at opacity 0", () => {
+    // The no-JS baseline (design review 2026-08-20): server markup must never
+    // hide content behind an animation's initial state. Every reveal renders
+    // settled on the server and only arms itself after hydration.
+    const html = renderToStaticMarkup(<GaLandingPage />)
+    expect(html).not.toContain("opacity:0")
+    expect(html).not.toContain("opacity: 0")
+    expect(html).toContain("Sign in with Google")
+    expect(html).toContain("Real schools")
   })
 
   it("keeps internal capability names off the page", () => {

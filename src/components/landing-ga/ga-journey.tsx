@@ -71,10 +71,15 @@ export function GaJourney() {
         className={
           enhanced
             ? "mx-auto grid w-full max-w-[1220px] gap-x-14 gap-y-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]"
-            : "mx-auto flex w-full max-w-[720px] flex-col"
+            : "mx-auto flex w-full max-w-[720px] flex-col gap-y-16"
         }
       >
-        <div className="flex flex-col gap-y-16 lg:gap-y-0" ref={actsRef}>
+        <div
+          className={
+            enhanced ? "flex flex-col" : "flex flex-col gap-y-16"
+          }
+          ref={actsRef}
+        >
           {gaJourneyActs.map((act, index) => (
             <JourneyActBlock
               act={act}
@@ -94,9 +99,7 @@ export function GaJourney() {
           <div className="hidden lg:block">
             <div className="sticky top-28">
               <figure
-                aria-label={`One product surface stepping through the journey: ${gaJourneyActs
-                  .map((act) => act.screen.depicts)
-                  .join(" ")}`}
+                aria-label="One product surface stepping through the journey: a colleague's observation, the student profile, a suggested next step, a drafted term update, and the posted update read by two of three recipients."
                 className="flex h-[min(560px,calc(100svh-13rem))] flex-col rounded-2xl border border-[color:var(--paper-rule-strong)] bg-[color:var(--paper-card)] p-5 shadow-[var(--paper-shadow-card)]"
                 role="img"
               >
