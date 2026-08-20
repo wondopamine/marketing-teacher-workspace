@@ -64,13 +64,16 @@ export function GaJourney() {
   return (
     <section
       aria-label="One student's care journey"
-      className="px-5 py-20 sm:px-8 lg:py-28"
+      className="scroll-mt-28 px-5 py-20 sm:px-8 lg:py-28"
       id={gaSectionAnchors.journey}
     >
-      <p className="mx-auto mb-12 w-full max-w-[1220px] text-sm leading-5 text-[color:var(--paper-muted)] italic">
-        {gaPageCopy.journey.syntheticNote}
-      </p>
-      <div className="mx-auto grid w-full max-w-[1220px] gap-x-14 gap-y-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+      <div
+        className={
+          enhanced
+            ? "mx-auto grid w-full max-w-[1220px] gap-x-14 gap-y-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]"
+            : "mx-auto flex w-full max-w-[720px] flex-col"
+        }
+      >
         <div className="flex flex-col gap-y-16 lg:gap-y-0" ref={actsRef}>
           {gaJourneyActs.map((act, index) => (
             <JourneyActBlock
@@ -80,38 +83,48 @@ export function GaJourney() {
               key={act.id}
             />
           ))}
+          {enhanced ? null : (
+            <p className="mt-12 text-sm leading-5 text-[color:var(--paper-muted)] italic">
+              {gaPageCopy.journey.syntheticNote}
+            </p>
+          )}
         </div>
 
         {enhanced ? (
           <div className="hidden lg:block">
-            <figure
-              aria-label={`One product surface stepping through the journey: ${gaJourneyActs
-                .map((act) => act.screen.depicts)
-                .join(" ")}`}
-              className="sticky top-28 flex h-[min(600px,calc(100svh-10rem))] flex-col rounded-2xl border border-[color:var(--paper-rule-strong)] bg-[color:var(--paper-card)] p-5 shadow-[var(--paper-shadow-card)]"
-              role="img"
-            >
-              <div aria-hidden className="flex gap-1.5 pb-4">
-                <i className="size-2 rounded-full bg-[color:var(--paper-rule-strong)]" />
-                <i className="size-2 rounded-full bg-[color:var(--paper-rule-strong)]" />
-                <i className="size-2 rounded-full bg-[color:var(--paper-rule-strong)]" />
-              </div>
-              <div aria-hidden className="relative flex-1">
-                {gaJourneyActs.map((act, index) => (
-                  <img
-                    alt=""
-                    className={`absolute inset-0 m-auto max-h-full max-w-full rounded-lg object-contain transition-opacity duration-200 ease-in-out ${
-                      index === activeIndex ? "opacity-100" : "opacity-0"
-                    }`}
-                    height={act.screen.height}
-                    key={act.id}
-                    loading={index === 0 ? "eager" : "lazy"}
-                    src={act.screen.src}
-                    width={act.screen.width}
-                  />
-                ))}
-              </div>
-            </figure>
+            <div className="sticky top-28">
+              <figure
+                aria-label={`One product surface stepping through the journey: ${gaJourneyActs
+                  .map((act) => act.screen.depicts)
+                  .join(" ")}`}
+                className="flex h-[min(560px,calc(100svh-13rem))] flex-col rounded-2xl border border-[color:var(--paper-rule-strong)] bg-[color:var(--paper-card)] p-5 shadow-[var(--paper-shadow-card)]"
+                role="img"
+              >
+                <div aria-hidden className="flex gap-1.5 pb-4">
+                  <i className="size-2 rounded-full bg-[color:var(--paper-rule-strong)]" />
+                  <i className="size-2 rounded-full bg-[color:var(--paper-rule-strong)]" />
+                  <i className="size-2 rounded-full bg-[color:var(--paper-rule-strong)]" />
+                </div>
+                <div aria-hidden className="relative flex-1">
+                  {gaJourneyActs.map((act, index) => (
+                    <img
+                      alt=""
+                      className={`absolute inset-0 m-auto max-h-full max-w-full rounded-lg object-contain transition-opacity duration-200 ease-in-out ${
+                        index === activeIndex ? "opacity-100" : "opacity-0"
+                      }`}
+                      height={act.screen.height}
+                      key={act.id}
+                      loading={index === 0 ? "eager" : "lazy"}
+                      src={act.screen.src}
+                      width={act.screen.width}
+                    />
+                  ))}
+                </div>
+              </figure>
+              <p className="mt-3 text-center text-sm leading-5 text-[color:var(--paper-muted)] italic">
+                {gaPageCopy.journey.syntheticNote}
+              </p>
+            </div>
           </div>
         ) : null}
       </div>
@@ -134,6 +147,7 @@ function JourneyActBlock({ act, index, enhanced }: JourneyActBlockProps) {
           : "flex flex-col"
       }
       data-act-index={index}
+      style={{ scrollMarginTop: "7rem" }}
       id={`act-${act.id}`}
     >
       <p className="text-sm leading-5 font-semibold text-[color:var(--paper-muted)]">

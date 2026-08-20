@@ -1,3 +1,4 @@
+import metaSource from "/content/landing/01-meta.mdx"
 import heroSource from "/content/landing/02-hero.mdx"
 import storySource from "/content/landing/03-story.mdx"
 import revealSource from "/content/landing/04-reveal.mdx"
@@ -20,6 +21,7 @@ import { MdxDocument, itemBody, itemHeading } from "./mdx-document"
  * module in sync with the governance source of truth at test time.
  */
 
+const metaDocument = new MdxDocument(metaSource)
 const heroDocument = new MdxDocument(heroSource)
 const storyDocument = new MdxDocument(storySource)
 const revealDocument = new MdxDocument(revealSource)
@@ -256,6 +258,10 @@ export const gaNavItems = [
 ] as const
 
 export const gaPageCopy = {
+  meta: {
+    title: metaDocument.requireHeading(),
+    description: metaDocument.requireBody(),
+  },
   hero: {
     headline: heroDocument.requireHeading(),
     body: heroDocument.requireBody(),

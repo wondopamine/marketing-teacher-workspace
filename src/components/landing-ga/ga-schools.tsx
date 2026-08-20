@@ -13,7 +13,7 @@ export function GaSchools() {
   return (
     <section
       aria-labelledby="ga-schools-title"
-      className="px-5 pb-20 sm:px-8 lg:pb-28"
+      className="scroll-mt-28 px-5 pb-20 sm:px-8 lg:pb-28"
       id={gaSectionAnchors.schools}
     >
       <div className="mx-auto w-full max-w-[1412px] rounded-[28px] bg-[color:var(--memo-section-bg)] px-6 py-14 sm:rounded-[44px] sm:px-12 sm:py-24 lg:px-24 lg:py-28">

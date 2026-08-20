@@ -168,7 +168,7 @@ export function MemoCard({ memo, index }: MemoCardProps) {
         style={cursorStyle}
         transition={transition}
       >
-        <p className="font-mono text-[12px] leading-[16px] font-medium text-[color:var(--paper-muted)]">
+        <p className="font-body text-[12px] leading-[16px] font-medium tracking-[0.02em] text-[color:var(--paper-muted)] tabular-nums">
           {memo.number}
         </p>
         <p className="mt-5 text-[22px] leading-[32px] font-medium tracking-[-0.01em] text-[color:var(--paper-ink)] italic">

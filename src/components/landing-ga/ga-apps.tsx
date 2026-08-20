@@ -15,7 +15,7 @@ export function GaApps() {
   return (
     <section
       aria-labelledby="ga-apps-title"
-      className="px-5 py-20 sm:px-8 lg:py-28"
+      className="scroll-mt-28 px-5 py-20 sm:px-8 lg:py-28"
       id={gaSectionAnchors.apps}
     >
       <div className="mx-auto w-full max-w-[1220px]">
@@ -40,7 +40,7 @@ export function GaApps() {
                 className="group flex flex-1 flex-col rounded-xl border border-[color:var(--paper-rule)] bg-[color:var(--paper-card)] p-6 shadow-[var(--paper-shadow-card)] transition-[translate,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-[var(--paper-shadow-card-hover)] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary/40"
                 href={`#${capability.actAnchor}`}
               >
-                <span className="font-mono text-xs leading-4 font-medium text-[color:var(--paper-muted)] tabular-nums">
+                <span className="font-body text-xs leading-4 font-medium text-[color:var(--paper-muted)] tabular-nums">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <h3 className="mt-3 font-heading text-lg leading-6 font-semibold text-[color:var(--paper-ink)]">

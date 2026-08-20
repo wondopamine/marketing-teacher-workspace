@@ -139,10 +139,12 @@ assert(
 )
 
 if (contentSource === "static") {
+  // 2026-08-20: the static homepage is the GA landing page (approved plan,
+  // docs/decisions/ga-landing-page.md); its title comes from 01-meta.mdx.
   assert(
     countMatches(homeHtml, /<title>/g) === 1 &&
       homeHtml.includes(
-        "<title>Teacher Workspace. Every student. One View.</title>"
+        "<title>Teacher Workspace | See what is changing</title>"
       ) &&
       homeHtml.includes("paper-page") &&
       !homeHtml.includes("data-teacher-preview"),

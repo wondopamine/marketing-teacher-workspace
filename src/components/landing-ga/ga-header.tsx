@@ -50,7 +50,7 @@ export function GaHeader() {
           </span>
         </a>
 
-        <div className="flex items-center gap-5 text-sm font-semibold text-[color:var(--paper-ink)] sm:gap-8">
+        <div className="hidden items-center gap-8 text-sm font-semibold text-[color:var(--paper-ink)] md:flex">
           {gaNavItems.map((item) => (
             <a
               className="inline-flex h-10 items-center rounded-sm transition-colors duration-200 ease-out hover:text-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-primary/40"

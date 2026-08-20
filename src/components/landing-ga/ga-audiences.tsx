@@ -24,7 +24,7 @@ export function GaAudiences() {
   return (
     <section
       aria-labelledby="ga-audiences-title"
-      className="px-5 pb-20 sm:px-8 lg:pb-28"
+      className="scroll-mt-28 px-5 pb-20 sm:px-8 lg:pb-28"
       id={gaSectionAnchors.audiences}
     >
       <div className="mx-auto w-full max-w-[1220px]">

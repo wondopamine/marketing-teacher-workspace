@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router"
 
 import type { PublicPageData } from "@/server/public-page"
 import { GaLandingPage } from "@/components/landing-ga/ga-landing-page"
+import { gaPageCopy } from "@/content/landing-ga-page"
 import { CmsPublishedPage } from "@/components/public/cms-public-page"
 import { PublicPageMessage } from "@/components/public/public-page-message"
 import {
@@ -29,6 +30,10 @@ export function publicHomeHead(data: PublicPageData | undefined) {
     }
   }
   return {
+    meta: [
+      { title: gaPageCopy.meta.title },
+      { name: "description", content: gaPageCopy.meta.description },
+    ],
     links: [
       {
         rel: "preload",
