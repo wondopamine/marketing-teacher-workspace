@@ -119,7 +119,13 @@ No waivers were requested or granted this run.
 
 ## Ratchet
 
-_To be completed at Phase 6 after the review verdict and user acceptance._
+Candidates surfaced by this run's reviews, recorded for `rule-proposal.md` routing to the harness repo [proposed — pending design-lead approval]:
+
+1. **No-JS baseline control**: server-rendered output must not hide content behind an animation's initial state (statically detectable — scan SSR markup for `opacity:0` on content subtrees). This build shipped its primary action at `opacity:0` and passed every deterministic check.
+2. **Availability-claim control**: an availability or capability claim on a public surface traces to a capability owner's recorded confirmation (no existing control reaches "Now available…" beside a flag-gated capability).
+3. **Screenshot-disclosure control**: captures of product UI on public surfaces are reviewed for the data categories they display, not only their text alternative (a capture passed A11Y-6/CNT-4 while showing conduct/counselling/SEN fields).
+4. **Test-harness check**: a project's `matchMedia` stub must not blanket-match `prefers-reduced-motion` (this repo's stub keeps all 348 tests in the reduced-motion branch; `vitest.setup.ts` unchanged this run — flagged, not fixed).
+5. **Script gaps**: `checks/type-scan.py` does not implement TYP-1's dead-import clause; `checks/contrast.py` cannot resolve Tailwind `/opacity` modifiers — both let real failures pass a "clean" run.
 
 ## Design review — round 1 (2026-08-20, dx-design-review)
 
@@ -195,4 +201,28 @@ CMP-1: asserted, no manifest — manifest absent for tw
 
 ### Re-check status
 
-_Pending: same reviewer, new screenshots._
+Round 2 ran 2026-08-20 (fresh dx-design-review instance — the round-1 reviewer's context could not be resumed; the round-1 verdict and fix list were passed in full). Verdict below, verbatim.
+
+## Design review — round 2 (2026-08-20, dx-design-review re-check)
+
+### Verbatim verdict (summary table + closing; full text on ticket #14)
+
+All 11 code findings graded **resolved** against independently verified evidence (reviewer re-ran the harness checks, pixel-sampled the frames, and ran two independent SSR probes — zero `opacity:0`, focus ring measured 4.43:1 on the sky and 4.83:1 on its offset, audience labels 5.61–5.91:1, close CTA 5.32:1, cropped capture read directly and confirmed attendance-only, type-scan TYP-3 clean, stacked act gap ~84px). Finding 12 graded **partial**: the ADR-0003 addendum is a legitimate scoped resolution for a branch build, but the page said "Verified quotes", the landing-map acceptance rows were unreconciled, and act 3 still presents a Release-2 capability beside the GA line — merge gates #6/#10, not a re-review gate.
+
+New/residual advisories: near-empty fixed nav pill below 640px occluding content; 31-word frame aria-label (CNT-3); "Verified quotes" rendering as a first-class string; evidence hygiene (byte-identical hero/focus frames, stale 768 set, no post-fix memo capture); the vitest matchMedia stub still silences the enhanced rendering branch (advisory + ratchet); CNT-10 "Message drafting" vs "AI Draft" pass-with-caveat — needs a rename or a documented waiver before merge; CNT-12 mixed case on capability labels.
+
+Grades: design quality — acceptable · originality — strong · craft — acceptable, improved · functionality — acceptable, up from weak · dark mode — N/A.
+
+VERDICT: pass
+
+*(In the standard's three-value vocabulary this is `pass-with-findings` — the advisories are all L2 or record-level, and none is a blocking control failure.)*
+
+### Post-round-2 touch-ups (same day)
+
+- `08-proof.mdx` publicLede no longer says "Verified quotes" → "Quoted verbatim from staff interviews, with role and school level."
+- Landing-map acceptance rows reconciled via a dated amendment in `docs/decisions/2026-08-13-teacher-workspace-ga-landing-map.md`.
+- Frame aria-label shortened to 19 words.
+- The mobile nav pill fits its content (`w-fit md:w-full`) instead of spanning the width.
+- Evidence refreshed: resting 1280 hero, full 768 set, current memo-card frames at 1280/768/360.
+
+Open for the PM before merge (unchanged): per-quote publication approval (#10), claims register incl. act-3 availability posture (#6), CNT-10 naming call (Message drafting vs AI Draft), Facebook/Instagram verbatim publication call.

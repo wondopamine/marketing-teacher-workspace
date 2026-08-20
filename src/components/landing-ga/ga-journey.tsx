@@ -99,7 +99,7 @@ export function GaJourney() {
           <div className="hidden lg:block">
             <div className="sticky top-28">
               <figure
-                aria-label="One product surface stepping through the journey: a colleague's observation, the student profile, a suggested next step, a drafted term update, and the posted update read by two of three recipients."
+                aria-label="One product surface stepping through the journey, from the first recorded observation to the posted update families have read."
                 className="flex h-[min(560px,calc(100svh-13rem))] flex-col rounded-2xl border border-[color:var(--paper-rule-strong)] bg-[color:var(--paper-card)] p-5 shadow-[var(--paper-shadow-card)]"
                 role="img"
               >

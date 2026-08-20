@@ -36,7 +36,7 @@ export function GaHeader() {
     <header className="pointer-events-none fixed inset-x-0 top-[var(--masthead-h,0px)] z-50 px-4 pt-4 transition-[top] duration-200 ease-out sm:px-8">
       <nav
         aria-label="Primary navigation"
-        className="nav-pill pointer-events-auto mx-auto flex w-full max-w-[940px] items-center justify-between gap-6 rounded-full py-2.5 pr-5 pl-5 shadow-[0_0_0_1px_rgb(15_23_42/0.04),0_2px_6px_-1px_rgb(15_23_42/0.06)] sm:gap-12"
+        className="nav-pill pointer-events-auto mx-auto flex w-fit max-w-[940px] items-center justify-between gap-6 rounded-full py-2.5 pr-5 pl-5 md:w-full shadow-[0_0_0_1px_rgb(15_23_42/0.04),0_2px_6px_-1px_rgb(15_23_42/0.06)] sm:gap-12"
       >
         <a
           aria-label="Teacher Workspace"
