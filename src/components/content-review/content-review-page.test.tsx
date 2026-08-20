@@ -126,7 +126,7 @@ describe("ContentReviewPage", () => {
     ).not.toBeNull()
     expect(
       screen.getByRole("heading", {
-        name: "Return to the existing Term 4 letter.",
+        name: "Sent. Seen. On file.",
       })
     ).not.toBeNull()
     expect(preview.textContent).not.toContain("Contributing with confidence")

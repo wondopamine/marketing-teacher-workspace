@@ -55,12 +55,11 @@ describe("Landing Page v2 content-review projection", () => {
     const serialised = JSON.stringify(result.projection)
     const lowercase = serialised.toLowerCase()
 
-    expect(lowercase).toContain("no attention tag")
     expect(lowercase).toContain("term update letter")
-    // The guidance screen exists but is flag-gated, so the projection must
-    // disclaim its availability rather than claim it as a GA capability.
-    expect(lowercase).toContain("release 2 capability flag")
-    expect(lowercase).toContain("will not have it at general availability")
+    // The guidance screen is flag-gated. The public copy no longer carries
+    // that disclosure (it lives in the screen catalog and the decision
+    // record), but the reviewer-facing slot label still marks the screen.
+    expect(lowercase).toContain("behind a release 2 flag")
     expect(lowercase).not.toContain("xiao ming")
     expect(lowercase).not.toContain("bursary")
     for (const prohibitedValue of [
@@ -138,7 +137,7 @@ describe("Landing Page v2 content-review projection", () => {
     expect(buildReviewDraftProjection({ registry }).ok).toBe(false)
   })
 
-  it("keeps omitted audience, proof, and support copy as referenced decisions", () => {
+  it("keeps omitted proof and support copy as referenced decisions", () => {
     const result = buildReviewDraftProjection()
 
     expect(result.ok).toBe(true)
@@ -148,12 +147,10 @@ describe("Landing Page v2 content-review projection", () => {
       section.entries.filter((entry) => entry.kind === "decision")
     )
 
-    // The GA launch line resolved into reviewable copy on 2026-08-07, so it
-    // no longer appears among the unanswered decisions.
+    // The GA launch line resolved into reviewable copy on 2026-08-07 and the
+    // three audience answers on 2026-08-20, so neither appears among the
+    // unanswered decisions any more.
     expect(decisions.map((entry) => entry.reviewReference)).toEqual([
-      "TW-AUDIENCE-FORM-TEACHERS",
-      "TW-AUDIENCE-KEY-PERSONNEL",
-      "TW-AUDIENCE-SCHOOL-LEADERS",
       "TW-PROOF",
       "TW-SUPPORT",
     ])
@@ -305,7 +302,11 @@ describe("Landing Page v2 content-review projection", () => {
           question: "What changes in my week?",
           answer: "One student's full picture without opening four systems.",
         },
-        landingPageV2Content.audiences[1],
+        {
+          ...landingPageV2Content.audiences[1],
+          question: null,
+          answer: null,
+        },
         landingPageV2Content.audiences[2],
       ],
     }
@@ -327,13 +328,19 @@ describe("Landing Page v2 content-review projection", () => {
       manifest.find((entry) => entry.contentId === contentId)?.contentKind
 
     expect(kindOf("reveal.ga-launch-line")).toBe("copy")
-    expect(kindOf("audience.teachers")).toBe("omission")
+    expect(kindOf("audience.teachers")).toBe("copy")
 
-    const blankLine = {
+    const blankAudience = (index: 0 | 1 | 2) => ({
+      ...landingPageV2Content.audiences[index],
+      question: null,
+      answer: null,
+    })
+    const blank = {
       ...landingPageV2Content,
       reveal: { ...landingPageV2Content.reveal, gaLaunchLine: null },
-    }
-    const unresolved = createContentReviewManifest(blankLine)
+      audiences: [blankAudience(0), blankAudience(1), blankAudience(2)],
+    } as const
+    const unresolved = createContentReviewManifest(blank)
     expect(
       unresolved.find((entry) => entry.contentId === "reveal.ga-launch-line")
         ?.contentKind

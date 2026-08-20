@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 
 import type { PublicPageData } from "@/server/public-page"
-import { SiteFooter } from "@/components/landing/footer"
-import { ScrollChoreography } from "@/components/landing/scroll-choreography/scroll-choreography"
+import { GaLandingPage } from "@/components/landing-ga/ga-landing-page"
 import { CmsPublishedPage } from "@/components/public/cms-public-page"
 import { PublicPageMessage } from "@/components/public/public-page-message"
 import {
@@ -75,12 +74,5 @@ function HomePage() {
     )
   }
 
-  return (
-    <>
-      <main id="main" className="paper-page">
-        <ScrollChoreography />
-      </main>
-      <SiteFooter />
-    </>
-  )
+  return <GaLandingPage />
 }

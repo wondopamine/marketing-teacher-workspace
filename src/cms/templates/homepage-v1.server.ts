@@ -127,7 +127,7 @@ export const homepageV1Contract = {
               label: "Review the profile",
               heading: "See the signals that usually sit apart.",
               body: [
-                "Attendance, CCA attendance, risk indicators, and recorded peer connections appear together on one profile — a synthetic record with no attention tag. Today each of those signals lives in a different system.",
+                "Attendance, CCA attendance, observations, and recorded peer connections appear together on one profile. Today each of those signals lives in a different system.",
               ],
               screen: cmsScreen(
                 "story-notice",
@@ -149,7 +149,7 @@ export const homepageV1Contract = {
               label: "Behind a Release 2 flag",
               heading: "Read a suggested next step before deciding.",
               body: [
-                "An authored guidance screen exists and frames its suggestion as progress to sustain. It opens only when a Release 2 capability flag is on, so teachers will not have it at general availability.",
+                "Guidance frames its suggestion as progress worth sustaining. You weigh it, then decide what fits — the judgement stays yours.",
               ],
               screen: cmsScreen(
                 "story-next-steps",
@@ -169,7 +169,7 @@ export const homepageV1Contract = {
             {
               id: "22bf511c-0da0-48c7-90e1-7028f8d0e49f",
               label: "Prepare a term update",
-              heading: "Start with the existing Term Update Letter draft.",
+              heading: "Start from a draft, not a blank page.",
               body: [
                 "In Posts, choose AI Draft and the Term Update Letter template. It fills “Start of Term 3: What to Expect” for you to review and edit before posting.",
               ],
@@ -181,9 +181,9 @@ export const homepageV1Contract = {
             {
               id: "8bb4f6d3-50f5-4e09-8f5a-3a2c932814d2",
               label: "Check the published post",
-              heading: "Return to the existing Term 4 letter.",
+              heading: "Sent. Seen. On file.",
               body: [
-                "The posted view shows 2 of 3 recipients have read it and one remains unread. It does not claim anything about what a family does next.",
+                "The posted view shows two of three recipients have read it, and one remains unread. What you sent, and what the family saw, stays on the record.",
               ],
               screen: cmsScreen(
                 "story-family-and-record",
@@ -198,9 +198,9 @@ export const homepageV1Contract = {
         type: "reveal",
         state: "visible",
         fields: {
-          heading: "Help teachers follow the same school practices.",
+          heading: "The care was always yours. We removed the admin between the moments.",
           body: [
-            "Shared guidance and teacher-reviewed drafts can support more consistent everyday work. Teachers keep professional judgement and final review.",
+            "Four capabilities support one journey: noticing, deciding, drafting, and keeping families in the loop. Teachers keep professional judgement and final review.",
           ],
           asides: [
             {

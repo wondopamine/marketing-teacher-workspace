@@ -25,9 +25,21 @@ const globallyProhibitedValues = [
   ["raw review snapshot field", "reviewedsnapshot"],
   ["raw evidence field", "evidencereference"],
   ["raw source field", "bursaryexamplecomment"],
+  // 2026-08-20: the GA page renders three curated verbatims as proposed
+  // content pending ticket #10 approval (docs/decisions/ga-landing-page.md),
+  // so the guard now watches the three quotes the page deliberately does NOT
+  // publish — including both quotes that name "PG".
   [
-    "unapproved testimonial fragment",
-    "a lot of enhancements have been made to facilitate",
+    "unapproved testimonial fragment (intuitive)",
+    "the system is quite intuitive",
+  ],
+  [
+    "unapproved testimonial fragment (growth)",
+    "seen the system grow and improve",
+  ],
+  [
+    "unapproved testimonial fragment (pg tool)",
+    "wonderful tool for all of us",
   ],
 ]
 // Keep generic review-UI and browser words (for example `rationale`, `href`,
