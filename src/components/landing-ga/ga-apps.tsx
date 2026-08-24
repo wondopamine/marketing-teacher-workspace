@@ -11,10 +11,11 @@ import {
  * so the four jobs land before the long-form story. Simplified per
  * stakeholder feedback (2026-08-21):
  * one icon, one title, one line per capability — no card chrome, no
- * scenarios. Each item still anchors back into the journey act where the
- * capability is shown, so discovery stays one hop away. The scenario copy
- * remains in `05-capabilities.mdx` for the wireframe; it just no longer
- * renders here.
+ * scenarios. They are statements, not navigation (2026-08-24): the journey
+ * that follows is the next thing on the page, so the four "see it in the
+ * journey" links were sending readers where the scroll already takes them.
+ * The scenario copy remains in `05-capabilities.mdx` for the wireframe; it
+ * just no longer renders here.
  *
  * The glyphs are hand-drawn (see `ga-capability-glyphs.tsx`) and sit bare on
  * the page ground — no tinted disc behind them (2026-08-24). The disc was
@@ -53,25 +54,20 @@ export function GaApps() {
 
         <ul className="mt-12 grid list-none grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:mt-16 lg:grid-cols-4">
           {gaCapabilities.map((capability) => (
-            <li className="flex" key={capability.copyId}>
-              <a
-                className="group flex flex-1 flex-col items-center rounded-xl px-3 py-2 text-center transition-colors duration-200 ease-out hover:bg-[color:var(--paper-hover-bg)] focus-visible:ring-3 focus-visible:ring-primary focus-visible:outline-none"
-                href={`#${capability.actAnchor}`}
-              >
-                <GaCapabilityGlyph
-                  className="size-10 text-[color:var(--paper-ink)] transition-transform duration-200 ease-out group-hover:-translate-y-0.5"
-                  copyId={capability.copyId}
-                />
-                <h3 className="mt-4 font-heading text-xl leading-7 font-semibold text-[color:var(--paper-ink)]">
-                  {capability.publicLabel}
-                </h3>
-                <p className="mt-2 flex-1 font-body text-sm leading-[1.6] text-[color:var(--paper-muted)]">
-                  {capability.job}
-                </p>
-                <span className="mt-3 text-sm leading-5 font-semibold text-[color:var(--cta-blue)]">
-                  See it in the journey <span aria-hidden>→</span>
-                </span>
-              </a>
+            <li
+              className="flex flex-col items-center px-3 py-2 text-center"
+              key={capability.copyId}
+            >
+              <GaCapabilityGlyph
+                className="size-10 text-[color:var(--paper-ink)]"
+                copyId={capability.copyId}
+              />
+              <h3 className="mt-4 font-heading text-xl leading-7 font-semibold text-[color:var(--paper-ink)]">
+                {capability.publicLabel}
+              </h3>
+              <p className="mt-2 font-body text-sm leading-[1.6] text-[color:var(--paper-muted)]">
+                {capability.job}
+              </p>
             </li>
           ))}
         </ul>

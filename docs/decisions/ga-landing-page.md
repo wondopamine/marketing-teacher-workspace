@@ -1135,3 +1135,58 @@ arbitrary radius utilities or inline `borderRadius` in TSX (fixture-proven), so
 "token-audit clean" is not evidence for TOK-3; `contrast.py` is inert without
 `.dx/design.json`; `a11y-eslint.py` does not detect eslint under pnpm hoisting.
 Three controls, two of them L0, rest on manual verification on this repo.
+
+### Follow-up: the Ink glyphs were the wrong render mode, and the capability row stops linking (2026-08-24)
+
+Owner, from a side-by-side: the sparkles glyph on the page did not look like the
+sparkles glyph the icon generator draws at
+`icon-generator-seven.vercel.app/tune?icon=sparkles&preset=ink`. It was thinner,
+wobblier, and its star arms bulged where the tool's are straight.
+
+**Retracted: "portable mode bakes the wobble in, so no `feTurbulence` paints at
+runtime and the performance floor holds."** That sentence appears twice above and
+is wrong about what portable mode *is*. It is not a cheaper rendering of the same
+icon. The tf(x) Icon Generator renders each preset two ways, and they are two
+different drawings:
+
+- **filter mode** — a light rough.js bake (Ink: roughness 0.18, bowing 0.35) plus
+  `feTurbulence` + `feDisplacementMap` (Ink: baseFrequency 0.85, numOctaves 2,
+  scale 0.35). The filter is what gives the stroke its grainy, eroded edge. This
+  is what `/tune` previews and what every one of the tool's export buttons emits.
+- **portable mode** — drops the filter and compensates with roughly twice the
+  roughness and bowing (Ink: 0.35 / 0.65). Its own source comments say why it
+  exists: viewers that cannot execute SVG filters — Figma, Finder Quick Look,
+  email clients.
+
+A browser is not one of those. Choosing portable for a web page bought a visibly
+different icon than the tool draws and nothing else. Confirmed rather than
+assumed: replaying the generator's `renderFilter` and its portable path against
+the Lucide `__iconNode`s reproduced both variants, and the path data shipped in
+`ga-capability-glyphs.tsx` was byte-identical to the portable output.
+
+`ga-capability-glyphs.tsx` now carries the filter-mode paths **and** the Ink
+preset's `feTurbulence`/`feDisplacementMap` pair, under the same filter id the
+generator emits (`brush-sparkles-ink-213977268`) and the same
+`makeSeed(lucideId, "Ink")` seeds, so a re-export still reproduces both the
+wobble and the noise field exactly. Verified against the owner's screenshot by
+scaling the live glyphs to the tool's 240px preview size in the running page:
+same star geometry, same eroded edge, same ring and plus.
+
+The performance claim the retraction gives up is smaller than it sounded. Four
+decorative 40px glyphs, painted once, on a `<ul>` with no animated ancestor —
+and the hover `translate` that used to sit on each glyph went away with the link
+below, so nothing transforms the filtered layer and it never re-rasterises.
+**Not measured under Lighthouse**, which is the same gap already open from
+round 4: a local run reads ~24 points low here, so it wants a preview deploy.
+
+**"See it in the journey →" is deleted** (owner, direct). The four items are
+statements, not navigation: the journey is the very next section, so each link
+sent a reader where the scroll was about to take them anyway. The `<a>` wrapper
+goes with the label, along with its hover plate and focus ring, and
+`actAnchor`/`capabilityActAnchors` are removed from `landing-ga-page.ts` as dead
+copy model. This **supersedes** the round-3 consequence recorded above —
+*"See it in the journey →" now points forward* — and retires two findings that
+were about those link rows and nothing else: the A11Y-1 contrast measurement
+(5.32:1 after `opacity-80` came off) and the LAY-6 shared link baseline at
+y≈699. Neither has a surface left to fail on. The section-inset half of LAY-6 is
+untouched and stays open.

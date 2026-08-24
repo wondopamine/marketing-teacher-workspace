@@ -121,16 +121,7 @@ export type GaCapability = {
   readonly publicLabel: string
   readonly job: string
   readonly scenario: string
-  /** The journey act the card links back to — discovery after the story. */
-  readonly actAnchor: string
 }
-
-const capabilityActAnchors = {
-  "student-insights": "act-notice",
-  "next-step": "act-next-steps",
-  "message-drafting": "act-words",
-  posts: "act-family-and-record",
-} as const
 
 export const gaCapabilities: ReadonlyArray<GaCapability> = (
   ["student-insights", "next-step", "message-drafting", "posts"] as const
@@ -141,7 +132,6 @@ export const gaCapabilities: ReadonlyArray<GaCapability> = (
     publicLabel: copy.label ?? copyId,
     job: copy.heading,
     scenario: copy.body,
-    actAnchor: capabilityActAnchors[copyId],
   }
 })
 
