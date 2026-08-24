@@ -226,3 +226,307 @@ VERDICT: pass
 - Evidence refreshed: resting 1280 hero, full 768 set, current memo-card frames at 1280/768/360.
 
 Open for the PM before merge (unchanged): per-quote publication approval (#10), claims register incl. act-3 availability posture (#6), CNT-10 naming call (Message drafting vs AI Draft), Facebook/Instagram verbatim publication call.
+
+---
+
+## Round 3 — stakeholder feedback iteration (2026-08-21)
+
+- **Trigger:** stakeholder Figma feedback (`feedback.pdf`, reviewed 2026-08-21) plus a
+  follow-up direction: journey visuals should work like Linear's feature vignettes —
+  highlight only the key component, offer a limited interactive part, never show the
+  whole product screen.
+- **Run type:** dx-design modification loop. The feedback + the user's explicit
+  "iterate on this" counts as the chosen direction (stop-once rule); plan recorded
+  below and exposed in-session before build.
+
+### What changed
+
+1. **Hero (peaceful).** Product peek and hero launch-line pill removed. Headline →
+   "Gain back your time to care for students" (stakeholder copy, verbatim). The locked
+   sky + clouds stay. New visual: the hand-drawn teacher-working loop
+   (`/hero/teacher-working.mp4`, 8.9s 624×624, provided by the stakeholder) rendered
+   with `mix-blend-multiply` so its white ground melts into the sky. The server, no-JS,
+   and reduced-motion renders get the still frame (`teacher-working-poster.webp`,
+   extracted from frame 0); the video mounts only after hydration when motion is
+   allowed, and a visible Pause/Play toggle (aria-pressed, ≥44px) satisfies
+   WCAG 2.2.2 for the >5s loop. Regression test: SSR markup contains no `<video`.
+2. **Journey visuals → coded feature vignettes** (`ga-vignettes.tsx`), replacing all
+   product captures. Identify = working filter chips (Attendance, CCA attendance,
+   Social links, FAS — the stakeholder's example set) over six synthetic students with
+   an aria-live match count; auto-cycles until first touch. Holistic = category
+   jump-rail + attendance card + Behaviour/Family as header-only cards with redacted
+   bars ("Sensitive sections stay inside the profile."). Guidance = one suggestion
+   card. Draft = Term Update Letter draft settling in. Posts = read receipts + a
+   scheduled reminder. Pinned stage crossfades vignettes (200ms opacity; inactive
+   layers inert + aria-hidden); every vignette settles complete without JS/motion.
+   **Privacy consequence:** no product capture ships on the public page at all —
+   enforced by a new regression test (`no /content-review/screens/` in SSR output).
+   This supersedes round 1's "captures, decorative" media decision at the
+   stakeholder's direction.
+3. **Journey copy** (03-story.mdx, stakeholder wording): "You identify / Find the
+   students you're looking for, easily.", "You understand / See each student
+   holistically.", "The words are ready / Write with your whole school behind you.",
+   "Every family is in the loop. / Sent. Seen. Followed through."; reveal body now
+   "identifying, understanding, deciding, and engaging students and families."
+4. **Capabilities section** (ga-apps.tsx): Craft-style icon row — TW ink icon above
+   the heading, lucide icon + title + one-line JTBD per capability, whole item
+   anchors to its act. Scenario paragraphs no longer render (they remain in
+   05-capabilities.mdx for the wireframe and governance sync).
+
+### Decisions and flags
+
+- **CTA label stays "Sign in with Google."** The mock proposed "Sign in with edupass",
+  but `landingPageV2Publication.primaryCta` records the confirmed Google access
+  contract (identityProvider: google; readiness check pins the label). Changing the
+  marketing label without a product-side identity change would be a false claim.
+  **Open PM/product question.**
+- **New copy claims enter the register as PROPOSED (ticket #6 gate):** "We draw on
+  what teachers across your school have already sent" (school-voice drafting) and
+  "We send the reminders" (automatic reminders). Neither is yet capability-owner
+  confirmed; both now render. Same posture as the act-3 flag-gated state.
+- **Audited-claim spot-check re-anchored:** the "Term Update Letter" mention left the
+  narrative copy (it survives visually in the draft vignette), so
+  `landing-v2.test.ts` / `landing-v2-review.server.test.ts` now anchor on the
+  read-tracking claim ("which families have read"), which the audited prototype
+  still demonstrates.
+- **CMS fallback template** (`homepage-v1.server.ts`) re-synced to the new copy so
+  the review candidate projection stays exact; section/item/screen IDs unchanged.
+- **CLAUDE.md tension, named:** the "product UI emerging from the paper world"
+  choreography is now confined to the journey (pinned vignette stage); the hero no
+  longer scales a product surface. Done at the product owner's explicit direction.
+
+### Verification (round 3)
+
+- token-audit clean; a11y-static clean; contrast clean (one manual note:
+  `--paper-hover-bg` used only on decorative redaction bars). type-scan: vignette
+  micro-type raised to the 12px floor; the two remaining findings are the standing
+  display-heading calibration note. vitest 349/349; production build + output-leak
+  scanner + route verifiers pass; 320px scrollWidth = 320.
+- Evidence: `docs/design-evidence/ga-landing-page/round-3/` — 1280 (hero ×2 frames
+  for motion proof, fold with pause control, pause focus, all five acts, identify
+  interaction + chip focus, reveal, apps), reduced-motion (hero still-image DOM
+  verified, journey stacked), 768 (hero, journey), 360 (hero, apps), 320 (reflow).
+
+### Round-3 review verdict (verbatim)
+
+VERDICT: fail
+
+Three blocking control failures (one L0), all introduced by the round-3 vignette work. Contract criteria 1–6 are otherwise met, largely verbatim.
+
+**Inputs**: contract, plan, component inventory, 19 round-3 frames, code — all received. **Standing overrides: none.** I checked for `.dx/design.json` at the repo root myself; the file does not exist (LAY-1 correctly N/A, and no override adjusts any control this run). No waivers are on file — `docs/decisions/ga-landing-page.md` "Waivers granted" is an empty table across all three rounds.
+
+**Evidence caveat that shaped this review:** three of the cited frames do not show what their filenames claim (details in ADVISORY). I therefore graded the interactive controls from the route's code and from pixel measurements of the frames that do render the surfaces, not from the builder's captions.
+
+BLOCKING (must fix before ship):
+
+1. **Text meets WCAG AA contrast (A11Y-1, L0)** — the filtered-out student rows render at 30% opacity and measure **1.92:1**. `src/components/landing-ga/ga-vignettes.tsx:132-136` applies `opacity-30` to the whole `<li>` for non-matching students. Measured from `round-3/768-journey.png`: "Priya Nair" text samples at rgb(185,183,177) on rgb(253,250,242) = 1.92:1; the avatar chip beside it is 1.74:1 (needs 4.5:1 at 14px). This ships in **every** rendering branch — desktop pinned stage, 768/360 stacked, no-JS, and reduced-motion (visible in `round-3/1280-reduced-journey.png`, where three of six names are washed out). `contrast.py` reported clean because it cannot resolve an opacity utility applied to a container — the exact gap round 1 already logged to the ratchet, so "contrast.py clean" does not cover this. L0: no waiver is available. If the team wants to argue these rows are exempt as "inactive" content, that needs a named human approver on the record, not a reviewer's inference.
+
+2. **Interactive targets are at least 24×24px, 44px on mobile (A11Y-4, L1)** — the four filter chips are 24px tall at every width. `ga-vignettes.tsx:111` sets `min-h-6` (24px) with `gap-1.5` (6px) between chips. Measured directly from `round-3/768-journey.png`: the "Attendance" chip spans y=447→470 = **24px**. These are real `<button>`s on phones — `ga-journey.tsx:171-175` renders every vignette inline with live controls when `enhanced` is false, which is the branch all mobile users get. 24px clears the desktop floor but not the 44px mobile floor; this is the same rule that forced `min-h-11` on the header and footer wordmarks after round 1. No waiver on file.
+
+3. **No nested cards (SLP-4, L1)** — up to three levels of card-styled container. `ga-journey.tsx:106` (`rounded-2xl border border-[color:var(--paper-rule-strong)] bg-[color:var(--paper-card)] p-5 shadow-[var(--paper-shadow-card)]`) wraps `VignetteCard` at `ga-vignettes.tsx:403` (`rounded-xl border … bg-[color:var(--memo-bg)] p-4 shadow-…`), which wraps the panels at `ga-vignettes.tsx:209` and `:231` (`rounded-lg border … bg-[color:var(--paper-card)] p-3`). The non-enhanced branch repeats it at `ga-journey.tsx:172`. Plainly visible as two concentric bordered, shadowed boxes in `round-3/1280-act-identify.png`, `1280-act-guidance.png`, `1280-act-draft.png`, `768-journey.png`, `1280-reduced-journey.png`. SLP-4 has no detail file, so title + verify are the whole rule and there is no "do not flag" exception to reach for. The outer frame carries no content — deleting it closes this and the SLP-11 finding below.
+
+ADVISORY (should fix):
+
+- **A card is only for an interactive unit (SLP-11, L2)** — same container as blocking #3. The pinned `<figure>` (`ga-journey.tsx:106`) and the fallback wrapper (`:172`) are card chrome around static content; in `1280-act-guidance.png` a ~200px vignette floats in a ~550px empty white frame. Removing the chrome would not hurt comprehension. One fix closes both findings; counted once.
+- **Adjacent type-scale steps differ by ≥1.25× (SLP-6, L2)** — the capability items are flat: title 16px (`ga-apps.tsx:72` `text-base`), one-liner 14px (`:75`), link 14px (`:78`) = 1.14×. In `1280-apps.png` "Student Insights" barely outweighs its own sentence; weight and colour are doing all the hierarchy work.
+- **Shared edges align (LAY-6, L2)** — in `1280-apps.png` item 1's "See it in the journey →" sits at y≈695 while items 2–4 sit at y≈673, because only item 1's one-liner wraps to two lines; the four link rows should share a baseline. Separately, the journey copy column starts at x=32 (`ga-journey.tsx:72,78` — `px-5 sm:px-8` + `max-w-[1220px]`) while the apps section is inset to x≈90, so the acts hug the viewport edge at 1280.
+- **Components stay consistent with their defaults and sibling usage (CMP-7, L2)** — verified manually against the codebase (no manifest). Two divergences: (a) one chip affordance carries three different meanings — a live toggle (`ga-vignettes.tsx:109-121`), a decorative category highlight (`:195-206`), and a dead "Use this step" span styled identically to the live chips (`:270-276`, inside an `aria-hidden` div); (b) the same vignette gets a labelled `<figure>` + `<figcaption>` in the enhanced branch (`ga-journey.tsx:106-111`) but a bare unlabelled `<div>` in the fallback branch (`:172`) that every phone and no-JS reader gets.
+- **Copy uses sentence case (CNT-12, L2)** — round 3 adds "Student Profiles" (`ga-vignettes.tsx:94`) and "Term Update Letter" (`:304`) to the unresolved round-1/2 finding: "Student Insights" sits in a row with "AI next-step guidance", "Message drafting", "Posts" (`1280-apps.png`). Some are arguably product surface names and exempt as branded nouns — but the row is visibly mixed, and no reason is recorded either way.
+- **Structure is programmatically determinable (A11Y-7, L1) — close call, not graded fail** — `ga-journey.tsx:71` still labels the section `aria-label="One student's care journey"`, but round 3 replaced the single-student captures with a six-student filter list and three recipient families. The label no longer describes its content. I judged this pass-with-caveat because the narrative reading is still defensible; a stricter reading makes it blocking, and the fix is one string. Recommend a human call.
+- **Custom components expose name, role and value (A11Y-8, L1) — close call** — the hero pause control carries **both** `aria-pressed={paused}` and a label that flips (`ga-hero.tsx:127,132`). When paused, AT announces "Play animation, toggle button, **pressed**". State does track the visual, so it clears A11Y-8's stated fails_when, but the combination is a known APG anti-pattern. Pick one: static name + `aria-pressed`, or changing name and no `aria-pressed`.
+- **One term per thing (CNT-10, L1) — third round unresolved** — "Message drafting" (apps) vs "AI Draft" (`ga-vignettes.tsx:306`). Round 2 recorded "needs a rename or a documented waiver before merge"; round 3 re-created the string in new code and neither happened. I keep the pass-with-caveat grade (a capability name vs a document-state badge are arguably different objects), but this is L1 with `waiver: documented` — a waiver row with a named approver, or the rename, should land before merge.
+- **Fixed nav pill occludes running copy (craft; round-1 advisory, unchanged)** — in `1280-reveal.png`… `1280-act-posts.png` the h2 "We removed the admin between the moments." has its first line entirely behind the pill with ghost text bleeding through the translucent fill; the same happens to the act-3 h2 in `1280-act-guidance.png`. Accepted in rounds 1–2 as a v1 sibling convention; round 3's act rhythm makes it land on headings more often.
+- **Evidence defects (three frames do not show their subject)** — `1280-pause-focus.png` shows the hero scrolled to top with **no pause button in frame** and no focus indicator anywhere; `1280-identify-chip-focus.png` shows the FAS chip at rest with **no focus ring** (the only delta from its sibling frame is the pause label reading "Play animation"); `1280-act-posts.png` shows the reveal band and the apps section, **not** the posts vignette — the fifth vignette has no evidence at all. Also: no 360 or 320 journey capture, so the mobile vignette rendering (the branch carrying the 24px chips) is unphotographed; and the direct-edit dev overlay is baked into all 19 frames, occluding content in `1280-apps.png`, `768-journey.png` and `1280-reduced-hero.png`. This is a repeat of round 1's mislabelled-focus-frame advisory. Positive: no byte-identical frames this round (19 files, 19 hashes).
+- **Record note is inaccurate** — the round-3 verification note says `--paper-hover-bg` is "used only for decorative redaction bars, not text". It is also the background of the criterion tags at `ga-vignettes.tsx:153` (12px `--paper-muted` on it). I measured that pairing at **4.62:1** — it passes, but the manual note as written does not cover it.
+- **Hydration layout shift, and no round-3 performance evidence** — `ga-hero.tsx:105-114` mounts `<video>` with no `width`/`height`/aspect-ratio, replacing an `<img>` that has `width={624} height={624}` (`:116-123`); before the poster resolves, `w-full` with an unknown intrinsic ratio lays the element out at 2:1, then snaps square. CLAUDE.md pins "must not regress current Lighthouse scores" and this round adds an autoplaying 8.9s MP4 on every load, including mobile — no Lighthouse or CLS figure was reported.
+- **SLP-5 (L2) close call, not graded fail** — the apps row is now the icon-above-heading 4-up shape, though without card chrome. L2 permits a specific reason and the decision record carries one ("Craft-style icon row", stakeholder direction, round 3 §4). Recorded, so not a finding — noted so the next reviewer does not re-litigate it.
+
+SUGGESTIONS (not violations — improvements the builder may take):
+- Delete the outer journey frame (`ga-journey.tsx:106` and `:172`) and let the vignette sit on the paper ground — closes SLP-4 and SLP-11 and removes the empty white plate in one edit.
+- De-emphasise non-matching rows with muted text + no border instead of `opacity-30`, keeping them ≥4.5:1 — serves A11Y-1 and keeps the "narrowing" idea legible to everyone.
+- `min-h-11 md:min-h-6` on the filter chips (or an expanded hit area) — serves A11Y-4 and makes the one interactive vignette actually tappable on the phone it mostly renders on.
+- Raise the capability title to 20px (`text-xl`) — restores a 1.25× step over its one-liner (SLP-6) and lets the four capabilities scan.
+- Give the vignette ambient cycles the same pause treatment the hero got, and fire the `aria-live` count only on user-initiated toggles — closes the two UNCOVERED items below at their source.
+
+QUALITY GRADES:
+- **Design quality — acceptable.** The hero is genuinely peaceful and the copy/CTA hierarchy is unambiguous at all four widths; the journey undercuts itself with a double frame around a small card and a copy column pinned hard to the viewport edge.
+- **Originality — strong.** Replacing product captures with coded, partly-interactive vignettes is the right and distinctive call, and it solves the privacy problem structurally rather than by cropping; the paper world still reads as nobody else's. The capabilities row drifting toward the generic icon-grid is the one pull in the other direction. No slop tells: no gradients, no glow, no side-tab borders, standard `cubic-bezier(0.4,0,0.2,1)` easing throughout, and the blue/mint/sky coding is the registered paper system, not decoration.
+- **Craft — weak.** A 1.9:1 text state in the default rendering, 24px touch targets, three levels of nested card, an empty frame, a stale section label, a video with no intrinsic dimensions, and three evidence frames that do not show their subject. Individually small; together they say the round was not re-read after it was built.
+- **Functionality — acceptable.** The teacher's one task (sign in) completes at 320/360/768/1280 and in the no-JS, reduced-motion and mobile branches; the filter works, settles, and hands control back on first touch; no dead ends or unrecoverable states. Held back by three identical-looking affordances where only one responds, and ambient motion the visitor cannot stop.
+- **Dark mode — N/A: product has no dark mode** (deliberately light paper world; no toggle, no re-rendering `.dark` layer on this route).
+
+UNCOVERED (defects no control covers — feed the ratchet):
+1. **Auto-updating content with no pause control.** The vignette cycles run indefinitely at 2.2s (holistic), 2.8s (identify) and 3.4s (guidance) intervals (`ga-vignettes.tsx:71,177,257`) with no pause/stop/hide affordance. The catalogue's declared floor is WCAG 2.2 AA and SC 2.2.2 covers auto-updating information, but A11Y-5 reaches only `prefers-reduced-motion` and MOT-1 only duration/placement. The page proves the gap: the hero got a pause control for exactly this reason, and the vignettes beside it did not.
+2. **Timer-driven live region.** `aria-live="polite"` on the match count (`ga-vignettes.tsx:96`) re-announces every 2.8s while the identify act is on screen and untouched. A11Y-11's four fails_when clauses are all about async state changes the user initiated; none reaches an unattended announcer.
+3. **Hydration-swap layout shift.** No control governs a media element mounted after hydration without intrinsic dimensions (`ga-hero.tsx:105-114`), even though it produces a visible reflow of the hero's focal image.
+4. **Performance budget.** CLAUDE.md pins "must not regress current Lighthouse scores"; no control requires a perf measurement in the verify phase, and none was reported for the round that added an autoplaying 8.9s MP4 to every load, mobile included.
+5. **Opacity utilities are invisible to `contrast.py`.** Round 1 logged that `contrast.py` cannot resolve Tailwind `/opacity` modifiers; this round shows the container-level `opacity-30` case is equally invisible — and it hid an L0 failure behind a "clean" run. Worth promoting from a ratchet note to a script fix.
+6. **Evidence fidelity.** No control requires that a cited evidence frame actually show the state its filename claims. Three round-3 frames failed this, and the same class of defect appeared in round 1. A verify-phase check ("each named frame shows the named state") would have caught all four.
+
+(Full judgment-control notes and the verification ledger are preserved in the run record on the design ticket.)
+
+### Fixes applied after round 3 (same day)
+
+All three blocking findings and the actionable advisories, fixed and re-photographed:
+
+1. **A11Y-1 (L0) row contrast** → `opacity-30` removed. Non-matching rows keep full
+   opacity and de-emphasise structurally: muted text (`--paper-muted` on
+   `--memo-bg`, 5.01:1), no card ground, avatar flips to `--paper-hover-bg` +
+   muted initials. Fixed, re-captured (`1280-act-identify.png`, `360-journey.png`,
+   `1280-reduced-journey.png`).
+2. **A11Y-4 chips** → `min-h-11 px-3` with `lg:min-h-6 lg:px-2.5` (44px on every
+   touch-first width; 24px only inside the desktop pinned stage). Measured in
+   `360-journey.png`.
+3. **SLP-4/SLP-11 nested frames** → the outer journey frame is deleted in both
+   branches; the vignette card is the only chrome, floating on the paper ground.
+   Also removes the empty white plate.
+4. **SLP-6** → capability titles raised to `text-xl` (20px; 1.43× over the 14px
+   one-liner). **LAY-6** → the one-liner takes `flex-1`, so the four "See it in the
+   journey" rows share a baseline.
+5. **A11Y-7** → journey section `aria-label` now "The journey" (matches the nav
+   name and the section's content). **A11Y-8** → the pause control uses the
+   changing-name pattern only (`aria-pressed` removed).
+6. **CMP-7** → the three chip meanings are now three affordances: live filters
+   keep the outlined rounded-full chip; the holistic rail reads as jump links
+   (text + underline on highlight, no border); the depicted "Use this step"
+   dropped its outline. Both branches now use the same plain wrapper (figure
+   removed with the frame).
+7. **Hydration shift** → the video carries `width/height={624}` + `aspect-square`,
+   matching the still frame exactly.
+8. **UNCOVERED #1/#2 at source** → every ambient cycle now comes to rest on its
+   own after two passes (identify, holistic, guidance), and the match-count
+   live region is `aria-live="off"` until the visitor first touches a chip.
+9. **Evidence fidelity** → full re-capture: real keyboard-driven focus rings
+   (`1280-pause-focus.png`, `1280-identify-chip-focus.png`), the posts vignette
+   photographed (`1280-act-posts.png`), holistic act added
+   (`1280-act-holistic.png`), journey at 360 and 320 added (scrollWidth 320 = 320).
+   The small floating badge in some frames is the capture tool's cursor
+   indicator, not page UI.
+10. **Record note corrected** → `--paper-hover-bg` also grounds the criterion tags
+    (muted text on it measures 4.62:1, passing); the earlier note undercounted.
+
+Deliberately not changed (with reasons): CNT-12 Title Case strings — "Student
+Insights" and "Posts" are product capability names, "Student Profiles" a product
+surface name, "Term Update Letter" a template name; recorded here as branded
+nouns (PM may rename). CNT-10 "Message drafting" vs "AI Draft" — still the PM
+naming call carried since round 2; the vignette depicts the product's own badge.
+Nav pill translucency — v1 sibling convention, accepted rounds 1–2. Performance:
+no Lighthouse run this round (uncovered #4 stands as an open verify-phase gap);
+the video is 3.1MB, poster 37KB webp, and the hydration-shift fix removes the
+known CLS source — flagged for a measured run before merge.
+
+Checks after fixes: token-audit clean; a11y-static clean; type-scan — only the
+standing display-heading calibration set; vitest 349/349; production build +
+output-leak scanner + route verifiers pass.
+
+### Round-3 re-check verdict (verbatim)
+
+## Original findings — re-graded
+
+**BLOCKING**
+
+1. **Text meets WCAG AA contrast (A11Y-1, L0) — RESOLVED.** `opacity-30` is gone from the row (`src/components/landing-ga/ga-vignettes.tsx:141-168`); I pixel-sampled the dimmed names in all three rendering branches and every one returns the same rgb(95,111,118) on rgb(253,250,242) = **5.01:1** — `1280-act-identify.png` ("Priya Nair"), `360-journey.png`, `1280-reduced-journey.png`; the muted avatar initials on `--paper-hover-bg` over `--memo-bg` compute to 4.62:1, also passing.
+2. **Interactive targets ≥24×24px, 44px on mobile (A11Y-4, L1) — RESOLVED.** `min-h-11 px-3 … lg:min-h-6 lg:px-2.5` at `ga-vignettes.tsx:120`; column-scanning the "Attendance" chip borders gives y=397→440 = **44px** in `360-journey.png` and the same 44px band in `768-journey.png` / `320-journey.png`, with 24px (y=237→260) only in the ≥1024px pinned stage of `1280-act-identify.png`.
+3. **No nested cards (SLP-4, L1) — RESOLVED (close call noted).** The bordered/shadowed `<figure>` is deleted from the pinned stage (`ga-journey.tsx:104-126`, now a bare `relative` div) and from the fallback branch (`:167-171`, now `flex justify-center`); `1280-act-identify/guidance/draft/holistic/posts.png`, `768-journey.png` and `1280-reduced-journey.png` all show a single card on the paper ground. Close call for the record: the `VignetteCard` (`:425`) still contains `rounded-lg border … bg-[--paper-card]` panels/rows (`:141`, `:231`, `:253`, `:388`), which a strict read of SLP-4's *verify* sentence ("no card-styled container nested inside another") still catches, though it no longer matches the `fails_when` ("cards inside cards inside cards") and it is exactly the remedy round 3 prescribed. Recommend a human confirm the two-level read once, so round 4 does not re-litigate it.
+
+**ADVISORIES**
+
+- **SLP-11 (empty white frame) — RESOLVED.** `1280-act-guidance.png` shows the ~200px vignette alone; the ~550px empty plate is gone with the frame.
+- **SLP-6 (flat type scale) — RESOLVED.** `ga-apps.tsx:72` is `text-xl leading-7` (20px) over a 14px one-liner = 1.43×; visible in `1280-apps.png`, where "Student Insights" now clearly outweighs its sentence.
+- **LAY-6 (shared edges) — PARTIAL.** The link-row half is fixed: `flex-1` on the one-liner (`ga-apps.tsx:75`) puts all four "See it in the journey →" rows on y≈699 in `1280-apps.png`. The section-inset half is unchanged and, unlike the other deliberate stands, carries **no recorded reason** in the decision record — journey copy still starts at x=32 (`ga-journey.tsx:72,78`) against the apps section's x≈90 and the nav pill's x≈170, three different left edges at 1280. L2 with `waiver: rationale`, so a one-line reason in the record closes it.
+- **A11Y-7 (descriptive labels) — RESOLVED.** `ga-journey.tsx:71` now reads `aria-label="The journey"`, matching the nav item in every frame.
+- **A11Y-8 (name/role/value) — RESOLVED.** `ga-hero.tsx:128-134` carries the changing name only; no `aria-pressed` anywhere on the pause button. `1280-pause-focus.png` shows the real control in frame, labelled "Pause animation", with a genuine focus ring.
+- **CMP-7 (consistency) — RESOLVED.** Three affordances now separate cleanly: outlined `rounded-full` live chips (`ga-vignettes.tsx:118-131`), borderless text-with-underline holistic rail (`:218-228`, confirmed in `1280-act-holistic.png`), tint-only "Use this step" (`:293`, confirmed in `1280-act-guidance.png`); both branches use the same plain wrapper now that the `<figure>`/`<figcaption>` asymmetry went with the frame. Contrast on the re-coloured chips re-checked under A11Y-1: active chip 4.90:1, "Use this step" 4.91:1, criterion tag 4.82:1 — all pass.
+- **Hydration layout shift — RESOLVED.** `ga-hero.tsx:107-115` sets `aspect-square` + `width/height={624}`, identical geometry to the `<img>` at `:118-125`; no ratio change across the swap.
+- **UNCOVERED #1 / #2 (unstoppable cycles, timer-driven live region) — RESOLVED at source.** `useCycle` clears its interval and returns to rest after `steps * 2` ticks (`ga-vignettes.tsx:435-455`), the identify cycle does the same at `:71-82` and stops permanently on first touch, and the match count is `aria-live={touched ? "polite" : "off"}` (`:105`).
+- **Evidence fidelity — RESOLVED (two stale frames).** `1280-identify-chip-focus.png` shows a real ring on "CCA attendance" with a different filter state (4 of 6), `1280-pause-focus.png` shows a real ring on the pause button, `1280-act-posts.png` genuinely shows the posts vignette, `1280-act-holistic.png` / `360-journey.png` / `320-journey.png` are new, and the dev overlay is gone. Residual: `1280-hero-fold.png` (15:27) and `1280-reveal.png` (15:31) predate the 16:15–16:17 fix batch, so those two are not post-fix captures.
+- **Record note (`--paper-hover-bg`) — RESOLVED.** Corrected at `docs/decisions/ga-landing-page.md:405-406`; I re-derived the criterion-tag pairing at 4.62:1, matching the note.
+- **Deliberate stands — RECORDED, one caveat.** CNT-12 branded nouns, CNT-10, nav-pill translucency and the missing Lighthouse run are all written down in "Deliberately not changed". Caveat: **CNT-10 is L1 with `waiver: documented`** and the "Waivers granted" table at `docs/decisions/ga-landing-page.md` is still empty across four rounds — a PM narration in prose is not a waiver row with a named approver. Third round unresolved; I keep pass-with-caveat, but this needs the rename or a real waiver row before merge.
+
+## New finding introduced by the round-3 work and not closed by the fixes
+
+- **Text meets WCAG AA contrast (A11Y-1, L0) — the capability link fails at rest.** `src/components/landing-ga/ga-apps.tsx:78` sets `text-[color:var(--cta-blue)] opacity-80` on 14px semibold "See it in the journey →". Measured in `1280-apps.png`: rgb(78,121,222) on rgb(246,243,235) = **3.70:1** (analytic value for `#245adb` at 80% over the paper ground matches the sampled pixel exactly). 14px semibold is not WCAG "large text", so the floor is 4.5:1; `group-hover:opacity-100` lifts it to 5.32:1 but the resting state governs, and it repeats four times across the section at every width. This is the round-3 apps rewrite (round 2 used `text-primary` with no opacity modifier), so it is new since round 2 — round 3 missed it, and it is invisible to `contrast.py` for exactly the reason logged as UNCOVERED #5. Dropping `opacity-80` fixes it.
+
+Regression sweep of the fixed surfaces against A11Y-1/2/4/5/6, the SLP set and the TYP floors found nothing else: focus rings present on chips, apps links and the pause button (`focus-visible:ring-2/3 ring-primary`, photographed); all decorative icons and the tw-icon are `aria-hidden`/`alt=""`; type stays on scale (20/14/12px, no new off-scale value); `320-journey.png` reflows with no horizontal overflow; the settled composition is complete in the reduced-motion and fallback branches.
+
+Two minor items worth an advisory, neither a control fail:
+- Flipping `aria-live` from `"off"` to `"polite"` in the same React commit as the count change (`ga-vignettes.tsx:105`) means the **first** post-touch announcement may be swallowed, since the region is not yet live when the mutation lands. Rendering the region always-live and gating the *content* would be more robust. A11Y-11 close call.
+- `opacity-40` on unrevealed posts rows (`ga-vignettes.tsx:391`) is transient (settles at 900ms intervals, and the settled/no-JS render is fully revealed), so not a contrast fail — but it is the same opacity-on-text pattern the audit script cannot see.
+
+## VERDICT: fail
+
+All three original blocking findings and every advisory that claimed a fix are genuinely resolved, verified from pixels and code rather than narration — this was a clean, complete round of fixes. The verdict is `fail` on one item only: an L0 contrast failure (3.70:1) on the four "See it in the journey →" links in `src/components/landing-ga/ga-apps.tsx:78`, which no waiver can cover. Delete `opacity-80` and this is a pass-with-findings, with the LAY-6 inset rationale and the CNT-10 waiver row as the remaining advisories.
+
+### Fixes applied after the re-check (same day)
+
+1. **A11Y-1 on the capability links (the re-check's one new L0)** → `opacity-80`
+   deleted; the links rest at full `--cta-blue` on the paper ground (5.32:1,
+   analytic). Re-captured: `1280-apps.png` (dev overlay hidden this time).
+2. **A11Y-11 close call** → the visible count is `aria-hidden`; a separate
+   sr-only region is `aria-live="polite"` from mount with its content gated on
+   first touch, so the first announcement lands in an already-live region.
+3. **Stale frames** → `1280-hero-fold.png` and `1280-reveal.png` re-captured
+   post-fix.
+4. **LAY-6 inset rationale (recorded here to close the L2):** the journey's
+   `max-w-[1220px]` copy column and the apps section's centred `max-w-[1100px]`
+   are the round-2 approved section widths; the journey column intentionally
+   runs wider so the act copy and the pinned stage can sit as two balanced
+   columns. Aligning every section to one left edge is a layout change outside
+   round 3's scope — carried as a candidate for the next layout pass.
+5. **SLP-4 two-level read (reviewer asked for a human confirmation):** the
+   vignette card's inner panels depict the product surface's own cards — they
+   are the content of the excerpt, not page chrome. Carried for the plan
+   approver to confirm once.
+
+Still open for the PM before merge (unchanged by this round): per-quote
+publication approval (#10); claims register incl. the two NEW round-3 claims
+(school-voice drafting, automatic reminders) and act-3 availability (#6);
+CNT-10 "Message drafting" vs "AI Draft" — rename or a real waiver row with a
+named approver; the "Sign in with edupass" CTA proposal vs the recorded Google
+access contract; CNT-12 Title-Case noun ratification; a measured Lighthouse run
+(the video adds 3.1MB to first load; the poster is 37KB webp).
+
+### Re-check confirmation (verbatim)
+
+## A11Y-1 re-grade — RESOLVED
+
+`opacity-80` is gone from `src/components/landing-ga/ga-apps.tsx:78`, which now reads plain `text-sm leading-5 font-semibold text-[color:var(--cta-blue)]` with the hover transition dropped along with it. Confirmed from the re-captured `docs/design-evidence/ga-landing-page/round-3/1280-apps.png` (18:48, dev overlay hidden): all four "See it in the journey →" links sample at exactly rgb(36,90,219) — the unblended `#245adb`, not the 80% composite rgb(78,121,222) I measured before — on rgb(246,243,235) = **5.32:1** at every one of the four positions. The rest of the section re-measures clean in the same frame: one-liners 4.71:1, titles 15.7:1, and the 20px/14px SLP-6 step and the shared y≈699 LAY-6 link baseline both survive the edit.
+
+## Regressions from the two fixes — none found
+
+**A11Y-11 rework (`ga-vignettes.tsx`, IdentifyVignette).** The visible count is `aria-hidden` and a sibling `<span aria-live="polite" className="sr-only">` is present from mount with its content gated on `touched`. That is the right shape: the region exists and is live before the first mutation, so the first post-touch announcement lands rather than being swallowed, and the ambient cycle stays silent because the gated content is `null` until the visitor toggles. No layout regression is possible — `sr-only` is `position:absolute` with a 1px clip, so the new third flex child is out of flow and cannot disturb the `items-baseline justify-between` header row; the `1280-act-identify.png` / `1280-identify-chip-focus.png` frames predate this change (16:16) but the change is visually inert by construction. Nothing else in the vignette moved: chips still `min-h-11 … lg:min-h-6` with `aria-pressed`, rows still structural-de-emphasis at 5.01:1.
+
+**Re-captured `1280-hero-fold.png` and `1280-reveal.png` (18:48).** Both now post-date every fix. `1280-reveal.png` also shows the standing nav-pill advisory behaving better than round 3 described — the reveal h2 clears the pill entirely at this scroll position rather than bleeding through it.
+
+One non-blocking observation on the A11Y-11 rework, offered as a suggestion rather than a finding: with the visible count `aria-hidden` and the live region empty until first touch, a screen-reader user who only reads the vignette never hears "3 of 6 match" at all. No information is actually lost — the six names and their criterion tags are fully exposed in the list — but an `sr-only` static description alongside the gated live text would restore the summary without re-introducing the ambient announcer.
+
+## VERDICT: pass-with-findings
+
+Every round-3 blocking finding, every advisory that claimed a fix, and the one new L0 I raised are now resolved and verified from pixels and code. Two items remain open, both correctly recorded as pre-merge gates rather than design defects:
+
+- **One term per thing (CNT-10, L1)** — "Message drafting" vs "AI Draft" is still pass-with-caveat, not fail, but it is L1 with `waiver: documented` and the "Waivers granted" table in `docs/decisions/ga-landing-page.md` is still empty. It needs the rename or a waiver row with a named human approver — correctly outside an agent's authority to supply.
+- **Performance budget** — CLAUDE.md pins "must not regress current Lighthouse scores" and no measured run exists for the round that added the autoplaying 8.9s / 3.1MB MP4. Uncovered by any control; flagged for a measured run before merge.
+
+Advisory, non-gating: the LAY-6 section-inset rationale (being added), and the SLP-4 close call I recorded — `VignetteCard` still contains bordered/filled panels and rows, which the control's *verify* sentence catches on a strict read even though it no longer matches its `fails_when`. Worth one human confirmation so round 4 does not re-open it.
+
+### Hero video swap + blend repair (same day, stakeholder asset)
+
+The stakeholder replaced the hero clip: `teacher-working.mp4` is now the
+forward-facing teacher (5.2s, 624×624, background pure white ≥254 across the
+whole clip; poster re-extracted). Investigating the requested "no background
+colour difference" exposed that **the multiply blend had never actually
+applied**: the content wrapper's `z-10` and the `ga-fade-up` keyframe settling
+at `translate: 0 0` (a non-none transform held by `fill-mode: both`) each
+pinned a stacking context between the video and the sky, so the video painted
+its white ground unblended — a real seam (inside 255 vs sky 247–254), present
+since the video was introduced. Fixed by removing the unneeded `z-10`, settling
+the keyframe at `translate: none`, and dropping the entrance animation from the
+video block (an animation fill would re-create the wall; the loop is its own
+entrance). Verified by pixel-diff across the video edges: identical values
+inside/outside (≤3/255 codec noise at the top edge). Reduced-motion still
+renders the still image (DOM-verified), tests 349/349, build + verifiers green.
+
+*Post-confirmation touch-up (same day):* the reviewer's sr-only suggestion was
+taken — a static `sr-only` description of the list now sits beside the gated
+live region, so screen-reader users get the summary without an ambient
+announcer. Tests re-run green (349/349).
