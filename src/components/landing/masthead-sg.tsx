@@ -22,9 +22,15 @@ function isSgdsMastheadDefined() {
 }
 
 export function MastheadSg() {
-  const [state, setState] = useState<MastheadState>(() =>
-    isSgdsMastheadDefined() ? "ready" : "loading"
-  )
+  /**
+   * Always start on the fallback the server rendered. The SGDS import is
+   * kicked off at module scope, so it can win the race against hydration —
+   * reading `customElements` in the initial state then made the client render
+   * `<sgds-masthead>` where the server had written the fallback markup, and
+   * React discarded the hydrated tree to rebuild it (measured 2026-08-24 as a
+   * console exception, React #418). The effect below upgrades after hydration.
+   */
+  const [state, setState] = useState<MastheadState>("loading")
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -32,7 +38,7 @@ export function MastheadSg() {
       setState("failed")
       return
     }
-    if (customElements.get(SGDS_MASTHEAD_TAG)) {
+    if (isSgdsMastheadDefined()) {
       setState("ready")
       return
     }

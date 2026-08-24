@@ -64,18 +64,8 @@ export function GaHero() {
     >
       {/* Illustrated paper sky — the locked v1 hero world, unchanged. */}
       <div aria-hidden className="hero-sky-bg absolute inset-0 overflow-hidden">
-        <img
-          alt=""
-          aria-hidden
-          className="ga-cloud-a pointer-events-none absolute top-[4%] left-[74%] w-[20%] mix-blend-lighten [will-change:transform] select-none"
-          src="/hero/cloud-halftone.png"
-        />
-        <img
-          alt=""
-          aria-hidden
-          className="ga-cloud-b pointer-events-none absolute top-[20%] -left-[6%] w-[34%] mix-blend-lighten [will-change:transform] select-none"
-          src="/hero/cloud-halftone.png"
-        />
+        <HeroCloud className="ga-cloud-a top-[4%] left-[74%] w-[20%]" />
+        <HeroCloud className="ga-cloud-b top-[20%] -left-[6%] w-[34%]" />
         <GaHeroInk />
       </div>
 
@@ -162,5 +152,32 @@ export function GaHero() {
         </div>
       </div>
     </section>
+  )
+}
+
+/**
+ * One drifting halftone cloud. Same artwork as the v1 hero (the PNG source is
+ * locked and untouched); it is served here through its AVIF/WebP variants,
+ * because the 1.1MB PNG — drawn twice — was the entire mobile first-paint
+ * budget on a throttled link (measured 2026-08-24). Intrinsic size is declared
+ * so the aspect ratio is known before the bytes arrive.
+ */
+function HeroCloud({ className }: { className: string }) {
+  return (
+    <picture className="contents">
+      <source srcSet="/hero/cloud-halftone.avif" type="image/avif" />
+      <source srcSet="/hero/cloud-halftone.webp" type="image/webp" />
+      <img
+        alt=""
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute mix-blend-lighten [will-change:transform] select-none",
+          className
+        )}
+        height={1274}
+        src="/hero/cloud-halftone.png"
+        width={1274}
+      />
+    </picture>
   )
 }
