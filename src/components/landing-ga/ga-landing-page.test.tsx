@@ -96,6 +96,8 @@ describe("GaLandingPage", () => {
     // only mounts after hydration when the visitor allows motion.
     expect(html).not.toContain("<video")
     expect(html).toContain("teacher-working-poster")
+    // Same contract for the hero's pointer trail: decorative, client-only.
+    expect(html).not.toContain("<canvas")
   })
 
   it("ships no product captures — the vignettes carry every visual", () => {

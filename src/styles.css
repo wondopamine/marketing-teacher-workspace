@@ -240,7 +240,8 @@
   }
 }
 
-/* Ambient cloud drift — used by the static-fallback hero. Paired with
+/* Ambient cloud drift — used by the static-fallback hero and, at the slower
+   GA pace below, by the GA hero. Paired with
    `animation-direction: alternate` so the browser ping-pongs A↔B forever
    with no seam. Translate-only keeps it on the GPU; ease-in-out gives the
    gentle accel/decel of wind-blown drift. The global prefers-reduced-motion
@@ -268,6 +269,28 @@
   to {
     transform: translate3d(12%, 0, 0);
   }
+}
+
+/* GA hero sky. The v1 hero's drift, slowed to roughly half its pace (user,
+   2026-08-24): these clouds are larger and sit beside the copy, so the same
+   amplitude over a longer period is what reads as a peaceful sky rather than
+   weather. Different periods and a negative delay on the second keep the two
+   from ever moving in unison. The hero's Pause control freezes the sky along
+   with the looping illustration, so one control stops all of the hero's
+   automatic motion (WCAG 2.2.2). */
+.ga-cloud-a {
+  animation: cloud-drift-a 18s cubic-bezier(0.455, 0.03, 0.515, 0.955) 0s
+    infinite alternate;
+}
+
+.ga-cloud-b {
+  animation: cloud-drift-b 26s cubic-bezier(0.455, 0.03, 0.515, 0.955) -7s
+    infinite alternate;
+}
+
+.ga-hero-motion-paused .ga-cloud-a,
+.ga-hero-motion-paused .ga-cloud-b {
+  animation-play-state: paused;
 }
 
 @keyframes scroll-hint {

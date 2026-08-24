@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react"
 
+import { GaHeroInk } from "./ga-hero-ink"
+
 import { Button } from "@/components/ui/button"
 import { TEACHER_WORKSPACE_APP_URL } from "@/content/landing"
 import { gaPageCopy } from "@/content/landing-ga-page"
+import { cn } from "@/lib/utils"
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)"
 
@@ -12,6 +15,12 @@ const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)"
  * fold — no product UI, no zoom. The animation is the looping illustration
  * video; `mix-blend-multiply` melts its white ground into the paper sky so
  * it reads as drawn on the page.
+ *
+ * Two ambient layers sit under the copy (user, 2026-08-24): the v1 hero's
+ * cloud drift, slowed (`.ga-cloud-a` / `.ga-cloud-b`), and a pointer trail
+ * of hand-drawn marks (`GaHeroInk`). The Pause control stops the video and
+ * the drift together; the trail needs no control, since it only ever moves
+ * while the visitor is moving the pointer.
  *
  * Entrances stay pure CSS keyframes (`ga-fade-up`), so the server-rendered
  * markup never hides content. The server (and no-JS, and reduced-motion)
@@ -48,33 +57,41 @@ export function GaHero() {
   return (
     <section
       aria-labelledby="ga-hero-title"
-      className="relative flex min-h-svh flex-col overflow-hidden"
+      className={cn(
+        "relative flex min-h-svh flex-col overflow-hidden",
+        paused && "ga-hero-motion-paused"
+      )}
     >
       {/* Illustrated paper sky — the locked v1 hero world, unchanged. */}
       <div aria-hidden className="hero-sky-bg absolute inset-0 overflow-hidden">
         <img
           alt=""
           aria-hidden
-          className="pointer-events-none absolute top-[4%] left-[74%] w-[20%] mix-blend-lighten select-none"
+          className="ga-cloud-a pointer-events-none absolute top-[4%] left-[74%] w-[20%] mix-blend-lighten [will-change:transform] select-none"
           src="/hero/cloud-halftone.png"
         />
         <img
           alt=""
           aria-hidden
-          className="pointer-events-none absolute top-[20%] -left-[6%] w-[34%] mix-blend-lighten select-none"
+          className="ga-cloud-b pointer-events-none absolute top-[20%] -left-[6%] w-[34%] mix-blend-lighten [will-change:transform] select-none"
           src="/hero/cloud-halftone.png"
         />
+        <GaHeroInk />
       </div>
 
       <div className="relative mx-auto flex w-full max-w-[1024px] flex-1 flex-col items-center px-5 pt-36 text-center sm:px-8 sm:pt-40">
         <div className="ga-fade-up">
           <h1
+            data-hero-ink-safe
             className="font-heading text-[clamp(2.25rem,5vw,3.75rem)] leading-[1.08] font-semibold tracking-tight text-balance text-[color:var(--paper-ink)]"
             id="ga-hero-title"
           >
             {hero.headline}
           </h1>
-          <p className="mx-auto mt-6 max-w-[46ch] font-body text-base leading-[1.7] text-balance text-[color:var(--paper-muted)] sm:text-lg">
+          <p
+            data-hero-ink-safe
+            className="mx-auto mt-6 max-w-[46ch] font-body text-base leading-[1.7] text-balance text-[color:var(--paper-muted)] sm:text-lg"
+          >
             {hero.body}
           </p>
           <div className="mt-8 flex flex-col items-center gap-3">
@@ -82,11 +99,18 @@ export function GaHero() {
               asChild
               className="h-12 rounded-full bg-primary px-7 text-base font-semibold text-primary-foreground shadow-[var(--paper-shadow-cta)] transition-[background-color,translate,scale,box-shadow] duration-200 ease-out hover:-translate-y-px hover:bg-primary/90 hover:shadow-[var(--paper-shadow-cta-hover)] focus-visible:ring-[3px] focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.96]"
             >
-              <a href={TEACHER_WORKSPACE_APP_URL} rel="noreferrer">
+              <a
+                data-hero-ink-safe
+                href={TEACHER_WORKSPACE_APP_URL}
+                rel="noreferrer"
+              >
                 {hero.action}
               </a>
             </Button>
-            <p className="font-body text-sm leading-5 text-[color:var(--paper-muted)]">
+            <p
+              data-hero-ink-safe
+              className="font-body text-sm leading-5 text-[color:var(--paper-muted)]"
+            >
               {hero.actionNote}
             </p>
           </div>
@@ -99,6 +123,7 @@ export function GaHero() {
           <figure
             aria-label="A hand-drawn teacher working calmly at her desk."
             className="relative w-[min(420px,72vw)]"
+            data-hero-ink-safe
           >
             {motionAllowed ? (
               <video
