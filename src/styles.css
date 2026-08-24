@@ -98,7 +98,10 @@
 
   --nav-surface: rgb(255 255 255 / 0.8);
   --brand-orbit: var(--cyan-7);
-  --paper: #f6f3eb;
+  /* Matches the foot of the hero sky gradient (/hero/hero-bg.*, which
+     resolves to #fefefe below ~70% height) so the hero meets the page with
+     no visible seam. Product owner, 2026-08-24. */
+  --paper: #fefefe;
   --paper-ink: #1a1a1a;
   --paper-muted: #5f6f76;
   --paper-rule: rgb(14 23 41 / 0.08);
@@ -116,7 +119,7 @@
   --audience-mint: #c8e8d2;
   --audience-sky: #d6e2f7;
 
-  --footer-bg: #f6f3eb;
+  --footer-bg: #fefefe;
 
   /* Polish tokens — kept here so component-level utilities stay tight
        and reusable hover/shadow rhythms don't drift apart. */

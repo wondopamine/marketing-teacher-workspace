@@ -564,3 +564,36 @@ so two link clusters run back to back and the only destination the shortcut row
 adds is Real schools. Removing it would undo a recorded accessibility fix, so
 it stands until someone decides; revert note if it goes: delete the `<nav
 aria-label="Page sections">` block in `ga-landing-page.tsx`.
+
+
+### Page ground unified with the hero (2026-08-24, product owner)
+
+The hero's sky gradient resolves to `#fefefe` from roughly 70% of its height
+down, while the page ground was `--paper: #f6f3eb`. Where the hero ended, that
+put a hard beige line across the full width — the product owner asked for the
+whole site to take the hero's lower colour instead.
+
+- `--paper` `#f6f3eb` → `#fefefe`, and `--footer-bg` with it (left beige, the
+  footer would simply have become the new seam).
+- Measured across the boundary at 1280: 253–254 on both sides, i.e. no step.
+
+**This changes a locked token.** CLAUDE.md pins the `--paper-*` design tokens
+and the hero illustration assets as locked; the product owner's direction
+supersedes that for `--paper` and `--footer-bg` only. The illustration assets
+are untouched, and no other paper token moved. Revert: restore both values to
+`#f6f3eb` in `src/styles.css`.
+
+Consequences checked:
+
+- **Contrast improves** on every text pairing, since the ground got lighter:
+  ink 15.7 → 17.26, muted 4.71 → 5.18, `--cta-blue` 5.32 → 5.85. No A11Y-1
+  exposure; the round-3 fixes all keep their margins.
+- **Global, by design.** `html` carries `var(--paper)`, so `/content-review`
+  takes the new ground too (verified rendering, `rgb(254,254,254)`).
+- **Surfaces now separate by border and shadow, not by ground.** The vignette
+  card (`--memo-bg #fdfaf2`) sits at 1.03 against the new page colour and
+  `--paper-card #ffffff` at 1.01. They still read — border plus
+  `--paper-shadow-card` carry them, and the effect is closer to the Linear
+  reference the vignettes were modelled on — but any future surface that
+  relies on ground contrast alone will disappear. Worth a human eye before the
+  next round adds one.
