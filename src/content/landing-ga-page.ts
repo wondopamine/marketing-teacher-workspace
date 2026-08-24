@@ -30,6 +30,18 @@ const audiencesDocument = new MdxDocument(audiencesSource)
 const proofDocument = new MdxDocument(proofSource)
 const closeDocument = new MdxDocument(closeSource)
 
+/**
+ * Splits prose after a full stop that ends a sentence. Returns a tuple whose
+ * first element is always present, so callers do not have to guard a heading
+ * that the document layer already required.
+ */
+function splitSentences(text: string): ReadonlyArray<string> {
+  return text
+    .split(/(?<=\.)\s+/)
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 0)
+}
+
 function itemCopy(document: MdxDocument, id: string) {
   const item = document.item(id)
   return {
@@ -231,6 +243,13 @@ export const gaPageCopy = {
   reveal: {
     eyebrow: revealDocument.text("eyebrow"),
     headline: revealDocument.requireHeading(),
+    /**
+     * The headline split at its sentence boundaries. The reveal discloses one
+     * sentence per scroll beat (product owner, 2026-08-24), and the copy stays
+     * one governed heading rather than becoming two fields nobody proofreads
+     * together. One sentence yields one beat, which the section handles.
+     */
+    headlineBeats: splitSentences(revealDocument.requireHeading()),
     body: revealDocument.requireBody(),
     launchLine: revealDocument.optionalText("launchLine"),
   },

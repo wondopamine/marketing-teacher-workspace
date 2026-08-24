@@ -97,6 +97,11 @@
   --sidebar-ring: var(--blue-8);
 
   --nav-surface: rgb(255 255 255 / 0.8);
+  /* The centred GA nav cluster: opaque-ish pills on a softer plate, so the
+     4px seams between pills stay readable over the pale hero sky. */
+  --nav-pill: rgb(255 255 255 / 0.92);
+  --nav-pill-hover: rgb(255 255 255 / 1);
+  --nav-plate: rgb(255 255 255 / 0.38);
   --brand-orbit: var(--cyan-7);
   /* Matches the foot of the hero sky gradient (/hero/hero-bg.*, which
      resolves to #fefefe below ~70% height) so the hero meets the page with
@@ -231,6 +236,38 @@
     background-color: var(--nav-surface);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
+  }
+}
+
+/* One section per view is done with section *sizing* alone — no scroll-snap
+   (product owner, 2026-08-24, after watching it grab). `y proximity` was
+   tried and removed: CSS exposes no snap strength, and its pull was strong
+   enough to haul a half-entered section to centre against the reader. The
+   reference's anchored feel does not come from snap either — it free-scrolls
+   with inertia (Lenis) over full-viewport sections. Full-viewport sections are
+   the part that carries; the rest is the browser's own scrolling. */
+
+/* Reduced motion unpins the reveal: with no scroll-driven swap the two beats
+   must not sit stacked in one grid cell, and a two-viewport section with a
+   pinned stage would otherwise scroll past a statement that never changes.
+   The component already renders the flowing composition in this case; this
+   collapses the geometry to match it. */
+@media (prefers-reduced-motion: reduce) {
+  /* `relative`, not `static`: unpinning must not remove the stage's
+     containing block. It did, and the reveal's absolute fragment layer
+     escaped to the document and rendered over the journey's copy (design
+     review, 2026-08-24). The fragments are no longer drawn on this path at
+     all, and the stage stays a containing block regardless. */
+  .ga-reveal-stage {
+    position: relative;
+    height: auto;
+    padding-block: 5rem;
+  }
+
+  /* The second beat's snap rest exists only for the swap. Unpinned, it would
+     be a viewport of empty page under the statement. */
+  .ga-reveal-rest {
+    display: none;
   }
 }
 

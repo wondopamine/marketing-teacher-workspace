@@ -80,9 +80,7 @@ export function GaJourney() {
         }
       >
         <div
-          className={
-            enhanced ? "flex flex-col" : "flex flex-col gap-y-16"
-          }
+          className={enhanced ? "flex flex-col" : "flex flex-col gap-y-16"}
           ref={actsRef}
         >
           {gaJourneyActs.map((act, index) => (

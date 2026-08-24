@@ -14,7 +14,7 @@ export function GaClose() {
   return (
     <section
       aria-labelledby="ga-close-title"
-      className="px-5 py-24 sm:px-8 lg:py-32"
+      className="flex flex-col justify-center px-5 py-24 sm:px-8 lg:min-h-svh lg:py-24"
     >
       <RevealOnScroll>
         <div className="mx-auto flex w-full max-w-[1024px] flex-col items-center gap-5 text-center">
