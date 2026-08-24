@@ -208,8 +208,8 @@ export const gaSectionAnchors = {
 } as const
 
 export const gaNavItems = [
-  { label: "The journey", href: `#${gaSectionAnchors.journey}` },
   { label: "The apps", href: `#${gaSectionAnchors.apps}` },
+  { label: "The journey", href: `#${gaSectionAnchors.journey}` },
   { label: "Real schools", href: `#${gaSectionAnchors.schools}` },
 ] as const
 

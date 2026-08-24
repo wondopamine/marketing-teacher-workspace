@@ -46,7 +46,7 @@ The plan was grilled; decisions resolved:
 
 - **Pinned journey costs mobile parity** — mobile gets the calm stacked read, not the choreography. Accepted: CLAUDE.md forbids engineering effort on mobile pinned scroll.
 - **Captures instead of the coded replica** — consistent, cheap, honest; sacrifices crisp text at very large zoom and interactivity. Accepted: the journey is narration, not a demo; claims live in copy.
-- **Story before specifics** — KPs must scroll past the narrative to reach briefing cards. Accepted: issue #3 orders discovery after the story deliberately.
+- **Story before specifics** — KPs must scroll past the narrative to reach briefing cards. Accepted: issue #3 orders discovery after the story deliberately. ~~Superseded 2026-08-24~~ — see "Capability row lifted above the journey" below.
 - **Act 3 shows a Release-2 state** — the guidance screen is flag-gated and not at GA. Accepted only as *proposed* content: capability-owner approval (ticket #6) gates the merge.
 
 ## Controls in scope
@@ -530,3 +530,37 @@ renders the still image (DOM-verified), tests 349/349, build + verifiers green.
 taken — a static `sr-only` description of the list now sits beside the gated
 live region, so screen-reader users get the summary without an ambient
 announcer. Tests re-run green (349/349).
+
+
+### Capability row lifted above the journey (2026-08-24, product owner)
+
+`GaApps` now renders directly under the hero, ahead of `GaJourney` — the
+craft.io pattern the product owner asked for: say what the product does, at a
+glance, before asking for the scroll investment of the long-form story.
+
+**This reverses the "Story before specifics" tradeoff recorded at the plan
+gate**, which accepted that KPs would scroll past the narrative to reach the
+briefing cards because issue #3 ordered discovery after the story deliberately.
+The product owner's direction supersedes it. Issue #3's IA should be read as
+seven sections whose order is now: hero, capabilities, journey, reveal,
+audiences, proof, close.
+
+Consequences handled:
+
+- **Nav order follows page order.** `gaNavItems` is now The apps → The journey
+  → Real schools, so the shortcut sequence is not a different order from the
+  one the visitor scrolls through.
+- **"See it in the journey →" now points forward**, down the page, instead of
+  back up it — the affordance reads better in the new position than the old.
+- **The section-order test pins the whole sequence** by id
+  (`ga-landing-page.test.tsx`) rather than spot-checking two indices, so a
+  future reorder cannot pass silently.
+- **Doc comments corrected** in `ga-landing-page.tsx`, `ga-apps.tsx` and
+  `ga-reveal.tsx`, which named IA section numbers that no longer hold.
+
+Not changed, flagged for a human call: on mobile the "Page sections" shortcut
+row (the round-1 LAY-2 fix) now sits between the hero and the capability row,
+so two link clusters run back to back and the only destination the shortcut row
+adds is Real schools. Removing it would undo a recorded accessibility fix, so
+it stands until someone decides; revert note if it goes: delete the `<nav
+aria-label="Page sections">` block in `ga-landing-page.tsx`.

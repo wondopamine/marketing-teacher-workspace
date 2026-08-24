@@ -11,17 +11,22 @@ import {
 } from "@/content/landing-ga-page"
 
 describe("GaLandingPage", () => {
-  it("renders the seven IA sections in issue #3's order", () => {
+  it("renders the seven IA sections in the approved order", () => {
     const { container } = render(<GaLandingPage />)
     const main = container.querySelector("main#main")
     expect(main).not.toBeNull()
     const sections = [...(main?.querySelectorAll(":scope > section") ?? [])]
-    // hero, journey, reveal, apps, audiences, schools, close
-    expect(sections).toHaveLength(7)
-    expect(sections[1]?.id).toBe("journey")
-    expect(sections[3]?.id).toBe("apps")
-    expect(sections[4]?.id).toBe("audiences")
-    expect(sections[5]?.id).toBe("schools")
+    // The capability row sits directly under the hero (product owner,
+    // 2026-08-24); hero, reveal and close carry no anchor id.
+    expect(sections.map((section) => section.id)).toEqual([
+      "",
+      "apps",
+      "journey",
+      "",
+      "audiences",
+      "schools",
+      "",
+    ])
   })
 
   it("keeps exactly one filled primary action on the page", () => {

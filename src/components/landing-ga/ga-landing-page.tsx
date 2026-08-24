@@ -11,9 +11,10 @@ import { SiteFooter } from "@/components/landing/footer"
 import { gaNavItems } from "@/content/landing-ga-page"
 
 /**
- * The GA landing page — issue #3's seven-section IA in order: hero, the
- * journey (acts 2–5), the reveal, the apps up close, the people who run
- * schools, real schools, close. Direction and approvals:
+ * The GA landing page — issue #3's seven sections, with the capability row
+ * lifted above the journey (product owner, 2026-08-24): hero, the four
+ * capabilities at a glance, the journey they play out in, the reveal, the
+ * people who run schools, real schools, close. Direction and approvals:
  * docs/decisions/ga-landing-page.md.
  */
 export function GaLandingPage() {
@@ -39,9 +40,9 @@ export function GaLandingPage() {
             </a>
           ))}
         </nav>
+        <GaApps />
         <GaJourney />
         <GaReveal />
-        <GaApps />
         <GaAudiences />
         <GaSchools />
         <GaClose />

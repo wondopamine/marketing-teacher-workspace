@@ -17,7 +17,9 @@ const capabilityIcons: Record<string, LucideIcon> = {
 }
 
 /**
- * Section 4 of the IA, simplified per stakeholder feedback (2026-08-21):
+ * The capability row, directly under the hero (product owner, 2026-08-24)
+ * so the four jobs land before the long-form story. Simplified per
+ * stakeholder feedback (2026-08-21):
  * one icon, one title, one line per capability — no card chrome, no
  * scenarios. Each item still anchors back into the journey act where the
  * capability is shown, so discovery stays one hop away. The scenario copy

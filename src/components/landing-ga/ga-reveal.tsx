@@ -2,7 +2,7 @@ import { RevealOnScroll } from "@/components/landing/reveal-on-scroll"
 import { gaPageCopy } from "@/content/landing-ga-page"
 
 /**
- * Section 3 of the IA: name the product once, state the thesis, land the
+ * The reveal: name the product once, state the thesis, land the
  * launch line. The only sky-blue band above the proof section, so the two
  * brand moments bookend the discovery layer.
  */
