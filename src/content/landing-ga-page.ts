@@ -60,57 +60,12 @@ const momentKeys = {
 } as const satisfies Record<GaJourneyActId, string>
 
 /**
- * The verified prototype capture behind each act. Every claim stays in the
- * act's live copy; the capture is decorative (`aria-hidden` inside a labelled
- * figure), so nothing is lost without it. Dimensions reserve layout space so
- * the pinned frame never reflows mid-scroll.
+ * Round 3 (stakeholder feedback, 2026-08-21): the acts no longer render
+ * product captures. Each act is illustrated by a coded feature vignette
+ * (`ga-vignettes.tsx`) that shows only the key component of the capability —
+ * information categories, filter criteria, read states — never a full product
+ * screen, so Behaviour/Family details can never appear on the public page.
  */
-export type ActScreen = {
-  readonly src: string
-  readonly width: number
-  readonly height: number
-  /** What the figure depicts — the `role="img"` label. */
-  readonly depicts: string
-}
-
-const actScreens = {
-  promise: {
-    src: "/content-review/screens/observations.png",
-    width: 1664,
-    height: 620,
-    depicts:
-      "An observation another teacher recorded on the student's profile, tagged Collaboration.",
-  },
-  notice: {
-    // Cropped from student-profile.png to the attendance region only: the
-    // full capture surfaces behaviour, counselling, and SEN fields that the
-    // scenario guardrails keep off the public page (design review 2026-08-20).
-    src: "/content-review/screens/student-profile-attendance.png",
-    width: 2050,
-    height: 980,
-    depicts:
-      "A student profile showing attendance and CCA attendance together.",
-  },
-  "next-steps": {
-    src: "/content-review/screens/guidance.png",
-    width: 1416,
-    height: 360,
-    depicts: "A suggested next step, framed as progress to sustain.",
-  },
-  words: {
-    src: "/content-review/screens/post-composer.png",
-    width: 1024,
-    height: 976,
-    depicts:
-      "A Posts draft from the Term Update Letter template, titled Start of Term 3: What to Expect, awaiting review.",
-  },
-  "family-and-record": {
-    src: "/content-review/screens/post-read-tracking.png",
-    width: 1784,
-    height: 200,
-    depicts: "The posted term update, read by two of three recipients.",
-  },
-} as const satisfies Record<GaJourneyActId, ActScreen>
 
 /**
  * Which capability quietly closes each act, named by its copy block in
@@ -130,7 +85,6 @@ export type GaJourneyAct = {
   readonly headline: string
   readonly body: string
   readonly capabilityLabel: string | null
-  readonly screen: ActScreen
 }
 
 export const gaJourneyActs: ReadonlyArray<GaJourneyAct> = gaJourneyActIds.map(
@@ -146,7 +100,6 @@ export const gaJourneyActs: ReadonlyArray<GaJourneyAct> = gaJourneyActIds.map(
         capabilityCopyId === null
           ? null
           : (capabilitiesDocument.item(capabilityCopyId).label ?? null),
-      screen: actScreens[id],
     }
   }
 )

@@ -171,7 +171,7 @@ describe("Landing Page v2 content contract", () => {
     ].join("\n")
     const lowered = narrative.toLowerCase()
 
-    expect(lowered).toContain("term update letter")
+    expect(lowered).toContain("which families have read")
     // The public copy (headings and bodies) carries the CNT-4 illustrative
     // disclosure instead of wireframe-audit framing; the flag-gated
     // availability honesty lives in the internal slot labels, the screen

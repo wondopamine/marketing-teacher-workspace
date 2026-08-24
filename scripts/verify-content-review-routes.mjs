@@ -64,7 +64,7 @@ assert(
   countMatches(reviewHtml, /<main\b/g) === 1 &&
     countMatches(reviewHtml, /<h1\b/g) === 1 &&
     reviewHtml.includes('<main id="main"') &&
-    reviewHtml.includes("See what is changing. Know what to do next."),
+    reviewHtml.includes("Gain back your time to care for students"),
   "The content-review route does not render one main landmark and one H1."
 )
 assert(

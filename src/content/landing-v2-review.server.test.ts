@@ -55,7 +55,7 @@ describe("Landing Page v2 content-review projection", () => {
     const serialised = JSON.stringify(result.projection)
     const lowercase = serialised.toLowerCase()
 
-    expect(lowercase).toContain("term update letter")
+    expect(lowercase).toContain("which families have read")
     // The guidance screen is flag-gated. The public copy no longer carries
     // that disclosure (it lives in the screen catalog and the decision
     // record), but the reviewer-facing slot label still marks the screen.

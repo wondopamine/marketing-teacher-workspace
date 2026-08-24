@@ -182,7 +182,7 @@ describe("CMS workspace", () => {
 
     fireEvent.keyDown(window, { key: "z", metaKey: true })
     expect(
-      screen.getByText("See what is changing. Know what to do next.")
+      screen.getByText("Gain back your time to care for students")
     ).not.toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "Redo" }))
     expect(screen.getByText("A clearer opening")).not.toBeNull()

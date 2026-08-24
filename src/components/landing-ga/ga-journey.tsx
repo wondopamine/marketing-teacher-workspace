@@ -1,6 +1,8 @@
 import { useReducedMotion } from "motion/react"
 import { useEffect, useRef, useState } from "react"
 
+import { gaActVignettes } from "./ga-vignettes"
+
 import {
   gaJourneyActs,
   gaPageCopy,
@@ -18,12 +20,15 @@ const ACT_OBSERVER_OPTIONS: IntersectionObserverInit = {
 }
 
 /**
- * Acts 2–5 of issue #3's narrative: one student's care journey, one act per
- * screen, capability name closing each act quietly. On desktop with motion
- * allowed, one product frame stays pinned while the acts scroll past and its
- * state crossfades (opacity only — the GPU-friendly constraint). Everywhere
- * else — mobile, reduced motion, no JS — each act keeps its own screen
- * inline, so the settled composition is complete without the choreography.
+ * Acts 1–5 of the care journey, one capability excerpt per act. The excerpts
+ * are coded feature vignettes (`ga-vignettes.tsx`), not product captures —
+ * each shows only the key component of the capability, Linear-style, with the
+ * active one allowed to move and (for the filter) be tried. On desktop with
+ * motion allowed, one paper frame stays pinned while the acts scroll past and
+ * the vignettes crossfade (opacity only — the GPU-friendly constraint).
+ * Everywhere else — mobile, reduced motion, no JS — each act keeps its
+ * vignette inline in its settled state, so the composition is complete
+ * without the choreography.
  */
 export function GaJourney() {
   // === true: hydration null must not skip the fallback presentation
@@ -63,7 +68,7 @@ export function GaJourney() {
 
   return (
     <section
-      aria-label="One student's care journey"
+      aria-label="The journey"
       className="scroll-mt-28 px-5 py-20 sm:px-8 lg:py-28"
       id={gaSectionAnchors.journey}
     >
@@ -97,33 +102,28 @@ export function GaJourney() {
 
         {enhanced ? (
           <div className="hidden lg:block">
+            {/* No frame around the stage (SLP-4/SLP-11): the vignette card is
+                the only chrome, floating on the paper ground while its
+                states crossfade. */}
             <div className="sticky top-28">
-              <figure
-                aria-label="One product surface stepping through the journey, from the first recorded observation to the posted update families have read."
-                className="flex h-[min(560px,calc(100svh-13rem))] flex-col rounded-2xl border border-[color:var(--paper-rule-strong)] bg-[color:var(--paper-card)] p-5 shadow-[var(--paper-shadow-card)]"
-                role="img"
-              >
-                <div aria-hidden className="flex gap-1.5 pb-4">
-                  <i className="size-2 rounded-full bg-[color:var(--paper-rule-strong)]" />
-                  <i className="size-2 rounded-full bg-[color:var(--paper-rule-strong)]" />
-                  <i className="size-2 rounded-full bg-[color:var(--paper-rule-strong)]" />
-                </div>
-                <div aria-hidden className="relative flex-1">
-                  {gaJourneyActs.map((act, index) => (
-                    <img
-                      alt=""
-                      className={`absolute inset-0 m-auto max-h-full max-w-full rounded-lg object-contain transition-opacity duration-200 ease-in-out ${
-                        index === activeIndex ? "opacity-100" : "opacity-0"
+              <div className="relative h-[min(560px,calc(100svh-13rem))]">
+                {gaJourneyActs.map((act, index) => {
+                  const Vignette = gaActVignettes[act.id]
+                  const active = index === activeIndex
+                  return (
+                    <div
+                      aria-hidden={!active}
+                      className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ease-in-out ${
+                        active ? "opacity-100" : "pointer-events-none opacity-0"
                       }`}
-                      height={act.screen.height}
+                      inert={!active}
                       key={act.id}
-                      loading={index === 0 ? "eager" : "lazy"}
-                      src={act.screen.src}
-                      width={act.screen.width}
-                    />
-                  ))}
-                </div>
-              </figure>
+                    >
+                      <Vignette animate={active} />
+                    </div>
+                  )
+                })}
+              </div>
               <p className="mt-3 text-center text-sm leading-5 text-[color:var(--paper-muted)] italic">
                 {gaPageCopy.journey.syntheticNote}
               </p>
@@ -142,6 +142,7 @@ type JourneyActBlockProps = {
 }
 
 function JourneyActBlock({ act, index, enhanced }: JourneyActBlockProps) {
+  const Vignette = gaActVignettes[act.id]
   return (
     <article
       className={
@@ -164,21 +165,9 @@ function JourneyActBlock({ act, index, enhanced }: JourneyActBlockProps) {
       </p>
 
       {enhanced ? null : (
-        <figure
-          aria-label={act.screen.depicts}
-          className="mt-6 rounded-xl border border-[color:var(--paper-rule-strong)] bg-[color:var(--paper-card)] p-3 shadow-[var(--paper-shadow-card)]"
-          role="img"
-        >
-          <img
-            alt=""
-            aria-hidden
-            className="w-full rounded-lg select-none"
-            height={act.screen.height}
-            loading={index === 0 ? "eager" : "lazy"}
-            src={act.screen.src}
-            width={act.screen.width}
-          />
-        </figure>
+        <div className="mt-6 flex justify-center">
+          <Vignette animate={false} />
+        </div>
       )}
 
       {act.capabilityLabel === null ? null : (

@@ -87,6 +87,19 @@ describe("GaLandingPage", () => {
     expect(html).not.toContain("opacity: 0")
     expect(html).toContain("Sign in with Google")
     expect(html).toContain("Real schools")
+    // The hero's settled composition is the still frame; the looping video
+    // only mounts after hydration when the visitor allows motion.
+    expect(html).not.toContain("<video")
+    expect(html).toContain("teacher-working-poster")
+  })
+
+  it("ships no product captures — the vignettes carry every visual", () => {
+    // Round 3 (stakeholder feedback): journey visuals are coded vignettes
+    // showing information categories only, so no prototype capture — and
+    // nothing under Behaviour/Family — can appear on the public page.
+    const html = renderToStaticMarkup(<GaLandingPage />)
+    expect(html).not.toContain("/content-review/screens/")
+    expect(html).toContain("Sensitive sections stay inside the profile.")
   })
 
   it("keeps internal capability names off the page", () => {
