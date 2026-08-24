@@ -793,3 +793,345 @@ Consequences checked:
 Revert: `git revert` this commit. Restoring the exclusion mechanism, if a
 reviewer wants the copy cleared after all, means re-adding
 `data-hero-ink-safe` to the five hero elements and the zone test in `paint`.
+
+## Round 4 — lassie.ai reference pass (2026-08-24)
+
+Product owner brought <https://www.lassie.ai> in as a standing visual
+reference for this page. Four changes, each measured against the reference's
+live behaviour rather than a screenshot of it (the mechanics were read off the
+running site with `agent-browser`, and off a screen recording of the section
+the owner pointed at).
+
+### Capability icons are hand-drawn, and lose the disc
+
+The four capability glyphs are no longer Lucide's clean strokes inside a tinted
+disc. They are the same four Lucide shapes distorted by rough.js under the
+"Pencil" preset of the tf(x) Icon Generator
+(<https://github.com/wondopamine/icon-generator>), exported in that tool's
+*portable* mode: the wobble is baked into the path data, so no `feTurbulence`
+filter paints at runtime and the performance floor holds. Paths live in
+`ga-capability-glyphs.tsx` with the Lucide notice (ISC, plus MIT for the
+Feather-derived subset) at the top of the file — the licence travels with the
+artwork. They are regenerable, not hand-editable: the wobble is seeded from
+`hash(lucideId + preset)`.
+
+The disc is gone (owner, direct). It was chrome the illustration world does not
+use — the hero draws in pencil on paper, and so do these now.
+
+### The nav is a centred cluster, not a bar
+
+`ga-header.tsx`: `fixed`, `w-max`, centred, each item its own pill on one
+shared blurred plate — the reference's structure, in our tokens
+(`--nav-pill`, `--nav-pill-hover`, `--nav-plate`). It reads as a floating
+group over the hero sky instead of page chrome pinned to the edges. Mobile is
+unchanged in substance: the section links were already `md:` only, so small
+screens still get the wordmark alone.
+
+### The reveal loses its band and gains the reference's scroll mechanic
+
+The sky-blue band is gone (owner, direct). What replaced it is the mechanic the
+reference uses for its statistic section, read off the live DOM: every fragment
+is anchored at the section's centre and pushed out from there, driven by one
+shared scale ramp (0.36 → 1, settled at the section's midpoint) plus a
+per-fragment drift vector that keeps travelling after settle. That last part is
+what stops the field reading as one flat sheet.
+
+Five fragments, all already on the page above (`ga-reveal-scatter.tsx`): the
+student-profile and posts vignettes, the profiles screen, the teacher poster,
+the hero's cards sketch. The cloud was tried and dropped — on the page ground it
+needed a tinted card behind it to read at all, and that card was just the
+deleted band in miniature, landing on the launch line.
+
+The statement is now disclosed a line at a time against the same scroll
+progress (`STAGES` in `ga-reveal.tsx`), all four windows closing by the section's
+midpoint, so a reader who stops where the section centres has the whole
+statement and one who keeps going saw it assemble. This is the reference's
+"progressive disclosure", which in its case swaps whole statements in one grid
+cell; ours has one statement, so the stages are its own lines.
+
+Fallbacks, unchanged in kind from the journey's: nothing renders below 1024px
+(mobile keeps the static composition), and under `prefers-reduced-motion` the
+statement is simply present and the fragments hold their settled positions.
+Transform and opacity only; the stage clips horizontally, verified by
+`scrollWidth === innerWidth` at 1440 and at 390.
+
+### The audience panels are an FAQ
+
+Section 5 was always three questions and three answers; three side-by-side
+tinted panels made the answers compete for the same read. It is now a
+disclosure list (`@base-ui/react/accordion`) with the role carried as a tag
+beside each question — the audience tint survives at tag scale. Copy heading
+changed in `content/landing/07-audiences.mdx` to "Frequently asked questions".
+
+Answers are `hiddenUntilFound`, so find-in-page and indexing still reach a
+closed answer: the content is folded, not gated.
+
+### Follow-up: one section per view, and the FAQ's fixed-height trick (2026-08-24)
+
+Owner observation on the first FAQ cut: the reference's expansion feels free
+because its FAQ is the only content above the fold — ours sat close to the
+proof band, so an opening answer visibly shoved it. Measured on the live
+reference to confirm: lassie's document height is **constant** through
+open/close (16278px before, during, and after), because the section reserves
+more height than its content needs and the expansion is absorbed by the
+section's own whitespace. Their accordion is also single-open, which bounds
+the worst case that whitespace must absorb.
+
+Both stolen, plus the owner's general rule — one section's content per view:
+
+- `#audiences` (FAQ): `lg:min-h-svh`, list anchored top, slack below. Verified:
+  docHeight 9417px constant through opening each of the three answers; the
+  section holds 900px exactly. Single-open is Base UI's default (`multiple`
+  defaults false) — nothing to configure. Mobile keeps natural flow (no
+  reservation; an accordion pushing content on mobile is normal).
+- `#apps`, the close, and the reveal's stage: `lg:min-h-svh`, content centred.
+  The schools band: `lg:min-h-[calc(100svh-4rem)]`, centred — the band, not the
+  section box, is the one-view unit there.
+- The hero already filled the viewport; the pinned journey is untouched — its
+  frame already shows one act at a time, which satisfies the rule in spirit.
+- **Scroll-snap: rejected here, adopted in the next follow-up.** At this point
+  snap was rejected on the grounds that snap points would fight the pinned
+  journey's scrubbing. **Superseded the same day** — the owner asked for
+  anchoring explicitly, and `proximity` snap with no snap point inside the pin
+  turned out to cost the journey nothing (measured). Kept visible rather than
+  edited away: the reasoning was sound and the resolution was to place the
+  points precisely, not to abandon the idea.
+
+Desktop doc height 8240 → 9417px. Verified at 1440×900 and 390×844: no
+horizontal overflow, tests green.
+
+### Follow-up: section anchoring, and the glyphs go to Ink (2026-08-24)
+
+**Anchoring.** The owner named the thing they like most about the reference:
+sections *anchor* into the fold rather than the page free-scrolling past them.
+Probed live: lassie reaches this through the Lenis scroll library (`lenis`
+class on `html`, no CSS snap). The stack is locked, so ours is the native
+equivalent — `scroll-snap-type: y proximity` on `html` at ≥1024px, with
+`snap-start` on the seven top-level sections. `proximity`, never `mandatory`:
+a reader who stops near a boundary is anchored; everywhere else the scroll is
+untouched. No snap point exists inside the pinned journey, so the scrub keeps
+full ownership there — measured with real wheel input: nudges near the apps and
+FAQ boundaries settle at exactly 985px and 6512px (the section tops), a nudge
+mid-journey settles free at 3460px. **Those two figures are superseded**: after
+the reveal became two viewports the FAQ top is 7284 at 1280. The apps figure
+and the mid-journey figure still hold. `scroll-mt-28` came off the full-view
+snapped sections so anchor jumps and snap share one resting position (the
+journey keeps it — its heading is top-anchored under the fixed nav). The
+schools band's lg padding tightened so the section is exactly one view (900px).
+
+**Ink glyphs.** The four capability glyphs re-baked from the Pencil preset to
+**Ink** (owner, direct — tf(x) Icon Generator, portable mode as before):
+stroke 1.15 → 1.4, the wobble still seeded and reproducible, the Lucide notice
+unchanged in `ga-capability-glyphs.tsx`.
+
+### Follow-up: the reveal statement becomes two beats (2026-08-24)
+
+Owner: split the reveal's text in two and swap the halves on scroll, the way
+the reference does it. Read off the live reference rather than the recording —
+two `<h2>`s stacked in one grid cell (`col-start-1 row-start-1`), beat one
+rising and fading out (y 0 → -49, opacity 1 → 0, done by p≈0.42), beat two
+rising from below and fading in (y +24 → -49, settled p≈0.55, then held). They
+overlap through the middle; neither ever moves horizontally.
+
+Split at the natural seam in our copy: **beat one** is the claim (eyebrow plus
+the headline), **beat two** is what backs it (the four-capabilities line plus
+the launch line).
+
+The reference can put both beats inside one viewport because nothing anchors
+its scroll — it uses Lenis, free-scrolling. Ours snaps, and a single-viewport
+section has exactly one rest, so a second beat there would only ever be legible
+while the section was leaving the screen. Resolved by giving the section real
+travel: **two viewports over a pinned (`sticky`) stage, with a snap point per
+beat.** Progress is tracked on the section with offset
+`["start end", "end end"]`, which puts pin-start at p=0.5 and pin-end at p=1 —
+and those are the two rests. Beat one is settled at the first, beat two at the
+second (measured: opacity [1, 0] at scrollY 5484, [0, 1] at 6384; wheel input
+settles on both exactly). The crossfade is therefore only ever seen in transit,
+which is the point — a beat is never read half-faded. The scatter keeps
+drifting across both, so the field ties the beats together.
+
+This is the page's second pinned section. Justified because it is one viewport
+of scrub, transform/opacity only, and it earns the reader two settled views
+instead of one crowded one — but it is deliberately quieter than the journey's
+pin (no morph, no shared element), so the journey stays the page's one big
+choreographic moment.
+
+**Two motion-12 opacity hijacks fixed on the way.** Both beats and all five
+scatter fragments rendered at opacity 0 while their transforms tracked scroll
+correctly: motion lifts a scroll-linked opacity onto its accelerated WAAPI
+path, where it runs as an independent animation and stops reading
+`scrollYProgress` (`motion-dom` use-transform.mjs:31-43). Same failure and
+same remedy as `paper-backdrop.tsx` — `{ clamp: false }` with an input range
+spanning [0, 1]. Worth noting the failure mode: transforms keep working, so the
+section looks laid out correctly and is simply invisible. Caught by measuring
+computed opacity, not by reading the diff.
+
+Fallbacks: below 1024px there is no pin, no stacking and no scatter — the beats
+are the two paragraphs of one block, in document order. Under
+`prefers-reduced-motion` `styles.css` unpins the stage and hides the second
+rest (otherwise it is a viewport of empty page), giving the same flowing
+composition at every width: section 626px, stage `relative` (it was `static`
+for one hour on 2026-08-24; see round 4's review below for why that broke). Verified 1440×900 and 390×844.
+(The `scrollWidth === innerWidth` evidence cited here has been retracted; see
+the design-review round below.)
+
+## Design review — round 4 (2026-08-24, dx-design-review)
+
+**VERDICT: fail**, six blocking findings. The full verdict is long; it is
+reproduced in the run record beside this file rather than inline. Honest note on
+its standing, as the procedure requires: the reviewer runs the same model
+against the same standards, so it is a second read, not an independent one.
+
+The findings, and what each cost:
+
+1. **Reduced motion put the reveal's five fragments inside the journey, over its
+   copy.** `.ga-reveal-stage { position: static }` — a rule added the same hour
+   to unpin the stage — removed the containing block for the scatter's
+   `absolute inset-0`, so the layer escaped to `BODY` and spanned the document
+   (offsetParent `BODY`, layer 1280×8621, pieces at y 4104–4676 inside journey
+   1885–5138). The Posts vignette rendered twice in one view. Fixed twice over:
+   the scatter is not rendered at all under reduced motion (it is decoration,
+   gated on `choreographed` now, which also retired `StaticPiece` and the
+   `animate` prop), and the rule uses `position: relative` so unpinning can
+   never detach a layer again.
+2. **The fixed nav pill occluded content at 320/360 and offered no navigation
+   there** — its only link was the current page, since the section anchors are
+   `md:`-only. The header is now `static` in the flow below `md`, `fixed` above.
+3. **At 768, clicking "The apps" rested the section under the nav** (20px
+   overlap on the product mark) — a direct cost of removing `scroll-mt-28` when
+   snap only exists at ≥1024. Restored below `lg`, dropped only where snap takes
+   over (`lg:scroll-mt-0`). Measured after: 92px clearance.
+4. **TOK-3:** the nav plate's `rounded-[20px]` is off the radius scale;
+   `rounded-3xl` (22px) is both on-scale and concentric with the 18px pills at a
+   4px outset.
+5. **TYP-2:** `leading-[1.35]` sat on a span the type scan reads as body copy.
+   Fixed at the root rather than waived — `Accordion.Header` renders an explicit
+   `<h3>` via Base UI's `render` prop and carries the heading type. Base UI's
+   default for that part was already an h3; the source now says so.
+6. **Evidence:** captures were at 1440/390 when the standard is 360/768/1280,
+   and three files changed after they were taken. Recaptured at the standard
+   widths against a frozen tree.
+
+Also taken: the field now scales by `min(1, vw * 0.32 / widest_offset)` so
+fragments stop being sliced between 1024 and ~1300 (0 clipped visible boxes at
+1024/1152/1280/1440, measuring the child that carries `translate(-50%, -50%)`,
+not the content-sized wrapper); and `scroll-snap-type: none` under
+`prefers-reduced-motion`, on the reviewer's reasoning that involuntary viewport
+movement is the case the preference exists for, browser-driven or not.
+
+### Correction: the overflow evidence in this record was worthless
+
+`scrollWidth === innerWidth` was cited four times as proof of no overflow. With
+`body { overflow-x: hidden }` at `styles.css:181` that test cannot fail, so it
+evidenced nothing. Retracted at both surviving citations. Replaced with a
+per-element probe over every `body *` rect against the viewport, which finds
+real overflow: at 360/768/1280 the only element past an edge is the pre-existing
+decorative hero cloud (`mix-blend-lighten`, `aria-hidden`). That probe also
+caught a bug in the first clamp attempt — it emitted `calc(-min(...) * f)`,
+invalid CSS, so the offsets escaped silently.
+
+### Two lessons worth keeping
+
+- **A reduced-motion override is a layout change.** `position: static` read as a
+  harmless unpin and silently detached an absolutely positioned layer onto the
+  document. Nothing in the checks covers "does the reduced-motion stylesheet
+  still produce a correct page", and it was shipped without anyone opening the
+  reduced-motion page. Open it every time.
+- **Scroll-linked opacity fails invisibly, twice now.** Same motion-12 WAAPI
+  hijack as `paper-backdrop.tsx`. Transforms keep tracking, so the section looks
+  correctly laid out and is simply not there. Measure computed opacity; a diff
+  read will not catch it.
+
+### Still open, referred to the product owner
+
+- **LAY-7 / MOT-3 close call:** beat two's rest shows body copy with no heading,
+  and the launch line "Now available to schools across Singapore" exists only at
+  that second rest — with snap making the first rest the likely stopping point.
+  This is the owner's directed split, so it is theirs to weigh.
+- **CNT-4:** the FAQ answers are self-described proposed copy with no PM
+  sign-off and no in-product draft label, and today's heading change strengthens
+  the framing to settled official Q&A. Needs a named sign-off or a draft label.
+- Pre-existing and outside the diff: "Student Insights" is title case beside
+  three sentence-case siblings.
+
+### Follow-up: snap removed, and the reveal is two sentences (2026-08-24)
+
+**Snap is gone.** The owner filmed it: `y proximity` hauled a half-entered
+section to centre against them. CSS exposes no snap strength, so there was
+nothing to tune — and the reference does not use snap either. Its anchored feel
+comes from full-viewport sections plus inertial smooth scrolling (Lenis); the
+sections are the part that carries, and the stack being locked means the rest is
+the browser's own scrolling. Removed `scroll-snap-type` and every `snap-start`;
+`scroll-mt-28` is back on all anchored sections (nothing supersedes it now).
+Measured after: `scrollSnapType: none`, zero snap-aligned elements, and wheel
+nudges settle where the wheel put them (5440 and 5920, previously hauled to
+5484). One-section-per-view still holds — that was always the section sizing,
+not the snap.
+
+Consequence worth naming: the reveal's two beats no longer have snap *rests*.
+The swap is now continuous, as in the reference, and the hold windows are wide
+enough that stopping anywhere but mid-swap leaves a sentence settled.
+
+**The reveal is now only the headline's two sentences.** Owner, direct: beat one
+"The care was always yours.", beat two "We removed the admin between the
+moments.", and nothing else in the section. The eyebrow, the four-capabilities
+paragraph and the launch line no longer render here. The heading stays one
+governed string in `04-reveal.mdx` — `splitSentences` in the view-model divides
+it at sentence boundaries, so the copy is still proofread as one sentence pair
+and a PM rewrite to a single sentence degrades to a single beat rather than
+breaking. Type went up to `clamp(2.25rem, 4.6vw, 3.75rem)` with the measure on
+the sentences at `15ch`; it was briefly on the wrapper, where `ch` resolves
+against the *wrapper's* 16px font and squeezed a 60px heading into a 260px
+column.
+
+**Open, and the owner's to place:** the GA launch line ("Now available to
+schools across Singapore…") no longer appears anywhere on the page. It is
+PM-confirmed GA positioning (`launchLine` in `04-reveal.mdx`, confirmed
+2026-08-07) and it still exists in the content source — it just has no surface.
+
+## Design review — round 4 re-check (2026-08-24, dx-design-review)
+
+Four of six blocking findings **resolved**, two **partial** — and the re-check
+found that two of my own fixes had introduced new blocking defects. The
+reviewer's session could not be resumed, so this is a fresh instance: a second
+read of the same standards by the same model, not an independent grader, and
+weaker evidence than a true re-check by the original.
+
+**New defect from the nav fix.** Making the header `static` below `md` dropped
+`top-[var(--masthead-h)]`, and the SG masthead is `fixed` at z-51 over the
+header's z-50 — so the masthead covered the wordmark: 93% at 320, 57% at 360,
+and `elementFromPoint` at the wordmark's centre returned `SGDS-MASTHEAD`. The
+header's only control below `md` was not clickable, and its focus ring was drawn
+underneath the masthead (A11Y-2, L0). Reproduced before fixing
+(`clickable: false` at both widths). The offset now survives on both paths — top
+padding while static, `top` while fixed. Measured after: clickable at 320, 360,
+375 and 768. `site-header.tsx` had it right all along and was the thing to
+compare against.
+
+**New defect from the clipping fix.** Scaling the scatter's offsets inward to
+stop fragments being sliced pulled them onto the statement instead: at 1024 the
+headline overlapped three fragments (79×52, 93×31, 56×37px), measured at glyph
+level. And my "0 clipped at 1024/1152" did not reproduce — the reviewer swept 41
+progress points and measured 20px still over at 1024, against my single sample
+at one scroll position. My claim was overstated; theirs is the right method.
+
+Resolved by arithmetic rather than by tuning: five ~300px fragments cannot sit
+both clear of a centred statement and inside the viewport below 1280 — the
+inequality has no solution. So the scatter is a **≥1280 enhancement**; 1024–1279
+keeps the beats on the bare ground. Measured across 1024/1152/1280/1440 at three
+progress points each: 0 copy overlaps, 0 clipped fragments.
+
+**Still open, and referred:** the FAQ answers' PM sign-off (CNT-4); the schools
+band's off-scale `rounded-[28px] sm:rounded-[44px]` (TOK-3, pre-existing but on
+a line this diff touched — snapping it to 26px would visibly change the band, so
+it wants the owner's call or a recorded waiver); the five distinct container left
+edges at 1280 (LAY-6, wants one line of rationale or an alignment pass); and no
+Lighthouse run since round 3, which now understates the page — this round added a
+five-fragment layer and doubled the reveal's height. A local run reads ~24 points
+low here, so that measurement needs a preview deploy.
+
+**Harness gaps the reviewer logged, worth carrying:** `token-audit.py` cannot see
+arbitrary radius utilities or inline `borderRadius` in TSX (fixture-proven), so
+"token-audit clean" is not evidence for TOK-3; `contrast.py` is inert without
+`.dx/design.json`; `a11y-eslint.py` does not detect eslint under pnpm hoisting.
+Three controls, two of them L0, rest on manual verification on this repo.
