@@ -707,3 +707,89 @@ Findings recorded and not fixed, for a human call:
   it starts below the fold. That is a behaviour change to the hero, so it is
   left for a decision rather than taken here.
 - **`total-byte-weight` still scores 0.5** at 2.38MB, dominated by that video.
+
+
+### The hero trail redrawn as a white ASCII field, occluded not cleared (2026-08-24, user)
+
+The user filmed the reference (`cursor interaction.mov`, 17.7s of the
+openai.com/codex hero swept with a real pointer) and asked for three things
+across two rounds: the ASCII "more natural and obvious", white rather than
+pencil grey, and — after seeing the first attempt — no blocking around the copy
+and the illustration, because the reference has none.
+
+The film was measured rather than eyeballed. Frames were pulled at fixed times
+(this machine's ffmpeg is Playwright's stripped build and cannot read a `.mov`,
+so the clip was loaded in headless Chrome and seeked over CDP) and thresholded
+against a blurred copy of themselves, which puts numbers on what the field
+actually is:
+
+- **A ~11×12px character cell.** Glyph rows land every 12px, columns every
+  10–11px. The first port used a 26px grid, which is why it read as scattered
+  ticks rather than a field of type.
+- **A density ramp, not one glyph set.** Fresh cells under the pointer carry
+  `0`, `o`, `>`; older ones show `-` and `_`. One trail decays *through* the
+  ramp — that is what makes the reference read as ASCII.
+- **A band 4–6 cells across**, ragged-edged, persisting for seconds.
+- **Occlusion, not exclusion.** The decisive frame is the pointer crossing the
+  "Download for macOS" pill (`round-3` reference frame at 11.00s): the band
+  runs into the pill's *rounded* edge with no padding and resumes on the far
+  side at the same rows. The field is behind the content and cut to the
+  content's own shape; nothing is cleared around it.
+
+The rewrite follows those numbers: a 12px grid, the ramp `_ - > o 0` indexed by
+each cell's current brightness with a per-cell nudge so a flat patch is not
+uniform, a 2-cell brush with random falloff, and a 2600ms decay. Cells
+accumulate, so lingering saturates a patch while a flick only tints it — the
+same difference the film shows between a pause and a sweep. Hand-drawn strokes
+are gone; these are real characters in a monospace stack (no new font is
+downloaded), pre-rendered once into a glyph strip and blitted per cell.
+
+**The `data-hero-ink-safe` exclusion mechanism is deleted.** The canvas already
+lives in the sky layer, so the copy, the CTA and the illustration paint over it
+and cut it to their own shapes — the reference's behaviour, and a simpler one:
+there is no padded rectangle to look wrong. The first port's 14px-padded boxes
+left holes around the headline, the body, the CTA and the figure that read as
+damage rather than depth, which is what the user objected to.
+
+**Colour: white** (`#ffffff`, a decoration rather than a themed surface, so no
+token), at 0.32–0.95 alpha because the sky it lands on is far paler than the
+reference's mid-tone lavender.
+
+Consequences checked:
+
+- **Contrast improves wherever a mark lands, and cannot do otherwise.** White
+  marks only raise the local luminance of an already-light sky, so text over
+  them gains: measured beside the headline, ink goes 13.87:1 → 15.58:1 and the
+  muted tone 4.16:1 → 4.67:1; beside the body copy, 15.06:1 → 15.33:1. The
+  worst case at any pixel is the unmarked sky, which is the page as already
+  reviewed. No A11Y-1 exposure from drawing behind text.
+- **The field fades out down the hero, by construction.** The sky resolves to
+  near-white below roughly its midpoint: the gap between sky and a saturated
+  white mark is 59/29/1 at y=120, 21/11/1 at y=400, 5/4/0 at y=600. So the
+  trail reads in the upper half and is invisible in the lower half. That is
+  what "white" costs on this sky and it is left as it stands; giving the glyphs
+  a faint shadow so they read all the way down would make them no longer purely
+  white, which is a call for a human.
+- **White is neutral under the illustration's `mix-blend-multiply`**, so the
+  field disappears behind the teacher rather than dirtying her — the same
+  reason it vanishes over the white of a cloud.
+- **Cost stayed bounded.** Measured over CDP with 600 dispatched pointer moves —
+  a continuous fast sweep far beyond real use — total script time 0.30s,
+  **layout 0.7ms across 6 layouts** (i.e. no layout in the loop), heap 18.3MB.
+  The live-cell ceiling is 900 and the `requestAnimationFrame` loop still exists
+  only while cells do.
+- **Verified by measurement, not by screenshot alone** — an effect this fast
+  photographs as an empty page if the harness is slower than the effect. A
+  synthetic sweep followed by `getImageData` reports 23,242 inked pixels at peak
+  alpha 228/255. Frames: `round-3/1280-hero-ink-ascii.png`,
+  `round-3/1280-hero-ink-occlusion.png` (swept straight through the headline and
+  the CTA — the copy occludes the field, the pill cuts it at its own edge), and
+  a 3× crop in `round-3/1280-hero-ink-zoom-3x.png`.
+- **Unchanged:** no server render, no mount under `prefers-reduced-motion` or a
+  coarse pointer, no pointer events, nothing announced. The trail still has no
+  Pause control, for the same reason as before — it only moves while the visitor
+  moves the pointer.
+
+Revert: `git revert` this commit. Restoring the exclusion mechanism, if a
+reviewer wants the copy cleared after all, means re-adding
+`data-hero-ink-safe` to the five hero elements and the zone test in `paint`.
