@@ -153,13 +153,19 @@ export type GaTestimonial = {
 
 /**
  * Proof stays scoped to what the verbatims evidence (Posts only — ADR 0003).
- * Three of the six staff quotes, curated 2026-08-20: speed of family reach,
- * immediacy, and workload reduction. The quotes naming "PG" stay unpublished
- * so another product's name never appears on this page. Only these public
- * fields ship; the governance records (source, approval state) stay in
- * `landing-v2.ts`, and `landing-ga-page.test.ts` asserts each entry matches
- * its governance record verbatim. Publication approval per quote is still
- * pending on ticket #10.
+ *
+ * Three of the six staff quotes, re-curated 2026-08-25 to say three different
+ * things: how fast a post reaches families, how much work it takes off a
+ * school, and how easy it is to use. The previous set spent two of its three
+ * cards on speed ("so fast" and "almost instant"), which read as one point made
+ * twice — `pg-immediacy` is the one that went, being the thinner version of the
+ * claim `pg-read-speed` makes with a number in it.
+ *
+ * The quotes naming "PG" stay unpublished so another product's name never
+ * appears on this page. Only these public fields ship; the governance records
+ * (source, approval state) stay in `landing-v2.ts`, and
+ * `landing-ga-page.test.ts` asserts each entry matches its governance record
+ * verbatim. Publication approval per quote is still pending on ticket #10.
  */
 export const gaTestimonials: ReadonlyArray<GaTestimonial> = [
   {
@@ -170,17 +176,18 @@ export const gaTestimonials: ReadonlyArray<GaTestimonial> = [
     schoolLevel: "Secondary School",
   },
   {
-    id: "pg-immediacy",
-    quote: "It's the immediacy of the outreach — it's almost instant.",
-    role: "Head of Department",
-    schoolLevel: "Secondary School",
-  },
-  {
     id: "pg-work-reduction",
     quote:
       "A lot of enhancements have been made to facilitate and cut down some of the work done in school. We are quite grateful.",
     role: "Vice Principal",
     schoolLevel: "Primary School",
+  },
+  {
+    id: "pg-intuitive",
+    quote:
+      "The system is quite intuitive — it's easy to go from one point to another.",
+    role: "Corporate Comms & Education Outreach Staff",
+    schoolLevel: "Secondary School",
   },
 ]
 
@@ -208,10 +215,7 @@ export const gaPageCopy = {
     action: heroDocument.text("action"),
     actionNote: heroDocument.text("actionNote"),
   },
-  journey: {
-    // CNT-4: the student and records on screen are purpose-built synthetic.
-    syntheticNote: storyDocument.text("syntheticNote"),
-  },
+  journey: {},
   reveal: {
     eyebrow: revealDocument.text("eyebrow"),
     headline: revealDocument.requireHeading(),

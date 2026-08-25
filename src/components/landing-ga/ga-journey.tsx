@@ -3,11 +3,7 @@ import { useEffect, useRef, useState } from "react"
 
 import { gaActVignettes } from "./ga-vignettes"
 
-import {
-  gaJourneyActs,
-  gaPageCopy,
-  gaSectionAnchors,
-} from "@/content/landing-ga-page"
+import { gaJourneyActs, gaSectionAnchors } from "@/content/landing-ga-page"
 
 import type { GaJourneyAct } from "@/content/landing-ga-page"
 
@@ -91,11 +87,6 @@ export function GaJourney() {
               key={act.id}
             />
           ))}
-          {enhanced ? null : (
-            <p className="mt-12 text-sm leading-5 text-[color:var(--paper-muted)] italic">
-              {gaPageCopy.journey.syntheticNote}
-            </p>
-          )}
         </div>
 
         {enhanced ? (
@@ -122,9 +113,6 @@ export function GaJourney() {
                   )
                 })}
               </div>
-              <p className="mt-3 text-center text-sm leading-5 text-[color:var(--paper-muted)] italic">
-                {gaPageCopy.journey.syntheticNote}
-              </p>
             </div>
           </div>
         ) : null}

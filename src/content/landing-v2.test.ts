@@ -7,7 +7,6 @@ import {
   getLandingPageV2Readiness,
   getLandingPageV2StructureIssues,
 } from "./landing-v2-readiness"
-import { landingDocuments } from "./landing-copy"
 import {
   audienceIds,
   capabilityIds,
@@ -172,11 +171,16 @@ describe("Landing Page v2 content contract", () => {
     const lowered = narrative.toLowerCase()
 
     expect(lowered).toContain("which families have read")
-    // The public copy (headings and bodies) carries the CNT-4 illustrative
-    // disclosure instead of wireframe-audit framing; the flag-gated
+    // Wireframe-audit framing stays out of the public copy; the flag-gated
     // availability honesty lives in the internal slot labels, the screen
     // catalog (content/screens.mdx), and the decision record
     // (docs/decisions/ga-landing-page.md), never in marketing copy.
+    //
+    // The CNT-4 illustrative disclosure ("Shown with purpose-built synthetic
+    // student records.") was removed from the page by the owner on 2026-08-25,
+    // and its assertion with it. The Holistic vignette still labels the profile
+    // "Primary 5 · synthetic record" inline; if CNT-4 has to hold as a written
+    // disclosure, restore `syntheticNote` to `03-story.mdx` and this check.
     const publicCopy = landingPageV2Content.journey
       .flatMap((act) => [act.headline, act.body])
       .join("\n")
@@ -184,12 +188,9 @@ describe("Landing Page v2 content contract", () => {
     expect(publicCopy).not.toContain("release 2")
     expect(publicCopy).not.toContain("wireframe")
     expect(publicCopy).not.toContain("synthetic")
-    expect(
-      landingDocuments.story.text("syntheticNote").toLowerCase()
-    ).toContain("synthetic")
-    expect(
-      readFileSync("content/screens.mdx", "utf8").toLowerCase()
-    ).toContain("release 2 capability flag")
+    expect(readFileSync("content/screens.mdx", "utf8").toLowerCase()).toContain(
+      "release 2 capability flag"
+    )
 
     for (const rejectedTerm of [
       "xiao ming",

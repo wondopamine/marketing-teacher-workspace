@@ -1,32 +1,39 @@
 import { motion, useTransform } from "motion/react"
-import { useEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 
 import { gaActVignettes } from "./ga-vignettes"
 
+import type { GaJourneyActId } from "@/content/landing-ga-page"
 import type { MotionValue } from "motion/react"
-import type { ReactNode } from "react"
 
 /**
- * The reveal's scatter field: fragments of the product and the paper world
- * drifting around the statement.
+ * The reveal's scatter field: five cards drifting around the statement, one per
+ * act of the journey.
  *
- * All five pieces are anchored at the section's centre and pushed out from
- * there, so the composition reads as the page's own material coming apart
- * around the sentence that names it. Scroll drives one shared scale ramp
- * (small → settled) plus a per-piece drift vector, which is what keeps the
- * field from moving as one flat sheet.
+ * The cards carry the section's argument rather than decorating it. While the
+ * first sentence holds — "the care was always yours" — every card shows a
+ * teacher with their class, because that is the claim. As the statement turns
+ * over to "we removed the admin between the moments", the cards turn with it:
+ * each one flips, staggered, to the piece of the product that act is about. The
+ * photograph and the interface are the same card seen from two sides, which is
+ * the whole point of the sentence pair.
  *
- * Transform and opacity only, and the stage clips them — nothing here can
- * reflow the page or widen it. Decorative throughout: every claim lives in
- * the statement, so the whole layer is `aria-hidden` and inert to the
- * pointer.
+ * The pieces are anchored at the section's centre and pushed out from there, so
+ * the composition reads as the page's own material coming apart around the
+ * sentence that names it. Scroll drives one shared scale ramp (small →
+ * settled), a per-piece drift vector — which is what keeps the field from
+ * moving as one flat sheet — and the flip.
+ *
+ * Transform and opacity only, and the stage clips them: nothing here can reflow
+ * the page or widen it. Decorative throughout — every claim lives in the
+ * statement, so the whole layer is `aria-hidden` and inert to the pointer, and
+ * the vignettes are handed `animate={false}` so no card runs a timer behind the
+ * back of a card that is facing away.
  */
 
-const HolisticVignette = gaActVignettes.notice
-const PostsVignette = gaActVignettes["family-and-record"]
-
 type ScatterPiece = {
-  id: string
+  /** The act this card belongs to — also the photo's filename and its back. */
+  id: GaJourneyActId
   /** Where the piece sits when the section is centred, px from the centre. */
   settle: readonly [number, number]
   /** Total travel across the section — half before settle, half after. */
@@ -34,91 +41,43 @@ type ScatterPiece = {
   /** Paper things are rarely square to the page. */
   rotate: number
   width: number
-  content: ReactNode
 }
 
-/**
- * The sketch and the teacher are already on the page above, so they cost
- * nothing to bring back here — and bringing them back is the point: the reveal
- * is where the hero's world and the product meet.
- */
 const PIECES: ReadonlyArray<ScatterPiece> = [
   {
-    id: "profile",
-    settle: [-472, -178],
+    id: "promise",
+    settle: [-470, -168],
     drift: [-88, -240],
     rotate: -2.5,
-    width: 300,
-    content: <HolisticVignette animate={false} />,
+    width: 264,
   },
   {
-    id: "screen",
-    settle: [468, -206],
+    id: "notice",
+    settle: [472, -182],
     drift: [112, -198],
     rotate: 2,
-    width: 330,
-    content: (
-      <div className="overflow-hidden rounded-2xl shadow-[var(--paper-shadow-card)]">
-        <img
-          alt=""
-          aria-hidden
-          className="block w-full select-none"
-          height={600}
-          loading="lazy"
-          src="/hero/profiles-screen-960.avif"
-          width={960}
-        />
-      </div>
-    ),
+    width: 272,
   },
   {
-    id: "posts",
-    settle: [452, 182],
+    id: "next-steps",
+    settle: [452, 198],
     drift: [58, -262],
     rotate: -1.5,
-    width: 300,
-    content: <PostsVignette animate={false} />,
+    width: 252,
   },
   {
-    id: "teacher",
-    settle: [-452, 198],
+    id: "words",
+    settle: [-452, 204],
     drift: [-118, -212],
     rotate: 2.5,
-    width: 190,
-    content: (
-      // Framed rather than blended: an ancestor transform gives this layer its
-      // own stacking context, so the hero's `mix-blend-multiply` trick cannot
-      // drop the white here. A paper card is the honest alternative.
-      <div className="rounded-2xl bg-[color:var(--paper-card)] p-2 shadow-[var(--paper-shadow-card)]">
-        <img
-          alt=""
-          aria-hidden
-          className="block w-full select-none"
-          height={624}
-          loading="lazy"
-          src="/hero/teacher-working-poster.webp"
-          width={624}
-        />
-      </div>
-    ),
+    width: 260,
   },
   {
-    id: "sketch",
-    settle: [-204, 366],
-    drift: [188, -196],
-    rotate: -4,
-    width: 340,
-    content: (
-      <img
-        alt=""
-        aria-hidden
-        className="block w-full select-none"
-        height={306}
-        loading="lazy"
-        src="/hero/hero-cards-sketch.svg"
-        width={1019}
-      />
-    ),
+    id: "family-and-record",
+    settle: [0, 322],
+    drift: [120, -196],
+    rotate: -3,
+    width: 214,
   },
 ]
 
@@ -127,10 +86,28 @@ const ENTER_SCALE = 0.36
 /** Progress at which the field is fully out and full size. */
 const SETTLE_AT = 0.5
 
+/** The white margin around a card's face, matching the paper-print frame. */
+const CARD_PAD = 8
+
 /**
- * Centring and tilt, kept in one inline transform string so they never share a
- * CSS property with the scroll-driven transform on the wrapper above.
+ * The width the vignettes are drawn at before being scaled into a card. They
+ * are authored around 300px — scaling one down keeps its proportions, where
+ * letting it reflow into a 230px column would restyle it.
  */
+const VIGNETTE_WIDTH = 300
+
+/**
+ * The flip, as fractions of the section's travel.
+ *
+ * The reveal's first sentence fades out over 0.60 → 0.72 and the second fades
+ * in over 0.66 → 0.82 (`ga-reveal.tsx`), so the cards turn across that handover
+ * and land face-up on the new sentence. Each card starts a beat after the one
+ * before it, because five cards flipping in lockstep reads as one object.
+ */
+const FLIP_FROM = 0.56
+const FLIP_SPAN = 0.24
+const FLIP_STAGGER = 0.022
+
 /** The widest settle offset in the field, which sets the scale below. */
 const WIDEST_REACH = Math.max(
   ...PIECES.map((piece) => Math.abs(piece.settle[0]))
@@ -150,26 +127,117 @@ function fieldScale(viewportWidth: number) {
   return Math.min(1, (viewportWidth * 0.32) / WIDEST_REACH)
 }
 
-function PieceBody({ piece }: { piece: ScatterPiece }) {
+/**
+ * A card, both faces.
+ *
+ * The interface sets the card's shape and the photograph is cropped to it.
+ * That order matters: a panel is whatever height its content makes it, so
+ * forcing one into a square leaves a band of empty card under it, and no
+ * padding or alignment hides that. Measuring the panel and handing its aspect
+ * ratio to the photograph puts the two faces in exactly the same box.
+ *
+ * The panel is rendered at `VIGNETTE_WIDTH` and scaled down from its top-left
+ * corner, so it keeps the proportions it was designed at rather than reflowing
+ * into a column a third of its width. `offsetHeight` reads the layout height,
+ * which a transform does not touch, so the measurement is of the panel as
+ * authored — and `useLayoutEffect` takes it before the first paint, so the card
+ * is never briefly the wrong shape.
+ */
+function PieceBody({
+  piece,
+  turn,
+}: {
+  piece: ScatterPiece
+  turn: MotionValue<number>
+}) {
+  const Vignette = gaActVignettes[piece.id]
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const [panelHeight, setPanelHeight] = useState(VIGNETTE_WIDTH)
+
+  useLayoutEffect(() => {
+    const panel = panelRef.current
+    if (!panel) return
+    const measure = () => setPanelHeight(panel.offsetHeight)
+    measure()
+    // The vignettes rest rather than animate here, so their height is stable —
+    // but a font landing late is enough to change it.
+    const observer = new ResizeObserver(measure)
+    observer.observe(panel)
+    return () => observer.disconnect()
+  }, [])
+
+  const inner = piece.width - CARD_PAD * 2
+  const scale = inner / VIGNETTE_WIDTH
+  const face =
+    "absolute inset-0 overflow-hidden rounded-2xl bg-[color:var(--paper-card)] shadow-[var(--paper-shadow-card)] [backface-visibility:hidden]"
+
   return (
     <div
       style={{
+        // Centring, tilt and the perspective the flip is seen through, kept in
+        // one inline transform so they never share a CSS property with the
+        // scroll-driven transform on the wrapper above.
+        perspective: 1400,
         transform: `translate(-50%, -50%) rotate(${piece.rotate}deg)`,
         width: piece.width,
       }}
     >
-      {piece.content}
+      <motion.div
+        className="relative"
+        style={{
+          // The card's own box: the panel's shape, at the card's width.
+          height: panelHeight * scale + CARD_PAD * 2,
+          rotateY: turn,
+          transformStyle: "preserve-3d",
+        }}
+      >
+        <div className={face} style={{ padding: CARD_PAD }}>
+          {/* `block h-full`: a `<picture>` is inline, so without a definite
+              height of its own the image's `h-full` has nothing to resolve
+              against and the crop silently falls back to the photo's own
+              aspect. */}
+          <picture className="block h-full w-full">
+            <source srcSet={`/reveal/${piece.id}-640.avif`} type="image/avif" />
+            <img
+              alt=""
+              className="block h-full w-full rounded-xl object-cover"
+              height={640}
+              loading="lazy"
+              src={`/reveal/${piece.id}-640.webp`}
+              width={640}
+            />
+          </picture>
+        </div>
+
+        <div
+          className={`${face} [transform:rotateY(180deg)]`}
+          style={{ padding: CARD_PAD }}
+        >
+          <div
+            ref={panelRef}
+            style={{
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
+              width: VIGNETTE_WIDTH,
+            }}
+          >
+            <Vignette animate={false} />
+          </div>
+        </div>
+      </motion.div>
     </div>
   )
 }
 
 function DriftingPiece({
   fieldWidthScale,
+  index,
   piece,
   progress,
 }: {
   /** Shrinks the whole field on narrow viewports; see `fieldScale`. */
   fieldWidthScale: number
+  index: number
   piece: ScatterPiece
   progress: MotionValue<number>
 }) {
@@ -199,13 +267,19 @@ function DriftingPiece({
   const opacity = useTransform(progress, [0, 0.08, 0.3, 1], [0, 0, 1, 1], {
     clamp: false,
   })
+  const flipFrom = FLIP_FROM + index * FLIP_STAGGER
+  const turn = useTransform(
+    progress,
+    [flipFrom, flipFrom + FLIP_SPAN],
+    [0, 180]
+  )
 
   return (
     <motion.div
       className="absolute top-1/2 left-1/2 will-change-transform"
       style={{ opacity, scale, x, y }}
     >
-      <PieceBody piece={piece} />
+      <PieceBody piece={piece} turn={turn} />
     </motion.div>
   )
 }
@@ -229,9 +303,10 @@ export function GaRevealScatter({
       aria-hidden
       className="pointer-events-none absolute inset-0 select-none"
     >
-      {PIECES.map((piece) => (
+      {PIECES.map((piece, index) => (
         <DriftingPiece
           fieldWidthScale={fieldWidthScale}
+          index={index}
           key={piece.id}
           piece={piece}
           progress={progress}

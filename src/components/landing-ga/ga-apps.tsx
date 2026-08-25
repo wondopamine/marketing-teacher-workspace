@@ -32,16 +32,8 @@ export function GaApps() {
       <div className="mx-auto w-full max-w-[1100px]">
         <RevealOnScroll>
           <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
-            <img
-              alt=""
-              aria-hidden
-              className="size-12 rounded-xl shadow-[var(--paper-shadow-card)] select-none"
-              height={48}
-              src="/hero/tw-icon.png"
-              width={48}
-            />
             <h2
-              className="mt-6 font-heading text-[clamp(1.75rem,3.4vw,2.5rem)] leading-[1.12] font-semibold tracking-tight text-balance text-[color:var(--paper-ink)]"
+              className="font-heading text-[clamp(1.75rem,3.4vw,2.5rem)] leading-[1.12] font-semibold tracking-tight text-balance text-[color:var(--paper-ink)]"
               id="ga-apps-title"
             >
               {gaPageCopy.apps.heading}

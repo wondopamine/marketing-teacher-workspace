@@ -94,11 +94,20 @@ export function GaSchoolClip({
  * real one in cannot move the row. Names the path it is waiting for, because
  * the whole point of a placeholder is that someone can act on it.
  */
-export function GaSchoolClipPlaceholder({ expectedPath }: { expectedPath: string }) {
+export function GaSchoolClipPlaceholder({
+  className,
+  expectedPath,
+}: {
+  className?: string
+  expectedPath: string
+}) {
   return (
     <div
       aria-hidden
-      className="flex aspect-square w-full max-w-80 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[color:var(--paper-rule-strong)] bg-[color:var(--paper-hover-bg)] px-4 text-center select-none"
+      className={cn(
+        "flex aspect-square w-full max-w-80 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[color:var(--paper-rule-strong)] bg-[color:var(--paper-hover-bg)] px-4 text-center select-none",
+        className
+      )}
     >
       <p className="font-body text-sm leading-5 font-semibold text-[color:var(--paper-muted)]">
         Clip to come

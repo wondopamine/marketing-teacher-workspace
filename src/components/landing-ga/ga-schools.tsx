@@ -1,4 +1,20 @@
 import {
+  cubicBezier,
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "motion/react"
+import { useEffect, useRef, useState } from "react"
+
+import { GaSchoolsMap } from "./ga-schools-map"
+import { SG_MAP } from "./ga-singapore-map"
+
+import type { MotionValue } from "motion/react"
+
+import type { GaTestimonial } from "@/content/landing-ga-page"
+
+import {
   GaSchoolClip,
   GaSchoolClipPlaceholder,
 } from "@/components/landing-ga/ga-school-clip"
@@ -10,13 +26,15 @@ import {
 } from "@/content/landing-ga-page"
 import { cn } from "@/lib/utils"
 
+const DESKTOP_QUERY = "(min-width: 1024px)"
+
 /**
  * The clip that runs beside each school's words, keyed by testimonial id.
  * Presentation, so it lives here rather than in the governed dataset — the
  * quotes are verbatim staff copy under a sync contract with `landing-v2.ts`,
  * and media is not part of that contract.
  *
- * `src` is absent until the file exists and the row draws a placeholder in the
+ * `src` is absent until the file exists and the card draws a placeholder in the
  * clip's exact geometry, so landing the real one cannot move the layout. To
  * ship a clip, drop it at the path below and add `src` (plus a `poster` still,
  * which is what reduced-motion readers see): the rest is already wired.
@@ -26,99 +44,318 @@ import { cn } from "@/lib/utils"
  */
 const SCHOOL_CLIPS: Record<string, { poster?: string; src?: string }> = {
   "pg-read-speed": {},
-  "pg-immediacy": {},
   "pg-work-reduction": {},
+  "pg-intuitive": {},
 }
 
 const clipPath = (id: string) => `/schools/${id}.mp4`
 
 /**
+ * A viewport of pinned scroll before the first card, so the map is seen as a
+ * drawing in its own right before anything travels over it.
+ */
+const LEAD_IN = 1
+
+/** Viewports of scroll the pin holds for: the lead-in, then one per card. */
+const TRAVEL = LEAD_IN + gaTestimonials.length
+
+/**
+ * The moment the pin starts, as a fraction of the section's `start end → end
+ * end` travel. The section is one viewport of stage plus `TRAVEL` viewports of
+ * rest, and the stage sticks after exactly one viewport of scrolling.
+ */
+const PIN_START = 1 / (1 + TRAVEL)
+
+/** …and the moment the first card arrives, once the lead-in is spent. */
+const CARDS_START = PIN_START + (1 - PIN_START) * (LEAD_IN / TRAVEL)
+
+/** How far a card lifts as it arrives and leaves, in px. Small on purpose. */
+const CARD_LIFT = 26
+
+const ENTER = cubicBezier(0.16, 1, 0.3, 1)
+
+/**
+ * When each card holds the middle of the map.
+ *
+ * The card does not travel: it sits at one place — centred over the map, under
+ * the heading — and the three quotes take turns there (owner, 2026-08-25). An
+ * earlier build ran the reference's conveyor, every card rising through the
+ * middle and out of the top, and the quote was only settled for a moment in
+ * passing. Holding the position means a reader who stops anywhere in a card's
+ * slot finds it still, square, and readable.
+ *
+ * Each card gets one viewport. It arrives over the first quarter of that,
+ * holds for half of it, and leaves over the last fifth — so the swap is brief
+ * and the rest of the slot is rest. The last card has no exit; it holds until
+ * the pin releases and the section scrolls away with it.
+ */
+function slotOf(index: number, count: number) {
+  const slot = (1 - CARDS_START) / count
+  const start = CARDS_START + index * slot
+  return {
+    start,
+    settled: start + slot * 0.28,
+    leaves: start + slot * 0.82,
+    end: index === count - 1 ? null : start + slot,
+  }
+}
+
+/**
+ * One school's words, in the reference's card.
+ *
+ * The geometry is the reference's, read off the live page rather than guessed:
+ * a 638px card, 24px of padding, a 24px gutter, and the two halves splitting
+ * the remainder evenly — so the words get exactly the width of the picture
+ * beside them. The quote sits at the top of its column and the attribution at
+ * the bottom (`justify-between`), which is what gives the card its air when a
+ * quote runs short.
+ *
+ * The picture is square where the reference's is a 3:4 portrait: the clips this
+ * slot is waiting for are square under the existing media contract, and a
+ * portrait card is tall enough to bury a wide, shallow island.
+ *
+ * The type is ours, not the reference's: that page sets its quotes in a serif
+ * and this design system has no serif (`--font-heading`, `--font-body` are
+ * locked). What carries over is the proportion — a display-sized quote on tight
+ * leading, a plain attribution line, and a small chip.
+ */
+function SchoolCard({
+  className,
+  testimonial,
+}: {
+  className?: string
+  testimonial: GaTestimonial
+}) {
+  const clip = SCHOOL_CLIPS[testimonial.id] ?? {}
+  return (
+    <figure
+      className={cn(
+        "flex flex-col gap-6 rounded-2xl border border-[color:var(--paper-rule)] bg-[color:var(--paper-card)] p-6 shadow-[var(--paper-shadow-card)] sm:flex-row",
+        className
+      )}
+    >
+      {/* Decorative, and below sm there is no room for it beside the words. */}
+      <div className="hidden sm:block sm:w-1/2 sm:shrink-0">
+        {clip.src ? (
+          <GaSchoolClip
+            className="w-full max-w-none rounded-2xl"
+            poster={clip.poster}
+            src={clip.src}
+          />
+        ) : (
+          <GaSchoolClipPlaceholder
+            className="max-w-none"
+            expectedPath={clipPath(testimonial.id)}
+          />
+        )}
+      </div>
+
+      <blockquote className="flex min-w-0 flex-1 flex-col justify-between gap-8">
+        <p className="font-heading text-[1.375rem] leading-[1.24] font-medium tracking-[-0.015em] text-pretty text-[color:var(--paper-ink)] sm:text-[1.5rem]">
+          {`“${testimonial.quote}”`}
+        </p>
+        <footer className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <p className="font-body text-sm leading-5 font-medium text-[color:var(--paper-ink)]">
+            {testimonial.role}
+          </p>
+          <p className="rounded-[4px] bg-[color:var(--paper-hover-bg)] px-2 py-1 font-body text-[12px] leading-4 whitespace-nowrap text-[color:var(--paper-muted)]">
+            {testimonial.schoolLevel}
+          </p>
+        </footer>
+      </blockquote>
+    </figure>
+  )
+}
+
+/**
+ * One testimonial taking its turn in the middle of the map: it lifts in,
+ * holds still to be read, and lifts out as the next one arrives.
+ */
+function SchoolBeat({
+  count,
+  index,
+  progress,
+  testimonial,
+}: {
+  count: number
+  index: number
+  progress: MotionValue<number>
+  testimonial: GaTestimonial
+}) {
+  const { start, settled, leaves, end } = slotOf(index, count)
+
+  // A short lift in and out, never a traversal: the card's place on the page
+  // is fixed and only the quote in it changes.
+  const y = useTransform(
+    progress,
+    end === null ? [start, settled] : [start, settled, leaves, end],
+    end === null ? [CARD_LIFT, 0] : [CARD_LIFT, 0, 0, -CARD_LIFT],
+    { ease: ENTER }
+  )
+  const scale = useTransform(progress, [start, settled], [0.96, 1], {
+    ease: ENTER,
+  })
+  // Spans the section's whole travel with `clamp: false`, so motion 12 cannot
+  // lift this onto its accelerated WAAPI path — where a scroll-linked opacity
+  // becomes an independent animation and stops reading `scrollYProgress`
+  // (same fix, same reason, as `ga-reveal.tsx` and `paper-backdrop.tsx`).
+  const opacity = useTransform(
+    progress,
+    end === null ? [0, start, settled, 1] : [0, start, settled, leaves, end, 1],
+    end === null ? [0, 0, 1, 1] : [0, 0, 1, 1, 0, 0],
+    { clamp: false }
+  )
+
+  return (
+    <motion.div
+      className="pointer-events-none absolute inset-0 flex items-center justify-center will-change-transform"
+      style={{ y }}
+    >
+      <motion.div
+        className="w-[min(40rem,63%)] will-change-[opacity,transform]"
+        style={{ opacity, scale }}
+      >
+        <SchoolCard testimonial={testimonial} />
+      </motion.div>
+    </motion.div>
+  )
+}
+
+/**
  * Section 6 of the IA: verbatim staff quotes, role and school level only,
  * scoped to Posts — the capability the verbatims actually evidence (ADR 0003).
  *
- * The three memo cards are gone (owner, 2026-08-25). The section now runs the
- * alternating illustrated rows from the dx-harness landing
- * (transformteamsg/dx-harness, `app/(landing)/page.tsx`): one clip beside one
- * claim, the pair swapping sides each row. Two details of that pattern are
- * load-bearing and are kept exactly. DOM order always puts the clip first, so
- * below `lg` every row reads clip-then-words in one rhythm and the flip is
- * purely visual (`lg:order-2`). And the seam hairline follows the flip —
- * `lg:border-l` when the clip has moved right, `lg:border-r` when it has not —
- * so the divider always sits between the two cells rather than jumping.
+ * The illustrated rows are gone (owner, 2026-08-25). The section takes its
+ * shape from the reference the owner supplied (lassie.ai's locations section),
+ * read off the live page rather than the video: a heading and one line of lede
+ * that stay put, a dot map beneath them, and one testimonial card centred over
+ * it. The card's place is fixed — the quotes take turns in it rather than
+ * travelling through, which is the one place this parts company with the
+ * reference and the owner's call.
  *
- * The section's tinted band is gone with them (owner, 2026-08-25); the rows sit
- * on the page ground, which is also what `mix-blend-multiply` needs — on a
- * tinted ground the blend would take every white inside the drawings down to
- * the tint, the defect the hero illustration hit the same day.
+ * Scroll is the only driver, and it drives transform and opacity only: `slotOf`
+ * gives each quote a viewport, of which most is rest. The stage pins for five
+ * viewports, one spent on the map alone before the first quote arrives, and it
+ * clips, so nothing can leak into the sections either side.
+ *
+ * Below 1024px there is no pin: the map rests and the three cards are three
+ * blocks in document order (CLAUDE.md's static mobile fallback). Under
+ * `prefers-reduced-motion` that same flowing composition is used at every
+ * width and the map's marks are never armed.
  */
 export function GaSchools() {
+  // === true: hydration null must not skip the fallback presentation
+  const reduced = useReducedMotion() === true
+  const [desktop, setDesktop] = useState(false)
+  const sectionRef = useRef<HTMLElement | null>(null)
+  // Tracked on the section, never on the pinned stage: a sticky element's own
+  // box stops moving mid-pin, which would flatten the progress it reports.
+  const { scrollYProgress } = useScroll({
+    offset: ["start end", "end end"],
+    target: sectionRef,
+  })
+
+  // The reference lets the map ride up into place while the section is still
+  // scrolling — a slow parallax that finishes exactly as the pin engages, so
+  // the drawing settles rather than simply arriving. The card layers are its
+  // children, so they ride with it; no card is out during this stretch anyway.
+  const mapY = useTransform(scrollYProgress, [0, PIN_START], [72, 0], {
+    ease: ENTER,
+  })
+
+  useEffect(() => {
+    const query = window.matchMedia(DESKTOP_QUERY)
+    const update = () => setDesktop(query.matches)
+    update()
+    query.addEventListener("change", update)
+    return () => query.removeEventListener("change", update)
+  }, [])
+
+  const choreographed = desktop && !reduced
+
+  const header = (
+    <div className="mx-auto max-w-2xl text-center">
+      <h2
+        className="font-heading text-[clamp(1.75rem,4vw,3.5rem)] leading-[1.08] font-semibold tracking-tight text-balance text-[color:var(--paper-ink)]"
+        id="ga-schools-title"
+      >
+        {gaPageCopy.schools.heading}
+      </h2>
+      <p className="mt-5 font-body text-base leading-[1.7] text-balance text-[color:var(--paper-muted)] sm:text-lg">
+        {gaPageCopy.schools.lede}
+      </p>
+    </div>
+  )
+
+  if (!choreographed) {
+    return (
+      <section
+        aria-labelledby="ga-schools-title"
+        className="scroll-mt-28 overflow-x-clip px-5 py-20 sm:px-8 lg:py-24"
+        id={gaSectionAnchors.schools}
+        ref={sectionRef}
+      >
+        <div className="mx-auto w-full max-w-[1120px]">
+          <RevealOnScroll>{header}</RevealOnScroll>
+          <RevealOnScroll>
+            <GaSchoolsMap className="mx-auto mt-12 w-full" />
+          </RevealOnScroll>
+          <ul className="mt-12 grid list-none gap-6 sm:mt-16">
+            {gaTestimonials.map((testimonial) => (
+              <li key={testimonial.id}>
+                <RevealOnScroll>
+                  <SchoolCard testimonial={testimonial} />
+                </RevealOnScroll>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section
       aria-labelledby="ga-schools-title"
-      className="scroll-mt-28 px-5 py-20 sm:px-8 lg:py-24"
+      className="ga-schools scroll-mt-28 overflow-x-clip"
       id={gaSectionAnchors.schools}
+      ref={sectionRef}
     >
-      <div className="mx-auto w-full max-w-[1220px]">
-        <RevealOnScroll>
-          <div className="mx-auto max-w-2xl text-center">
-            <h2
-              className="font-heading text-[clamp(1.75rem,4vw,3.5rem)] leading-[1.08] font-semibold tracking-tight text-balance text-[color:var(--paper-ink)]"
-              id="ga-schools-title"
-            >
-              {gaPageCopy.schools.heading}
-            </h2>
-            <p className="mt-6 font-body text-base leading-[1.7] text-balance text-[color:var(--paper-muted)] sm:text-lg">
-              {gaPageCopy.schools.lede}
-            </p>
-          </div>
-        </RevealOnScroll>
+      <div className="ga-schools-stage sticky top-0 flex h-svh flex-col items-center justify-center gap-10 overflow-hidden px-8 pt-28 pb-10">
+        {header}
 
-        <ul className="mt-14 list-none border-t border-[color:var(--paper-rule)] lg:mt-20">
-          {gaTestimonials.map((testimonial, index) => {
-            const clip = SCHOOL_CLIPS[testimonial.id] ?? {}
-            // Odd rows send the clip to the right at lg; the seam follows it.
-            const flipped = index % 2 === 1
-            return (
-              <li
-                className="grid border-b border-[color:var(--paper-rule)] last:border-b-0 lg:grid-cols-2"
-                key={testimonial.id}
-              >
-                <div
-                  className={cn(
-                    "grid place-items-center border-[color:var(--paper-rule)] px-6 py-10 max-lg:border-b sm:p-12",
-                    flipped ? "lg:order-2 lg:border-l" : "lg:border-r"
-                  )}
-                >
-                  {clip.src ? (
-                    <GaSchoolClip poster={clip.poster} src={clip.src} />
-                  ) : (
-                    <GaSchoolClipPlaceholder
-                      expectedPath={clipPath(testimonial.id)}
-                    />
-                  )}
-                </div>
+        {/* The map sets this box's height, so the card layers below can be
+            `inset-0` over exactly the drawing. Width is bounded by the
+            viewport's remaining height through the map's own aspect ratio (the
+            reserve covers the stage's padding, the header block and the gap),
+            so the composition is always one screen and never scrolls. */}
+        <motion.div
+          className="relative w-full will-change-transform"
+          style={{
+            maxWidth: `min(1120px, calc((100svh - 21rem) * ${SG_MAP.aspect}))`,
+            y: mapY,
+          }}
+        >
+          <GaSchoolsMap />
 
-                <blockquote className="flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12">
-                  <p className="font-body text-[12px] leading-4 font-medium tracking-[0.02em] text-[color:var(--paper-muted)] tabular-nums">
-                    {String(index + 1).padStart(2, "0")}
-                  </p>
-                  <p className="mt-4 max-w-[32ch] text-xl leading-[30px] font-medium tracking-[-0.01em] text-pretty text-[color:var(--paper-ink)] italic sm:text-2xl sm:leading-[36px]">
-                    {`“${testimonial.quote}”`}
-                  </p>
-                  <footer className="mt-6">
-                    <p className="font-body text-sm leading-5 font-semibold text-[color:var(--paper-ink)]">
-                      {testimonial.role}
-                    </p>
-                    <p className="mt-0.5 font-body text-sm leading-5 text-[color:var(--paper-muted)] italic">
-                      {testimonial.schoolLevel}
-                    </p>
-                  </footer>
-                </blockquote>
-              </li>
-            )
-          })}
-        </ul>
+          {gaTestimonials.map((testimonial, index) => (
+            <SchoolBeat
+              count={gaTestimonials.length}
+              index={index}
+              key={testimonial.id}
+              progress={scrollYProgress}
+              testimonial={testimonial}
+            />
+          ))}
+        </motion.div>
       </div>
+
+      {/* The travel the conveyor runs through: the lead-in, then the cards. */}
+      <div
+        aria-hidden
+        className="ga-schools-rest"
+        style={{ height: `${TRAVEL * 100}svh` }}
+      />
     </section>
   )
 }
