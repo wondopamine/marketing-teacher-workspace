@@ -1387,3 +1387,22 @@ blue than the 2026-08-25 request first asked for. **This token is now
 load-bearing in a way its name does not suggest** — darkening it does not just
 deepen the sky, it tints the drawing's face and frames, and no fixed mask can
 undo that.
+
+### Follow-up: the drawing gets clearance from the frame's bottom edge (2026-08-25)
+
+Owner: the teacher illustration is too close to the bottom of the frame.
+
+Measured before touching it: the figure sat flush with the section's bottom
+(`figureBottomToSectionBottom: 0`), and since the ink stops at 90% of the square
+there was 42px of white margin below it — of which the frame's 32px clip ate
+most, leaving **10px** between her shoes and the card's rounded edge.
+
+This is a consequence of the frame rather than an old defect. Flush was correct
+while the hero ran into the page with no seam; the clip is what turned that edge
+into something the composition has to answer to.
+
+Four clearances were rendered and compared rather than computed: at 0 her shoes
+almost touch the edge, at 128px she floats in a pocket of empty sky. `pb-16
+md:pb-24` was chosen, with the larger step landing at `md` because that is where
+the frame itself starts. Ink-to-edge after, measured at each width: 106px at
+1280, 118px at 900, 106px at 700, 92px at 390.
