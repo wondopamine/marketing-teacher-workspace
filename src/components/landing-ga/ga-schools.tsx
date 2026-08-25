@@ -14,10 +14,6 @@ import type { MotionValue } from "motion/react"
 
 import type { GaTestimonial } from "@/content/landing-ga-page"
 
-import {
-  GaSchoolClip,
-  GaSchoolClipPlaceholder,
-} from "@/components/landing-ga/ga-school-clip"
 import { RevealOnScroll } from "@/components/landing/reveal-on-scroll"
 import {
   gaPageCopy,
@@ -27,28 +23,6 @@ import {
 import { cn } from "@/lib/utils"
 
 const DESKTOP_QUERY = "(min-width: 1024px)"
-
-/**
- * The clip that runs beside each school's words, keyed by testimonial id.
- * Presentation, so it lives here rather than in the governed dataset — the
- * quotes are verbatim staff copy under a sync contract with `landing-v2.ts`,
- * and media is not part of that contract.
- *
- * `src` is absent until the file exists and the card draws a placeholder in the
- * clip's exact geometry, so landing the real one cannot move the layout. To
- * ship a clip, drop it at the path below and add `src` (plus a `poster` still,
- * which is what reduced-motion readers see): the rest is already wired.
- *
- * Note for whoever exports them: `.mov` is a QuickTime container that Chrome
- * and Firefox will not play. Export H.264 in an `.mp4`, or VP9 in a `.webm`.
- */
-const SCHOOL_CLIPS: Record<string, { poster?: string; src?: string }> = {
-  "pg-read-speed": {},
-  "pg-work-reduction": {},
-  "pg-intuitive": {},
-}
-
-const clipPath = (id: string) => `/schools/${id}.mp4`
 
 /**
  * A viewport of pinned scroll before the first card, so the map is seen as a
@@ -103,16 +77,18 @@ function slotOf(index: number, count: number) {
 /**
  * One school's words, in the reference's card.
  *
- * The geometry is the reference's, read off the live page rather than guessed:
- * a 638px card, 24px of padding, a 24px gutter, and the two halves splitting
- * the remainder evenly — so the words get exactly the width of the picture
- * beside them. The quote sits at the top of its column and the attribution at
+ * The geometry starts from the reference's, read off the live page rather than
+ * guessed: 24px of padding and a 24px gutter. The split does not: the
+ * reference gives its picture half the card, and at our quote size that ran the
+ * words to seven and eight lines, so the picture takes 42% and the words take
+ * what is left (owner, 2026-08-25). The quote sits at the top of its column and the attribution at
  * the bottom (`justify-between`), which is what gives the card its air when a
  * quote runs short.
  *
- * The picture is square where the reference's is a 3:4 portrait: the clips this
- * slot is waiting for are square under the existing media contract, and a
- * portrait card is tall enough to bury a wide, shallow island.
+ * The picture is square where the reference's is a 3:4 portrait: the drawings
+ * are square, and a portrait card is tall enough to bury a wide, shallow
+ * island. Each one is keyed by its testimonial's id — drop a replacement at
+ * `assets/schools/<id>.png` and run `pnpm gen:school-art`.
  *
  * The type is ours, not the reference's: that page sets its quotes in a serif
  * and this design system has no serif (`--font-heading`, `--font-body` are
@@ -126,7 +102,6 @@ function SchoolCard({
   className?: string
   testimonial: GaTestimonial
 }) {
-  const clip = SCHOOL_CLIPS[testimonial.id] ?? {}
   return (
     <figure
       className={cn(
@@ -135,19 +110,24 @@ function SchoolCard({
       )}
     >
       {/* Decorative, and below sm there is no room for it beside the words. */}
-      <div className="hidden sm:block sm:w-1/2 sm:shrink-0">
-        {clip.src ? (
-          <GaSchoolClip
-            className="w-full max-w-none rounded-2xl"
-            poster={clip.poster}
-            src={clip.src}
+      <div className="hidden sm:block sm:w-[42%] sm:shrink-0">
+        <picture>
+          <source
+            srcSet={`/schools/${testimonial.id}-320.avif 320w, /schools/${testimonial.id}-640.avif 640w`}
+            type="image/avif"
           />
-        ) : (
-          <GaSchoolClipPlaceholder
-            className="max-w-none"
-            expectedPath={clipPath(testimonial.id)}
+          <img
+            alt=""
+            aria-hidden
+            className="block aspect-square w-full rounded-2xl bg-[color:var(--paper-hover-bg)] object-contain p-3 select-none"
+            height={640}
+            loading="lazy"
+            sizes="(min-width: 1024px) 290px, 45vw"
+            src={`/schools/${testimonial.id}-640.webp`}
+            srcSet={`/schools/${testimonial.id}-320.webp 320w, /schools/${testimonial.id}-640.webp 640w`}
+            width={640}
           />
-        )}
+        </picture>
       </div>
 
       <blockquote className="flex min-w-0 flex-1 flex-col justify-between gap-8">
@@ -212,7 +192,7 @@ function SchoolBeat({
       style={{ y }}
     >
       <motion.div
-        className="w-[min(40rem,63%)] will-change-[opacity,transform]"
+        className="w-[min(46rem,72%)] will-change-[opacity,transform]"
         style={{ opacity, scale }}
       >
         <SchoolCard testimonial={testimonial} />

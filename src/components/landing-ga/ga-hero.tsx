@@ -100,9 +100,6 @@ export function GaHero() {
           >
             {hero.headline}
           </h1>
-          <p className="mx-auto mt-6 max-w-[46ch] font-body text-base leading-[1.7] text-balance text-[color:var(--paper-muted)] sm:text-lg">
-            {hero.body}
-          </p>
           <div className="mt-8 flex flex-col items-center gap-3">
             <Button
               asChild
@@ -112,9 +109,6 @@ export function GaHero() {
                 {hero.action}
               </a>
             </Button>
-            <p className="font-body text-sm leading-5 text-[color:var(--paper-muted)]">
-              {hero.actionNote}
-            </p>
           </div>
         </div>
 

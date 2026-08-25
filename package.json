@@ -36,7 +36,8 @@
     "cms:export-published": "tsx scripts/export-cms-publication.ts",
     "cms:backup-database": "node scripts/backup-cms-database.mjs",
     "gen:hero-images": "node scripts/gen-hero-images.mjs",
-    "gen:reveal-photos": "node scripts/gen-reveal-photos.mjs"
+    "gen:reveal-photos": "node scripts/gen-reveal-photos.mjs",
+    "gen:school-art": "node scripts/gen-school-art.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",

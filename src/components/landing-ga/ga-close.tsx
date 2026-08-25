@@ -37,9 +37,6 @@ export function GaClose() {
                 {hero.action}
               </a>
             </Button>
-            <p className="text-sm leading-5 text-[color:var(--paper-muted)]">
-              {hero.actionNote}
-            </p>
           </div>
         </div>
       </RevealOnScroll>

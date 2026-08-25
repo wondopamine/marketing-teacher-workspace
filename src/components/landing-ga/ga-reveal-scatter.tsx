@@ -13,10 +13,15 @@ import type { MotionValue } from "motion/react"
  * The cards carry the section's argument rather than decorating it. While the
  * first sentence holds — "the care was always yours" — every card shows a
  * teacher with their class, because that is the claim. As the statement turns
- * over to "we removed the admin between the moments", the cards turn with it:
- * each one flips, staggered, to the piece of the product that act is about. The
- * photograph and the interface are the same card seen from two sides, which is
- * the whole point of the sentence pair.
+ * over to "we removed the admin between the moments", three of them turn with
+ * it, staggered, to the piece of the product that act is about. The photograph
+ * and the interface are the same card seen from two sides, which is the whole
+ * point of the sentence pair.
+ *
+ * Three, not five (owner, 2026-08-25). Turning the whole field over answered
+ * the sentence too completely: the teachers vanished and the reveal ended on a
+ * wall of product. The two that keep their photographs are what stops the
+ * second sentence from undoing the first.
  *
  * The pieces are anchored at the section's centre and pushed out from there, so
  * the composition reads as the page's own material coming apart around the
@@ -41,6 +46,13 @@ type ScatterPiece = {
   /** Paper things are rarely square to the page. */
   rotate: number
   width: number
+  /**
+   * Whether this card turns over to its act's interface when the statement
+   * does. Three of the five do (owner, 2026-08-25): enough for the sentence
+   * pair to land, while the two that stay as photographs keep the field from
+   * becoming a wall of product.
+   */
+  flips: boolean
 }
 
 const PIECES: ReadonlyArray<ScatterPiece> = [
@@ -50,6 +62,7 @@ const PIECES: ReadonlyArray<ScatterPiece> = [
     drift: [-88, -240],
     rotate: -2.5,
     width: 264,
+    flips: true,
   },
   {
     id: "notice",
@@ -57,6 +70,7 @@ const PIECES: ReadonlyArray<ScatterPiece> = [
     drift: [112, -198],
     rotate: 2,
     width: 272,
+    flips: true,
   },
   {
     id: "next-steps",
@@ -64,6 +78,7 @@ const PIECES: ReadonlyArray<ScatterPiece> = [
     drift: [58, -262],
     rotate: -1.5,
     width: 252,
+    flips: false,
   },
   {
     id: "words",
@@ -71,13 +86,18 @@ const PIECES: ReadonlyArray<ScatterPiece> = [
     drift: [-118, -212],
     rotate: 2.5,
     width: 260,
+    flips: false,
   },
   {
     id: "family-and-record",
-    settle: [0, 322],
-    drift: [120, -196],
+    settle: [0, 300],
+    // Half the rise of the others. This is the one card directly under the
+    // statement, and at the full drift its top edge reached the last line of
+    // the three-line sentence by the end of the section.
+    drift: [120, -110],
     rotate: -3,
-    width: 214,
+    width: 290,
+    flips: true,
   },
 ]
 
@@ -152,6 +172,9 @@ function PieceBody({
 }) {
   const Vignette = gaActVignettes[piece.id]
   const panelRef = useRef<HTMLDivElement | null>(null)
+  // Defaults to `VIGNETTE_WIDTH`, which makes the card square — which is
+  // exactly right for a card with no panel to measure, since the photographs
+  // are square. A card that does flip overwrites it on its first layout.
   const [panelHeight, setPanelHeight] = useState(VIGNETTE_WIDTH)
 
   useLayoutEffect(() => {
@@ -185,10 +208,11 @@ function PieceBody({
       <motion.div
         className="relative"
         style={{
-          // The card's own box: the panel's shape, at the card's width.
+          // The card's own box: the panel's shape, at the card's width — or a
+          // square, for a card that keeps its photograph.
           height: panelHeight * scale + CARD_PAD * 2,
-          rotateY: turn,
-          transformStyle: "preserve-3d",
+          rotateY: piece.flips ? turn : 0,
+          transformStyle: piece.flips ? "preserve-3d" : undefined,
         }}
       >
         <div className={face} style={{ padding: CARD_PAD }}>
@@ -209,21 +233,23 @@ function PieceBody({
           </picture>
         </div>
 
-        <div
-          className={`${face} [transform:rotateY(180deg)]`}
-          style={{ padding: CARD_PAD }}
-        >
+        {piece.flips ? (
           <div
-            ref={panelRef}
-            style={{
-              transform: `scale(${scale})`,
-              transformOrigin: "top left",
-              width: VIGNETTE_WIDTH,
-            }}
+            className={`${face} [transform:rotateY(180deg)]`}
+            style={{ padding: CARD_PAD }}
           >
-            <Vignette animate={false} />
+            <div
+              ref={panelRef}
+              style={{
+                transform: `scale(${scale})`,
+                transformOrigin: "top left",
+                width: VIGNETTE_WIDTH,
+              }}
+            >
+              <Vignette animate={false} />
+            </div>
           </div>
-        </div>
+        ) : null}
       </motion.div>
     </div>
   )
