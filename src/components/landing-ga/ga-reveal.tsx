@@ -72,7 +72,12 @@ function Beat({
   const y = useTransform(progress, [...spec.y.at], [...spec.y.to])
   return (
     <motion.div
-      className="col-start-1 row-start-1 will-change-[opacity,transform]"
+      // `self-center` is load-bearing: the two beats share one grid cell, so
+      // the cell is as tall as the longer sentence and a stretched item hangs
+      // its shorter one from the top. That put the first beat 31px above the
+      // second, and the statement visibly dropped as it swapped (owner,
+      // 2026-08-25). Centred, both sit on the same optical line.
+      className="col-start-1 row-start-1 self-center will-change-[opacity,transform]"
       style={{ opacity, y }}
     >
       {children}

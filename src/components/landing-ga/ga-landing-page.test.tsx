@@ -4,6 +4,8 @@ import { renderToStaticMarkup } from "react-dom/server"
 
 import { GaLandingPage } from "./ga-landing-page"
 
+import { siteConfig } from "@/config/site"
+
 import {
   gaAudiences,
   gaCapabilities,
@@ -30,22 +32,39 @@ describe("GaLandingPage", () => {
     ])
   })
 
-  it("keeps exactly one filled primary action on the page", () => {
+  it("keeps the filled primary actions to the header and the hero", () => {
+    // CMP-5: exactly one filled action on the page, and it is the hero's. The
+    // owner added "Get started" to the header on 2026-08-25 so the way in stays
+    // in reach, then made it white — so the nav repeats the destination without
+    // repeating the emphasis, and the rule still holds. The close stays
+    // outlined. All three say the same word and point at the same place.
     const { container } = render(<GaLandingPage />)
-    const filled = [...container.querySelectorAll("a")].filter((a) =>
-      a.className.includes("bg-primary ")
+    const actions = [...container.querySelectorAll("a")].filter(
+      (a) => a.getAttribute("href") === siteConfig.links.product
     )
+    expect(actions.map((a) => a.textContent)).toEqual([
+      "Get started",
+      "Get started",
+      "Get started",
+    ])
+    const filled = actions.filter((a) => a.className.includes("bg-primary "))
     expect(filled).toHaveLength(1)
-    expect(filled[0]?.textContent).toBe("Sign in with Google")
+    expect(filled[0]?.closest("header")).toBeNull()
   })
 
-  it("never puts a CTA in the nav", () => {
+  it("keeps the nav to the wordmark and the way in, and nothing else", () => {
+    // The section anchors went first — three links to places the page reaches
+    // on the way down made the header a menu rather than a mark and a way in.
+    // Feedback followed (review of 2026-08-25), a second ask competing with the
+    // only one this page is making; the footer still carries it. Nothing in the
+    // nav points within the page, and nothing else may be added quietly.
     render(<GaLandingPage />)
     const nav = screen.getByRole("navigation", { name: "Primary navigation" })
     const links = within(nav).getAllByRole("link")
-    for (const link of links) {
-      expect(link.getAttribute("href")?.startsWith("https://")).toBe(false)
-    }
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/",
+      siteConfig.links.product,
+    ])
   })
 
   it("tells each journey act in its own words, never by feature name", () => {
@@ -99,7 +118,7 @@ describe("GaLandingPage", () => {
     const html = renderToStaticMarkup(<GaLandingPage />)
     expect(html).not.toContain("opacity:0")
     expect(html).not.toContain("opacity: 0")
-    expect(html).toContain("Sign in with Google")
+    expect(html).toContain("Get started")
     expect(html).toContain("Real schools")
     // The hero's settled composition is the still frame; the looping video
     // only mounts after hydration when the visitor allows motion.

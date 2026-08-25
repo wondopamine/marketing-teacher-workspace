@@ -2,12 +2,24 @@
 # A short line above the headline. Leave it blank for no eyebrow.
 eyebrow:
 
-# The button label and the note under it. The same button appears twice:
-# once here in the hero, and again at the close of the page.
+# The button label and the note under it. The same button appears twice on a
+# page: once in the hero, and again at the close.
+#
+# Two labels, because two pages share this file. `action` is the v1 page's and
+# it is governed — `landing-v2.ts` publishes it as the primary CTA label, a
+# readiness rule pins the exact string, and an approved CMS projection pins it
+# again, so changing it breaks all three. The GA page reads `gaAction`, which
+# the 2026-08-25 review changed to "Get started". The note below is shared:
+# whichever word the button uses, the account requirement is the same.
 action: Sign in with Google
+gaAction: Get started
 actionNote: Use your @edu.gov.sg account.
 ---
 
 # Gain back your time to care for students
+
+{/* The GA page shows the headline and the button alone (review of
+    2026-08-25). This paragraph is still the v1 page's hero body, which is why
+    it stays in the file — `landing-v2.ts` requires it. */}
 
 Use Teacher Workspace to understand students, get help with next steps, draft messages, and communicate with families.

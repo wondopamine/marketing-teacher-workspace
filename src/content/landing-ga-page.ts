@@ -198,12 +198,6 @@ export const gaSectionAnchors = {
   schools: "schools",
 } as const
 
-export const gaNavItems = [
-  { label: "The apps", href: `#${gaSectionAnchors.apps}` },
-  { label: "The journey", href: `#${gaSectionAnchors.journey}` },
-  { label: "Real schools", href: `#${gaSectionAnchors.schools}` },
-] as const
-
 export const gaPageCopy = {
   meta: {
     title: metaDocument.requireHeading(),
@@ -211,9 +205,9 @@ export const gaPageCopy = {
   },
   hero: {
     headline: heroDocument.requireHeading(),
-    body: heroDocument.requireBody(),
-    action: heroDocument.text("action"),
-    actionNote: heroDocument.text("actionNote"),
+    // `gaAction`, not `action`: the shared file keeps the v1 page's governed
+    // label. See the frontmatter comment in `02-hero.mdx`.
+    action: heroDocument.text("gaAction"),
   },
   journey: {},
   reveal: {
