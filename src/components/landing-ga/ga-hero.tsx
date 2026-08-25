@@ -92,7 +92,7 @@ export function GaHero() {
         <HeroCloud className="ga-cloud-b top-[20%] -left-[6%] w-[34%]" />
       </div>
 
-      <div className="relative mx-auto flex w-full max-w-[1024px] flex-1 flex-col items-center px-5 pt-36 pb-12 text-center sm:px-8 sm:pt-40 sm:pb-16">
+      <div className="relative mx-auto flex w-full max-w-[1024px] flex-1 flex-col items-center px-5 pt-36 text-center sm:px-8 sm:pt-40">
         <div className="ga-fade-up">
           <h1
             className="font-heading text-[clamp(2.25rem,5vw,3.75rem)] leading-[1.08] font-semibold tracking-tight text-balance text-[color:var(--paper-ink)]"
@@ -120,40 +120,17 @@ export function GaHero() {
 
         {/* The teacher, slowly working. Decorative: the copy above carries
             every claim. The still frame is the settled composition; the loop
-            is an enhancement for visitors who allow motion. The column's
-            bottom padding is what keeps her clear of the frame: the figure used
-            to sit flush with the section's bottom, which was invisible until
-            the frame started clipping 32px off it and cutting through the sheet
-            below — the card's bottom edge read white under the drawing instead
-            of pale blue.
-
-            `mix-blend-multiply` is what melts the drawing's white ground into
-            the sky, but multiply maps white to whatever is behind it — so her
-            face, the wall frames and the laptop are only white while the sky
-            behind them is. Once the sky's foot became pale blue (owner,
-            2026-08-25) they filled with sky instead. `.ga-hero-paper` puts a
-            sheet of white back under the drawing for multiply to land on; its
-            edges are masked away so the sheet reads as paper the drawing sits
-            on rather than as a card pasted on the sky.
-
-            Paint order is doing real work here: the sheet and the media are
-            both positioned with `z-index: auto`, so DOM order alone puts the
-            media above the sheet — and neither opens a stacking context that
-            would cut the media off from the backdrop it has to multiply with.
-            Isolating the figure would break this outright: multiply against an
-            isolated (transparent) group leaves white as white, which is the
-            white square this mask exists to avoid. */}
+            is an enhancement for visitors who allow motion. */}
         <div className="mt-10 flex w-full flex-1 items-end justify-center sm:mt-12">
           <figure
             aria-label="A hand-drawn teacher working calmly at her desk."
             className="relative w-[min(420px,72vw)]"
           >
-            <div aria-hidden className="ga-hero-paper" />
             {motionAllowed ? (
               <video
                 aria-hidden
                 autoPlay
-                className="relative aspect-square w-full mix-blend-multiply select-none"
+                className="aspect-square w-full mix-blend-multiply select-none"
                 height={624}
                 loop
                 muted
@@ -166,7 +143,7 @@ export function GaHero() {
               <img
                 alt=""
                 aria-hidden
-                className="relative w-full mix-blend-multiply select-none"
+                className="w-full mix-blend-multiply select-none"
                 height={624}
                 src="/hero/teacher-working-poster.webp"
                 width={624}

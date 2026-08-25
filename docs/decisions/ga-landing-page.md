@@ -1344,54 +1344,46 @@ The teacher illustration clears the bottom inset with room to spare at 1280, so
 nothing of her is cropped by the frame. Not re-checked at every width — worth a
 glance in the next capture set.
 
-### Follow-up: the drawing gets a sheet of paper back under it (2026-08-25)
+### Follow-up: the drawing's whites, and why the sheet was the wrong fix (2026-08-25)
 
-Owner: the teacher's face is transparent — fill the face and the frames white.
+Owner: the teacher's face is transparent — fill the face and the art frames
+white. Then, on the first attempt: *"this is not acceptable, it has a boundary
+around the illo. I asked the face and the art frames only."* Correct, and the
+attempt is reverted.
 
-**This was a regression from the pale-blue sky foot, not a pre-existing bug.**
-The illustration is line work on white composited with `mix-blend-multiply`,
-and multiply maps white to whatever is behind it. Her face is `#ffffff` in the
-source (sampled from `teacher-working-poster.webp`), as are the wall frames, the
-laptop screen and the pot. While the sky's foot was `#fdfdfd` those areas
-multiplied to near-white and read as white. The moment the foot became pale
-blue, every one of them filled with sky.
+**Why a sheet of white behind the drawing was the wrong shape of fix.**
+`mix-blend-multiply` maps white to the backdrop, and it cannot tell an
+*enclosed* white (her face, the frame interiors, the laptop) from the *outside*
+white that should stay sky. That is a topological property, not a colour one —
+separating them needs a flood fill inward from the image border. Any backdrop
+big enough to cover the enclosed regions also covers the outside ones, which is
+the boundary the owner saw.
 
-`.ga-hero-paper` puts a sheet of white back under the drawing for multiply to
-land on. Three details decide whether it works:
+**So the question became whether a mask could do it, and it was measured rather
+than assumed.** Flood-filling the exterior of the real video frames:
 
-- **Paint order, no isolation.** The sheet and the media are both positioned
-  with `z-index: auto`, so DOM order alone puts the media above the sheet, and
-  neither opens a stacking context that would cut the media off from the
-  backdrop it has to multiply with. `isolation: isolate` on the figure would
-  break it outright — multiply against an isolated, transparent group leaves
-  white as white, which is the white square the sheet exists to avoid.
-- **Two intersected linear masks, not a radial.** The ink occupies 10%–90% of
-  the source square, so the sheet must be opaque across that span and fade
-  outside it. A circle big enough to reach the corners of a square is still
-  solid where it crosses the square's sides — precisely where a hard edge
-  shows. Intersecting a horizontal and a vertical gradient feathers all four
-  sides evenly.
-- **The feather has to stay local.** First attempt oversized the sheet to 128%
-  of the figure for a softer fade; the wash reached the hero card's bottom edge
-  and bleached the pale blue the sky is meant to end on. Settled at 108% with
-  the fade spent on the overhang — solid across 7%–93% of the figure, ~45px of
-  feather.
+| | result |
+| --- | --- |
+| Art frames, laptop, pot | **stable** — survive a 9-frame intersection intact |
+| Her face | **moves and reshapes** — the intersection loses it entirely |
+| Intersection ∩ union ratio | 0.501 across nine frames |
+| Union mask (covers every position) | smears white over ~4,100 background px per frame, 17% of the mask |
+| Live per-frame keying | exact; 3.5ms per frame at half resolution × 23.8fps ≈ 8.4% of a core |
 
-**A second defect surfaced underneath it.** The figure sat flush with the
-section's bottom — measured `gap: 0` — which was invisible until the frame began
-clipping 32px off that edge. With the sheet in place the clip cut through white,
-so the card's bottom edge sampled `#ffffff` from x≈0.4 to 0.65 against
-`#e0effd` everywhere else: a white notch in the card's silhouette. The hero
-column now carries `pb-12 sm:pb-16`, which puts the drawing 64px clear of the
-section bottom at ≥640 and 48px below it. Measured after: the bottom edge is
-uniform pale blue across its full width.
+A fixed mask therefore fixes the art frames exactly and cannot fix the face at
+all; only per-frame keying can, and it costs about a twelfth of a core for the
+whole time the hero is on screen.
 
-Verified on all three paths — 1280 with the video, 390 with the frame off, and
-reduced motion at 1280 where the poster `<img>` renders and the clip stays
-`inset(0px)`. `mask-composite: intersect` resolves in Chrome; the `-webkit-`
-`source-in` pair is kept alongside it for Safari.
+**The owner chose neither, and picked the sky instead:** `--hero-sky-foot` goes
+from `#dfeefd` to `#f2f7fd`. Because every enclosed white in the drawing renders
+in exactly that colour, lightening it is what makes the face read as white — no
+mask, no canvas, no runtime cost. Measured on the page afterwards: her face
+samples `#f0f6fa` and a frame interior `#f2f5fa`, both reading as white against
+the ink; the card's foot is `#f3f7fd` against the `#fefefe` gutter, so the
+frame's edge survives, fainter than before.
 
-Worth knowing for anyone who touches the sky again: the sky's foot colour and
-the drawing's whites are now coupled. Darkening the foot further does not just
-tint the sky — it changes what the sheet has to cover, and the sheet's extent is
-bounded by the card's bottom edge.
+The trade is real and was made with it stated: the hero ends on a much fainter
+blue than the 2026-08-25 request first asked for. **This token is now
+load-bearing in a way its name does not suggest** — darkening it does not just
+deepen the sky, it tints the drawing's face and frames, and no fixed mask can
+undo that.
