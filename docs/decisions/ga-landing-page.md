@@ -1406,3 +1406,49 @@ almost touch the edge, at 128px she floats in a pocket of empty sky. `pb-16
 md:pb-24` was chosen, with the larger step landing at `md` because that is where
 the frame itself starts. Ink-to-edge after, measured at each width: 106px at
 1280, 118px at 900, 106px at 700, 92px at 390.
+
+### Follow-up: Real schools becomes illustrated rows, and loses its band (2026-08-25)
+
+Owner, pointing at the dx-harness landing they built
+(<https://github.com/transformteamsg/dx-harness>): run this section as
+illustration-and-text side by side, the way that page does it. Clips to follow;
+placeholders for now. Then, mid-build: drop the light blue background.
+
+**The pattern was read from the source, not the screenshot** —
+`app/(landing)/page.tsx` and `components/landing/illo-video.tsx` in that repo.
+Four things in it are load-bearing and are kept exactly:
+
+- **DOM order never flips.** The clip is always the first child, so below `lg`
+  every row reads clip-then-words in one rhythm. The alternation is purely
+  visual (`lg:order-2`), which also keeps the reading order sane for anyone not
+  seeing the layout. Verified at 700px: one column, `order: 0` on all three.
+- **The seam follows the flip.** `lg:border-l` when the clip has moved right,
+  `lg:border-r` when it has not, so the hairline always sits between the two
+  cells instead of jumping side to side. Measured: seams read R, L, R down the
+  three rows against orders 0, 2, 0.
+- **Playback follows visibility.** The clip runs only while at least half of it
+  is on screen, so three clips never decode at once, and `prefers-reduced-motion`
+  stops it entirely with the poster resting. Their decision record notes the same
+  WCAG 2.2.2 cost we recorded for the hero on the same day — no per-clip stop for
+  a reader without the OS preference — and the trade is taken the same way.
+- **`mix-blend-multiply` on the clip**, which is why the band had to go anyway.
+  Multiply maps white to the backdrop, so on the old `--memo-section-bg` tint
+  every white inside the drawings — faces, paper, screens — would have taken the
+  tint. That is precisely the hero defect from earlier today. The owner's call to
+  drop the band and the blend's requirement point the same way; the rows now sit
+  on the page ground.
+
+**The quotes are untouched.** They are verbatim staff copy under a sync contract
+with `landing-v2.ts`, so the clip mapping is keyed by testimonial id in the
+component rather than added to the dataset — media is not part of that contract,
+and `landing-ga-page.test.ts` still passes unchanged.
+
+**Placeholders hold the clip's exact geometry** (`aspect-square`, `max-w-80`) and
+print the path each row is waiting for, so landing a file cannot move the layout
+and nobody has to guess where it goes: `/schools/<testimonial-id>.mp4`. One note
+for the export, recorded because it will otherwise cost a round trip: `.mov` is a
+QuickTime container that Chrome and Firefox will not play. H.264 in `.mp4`, or
+VP9 in `.webm`.
+
+`--memo-section-bg` stays in the tokens — the v1 landing's `schools-today.tsx`
+still uses it.
