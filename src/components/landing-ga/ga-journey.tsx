@@ -167,14 +167,6 @@ function JourneyActBlock({ act, index, enhanced }: JourneyActBlockProps) {
           <Vignette animate={false} />
         </div>
       )}
-
-      {act.capabilityLabel === null ? null : (
-        <p className="mt-6 border-t border-[color:var(--paper-rule)] pt-4 text-sm leading-5 text-[color:var(--paper-muted)] italic">
-          <strong className="font-semibold text-[color:var(--paper-ink)] not-italic">
-            {act.capabilityLabel}
-          </strong>
-        </p>
-      )}
     </article>
   )
 }

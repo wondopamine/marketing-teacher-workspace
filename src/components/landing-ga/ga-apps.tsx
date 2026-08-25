@@ -46,9 +46,6 @@ export function GaApps() {
             >
               {gaPageCopy.apps.heading}
             </h2>
-            <p className="mt-5 font-body text-base leading-[1.7] text-balance text-[color:var(--paper-muted)]">
-              {gaPageCopy.apps.lede}
-            </p>
           </div>
         </RevealOnScroll>
 

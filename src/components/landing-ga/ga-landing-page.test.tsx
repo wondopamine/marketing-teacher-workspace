@@ -6,6 +6,7 @@ import { GaLandingPage } from "./ga-landing-page"
 
 import {
   gaAudiences,
+  gaCapabilities,
   gaJourneyActs,
   gaTestimonials,
 } from "@/content/landing-ga-page"
@@ -47,15 +48,23 @@ describe("GaLandingPage", () => {
     }
   })
 
-  it("renders every journey act with its moment and capability sign-off", () => {
+  it("tells each journey act in its own words, never by feature name", () => {
+    // The acts are the teacher's story; naming the capability that closes one
+    // sold the product mid-sentence (owner, 2026-08-25). None of the four
+    // public labels appears anywhere in the story copy, so any of them turning
+    // up in an act block means the sign-off line came back.
     const { container } = render(<GaLandingPage />)
+    const labels = gaCapabilities.map((capability) => capability.publicLabel)
     for (const act of gaJourneyActs) {
       const block = container.querySelector(`#act-${act.id}`)
       expect(block, act.id).not.toBeNull()
       expect(block?.textContent).toContain(act.moment)
       expect(block?.textContent).toContain(act.headline)
-      if (act.capabilityLabel !== null) {
-        expect(block?.textContent).toContain(act.capabilityLabel)
+      expect(block?.textContent).toContain(act.body)
+      for (const label of labels) {
+        expect(block?.textContent, `${act.id} names ${label}`).not.toContain(
+          label
+        )
       }
     }
   })

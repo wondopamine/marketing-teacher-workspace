@@ -66,7 +66,7 @@ export const homepageV1Contract = {
         type: "capabilities",
         state: "visible",
         fields: {
-          heading: "Four ways to move everyday work forward",
+          heading: "Start with the work you do every day",
           items: [
             {
               id: "e3e3e742-0940-4c73-955c-7f9d1fa2eb17",

@@ -1228,3 +1228,56 @@ first. If it needs to come back, the cheapest form that satisfies the criterion
 is a single control that sets the same state `prefers-reduced-motion` does —
 swap the video for its poster and pause the sky — rather than the video-only
 toggle that was here.
+
+### Follow-up: the capability section stops counting, and the acts stop naming features (2026-08-25)
+
+Owner, on the capability section's wording: *"given TW is beyond the 4 major
+JTBDs of the teachers, I want to reframe the wordings here"* — and render the
+heading only.
+
+**"Four ways to move everyday work forward" is retired.** The number was the
+problem: it read as a claim about the size of the product, and Teacher Workspace
+is not four things. The heading is now **"Start with the work you do every
+day"** — the four items are where a teacher starts, not the boundary of what is
+there.
+
+Written against Google's developer documentation style guide, which the owner
+named as the reference. Four of its rules decide this line:
+
+- *"Don't use numbers in headings to indicate a sequence."* The count goes.
+- *"For a task-based heading, start with a bare infinitive"* — "Start", not
+  "Starting"; the guide asks that `-ing` forms never open a heading.
+- *"Use second person: 'you' rather than 'we.'"* The old lede was about us
+  ("Teacher Workspace brings related capabilities into one product"); the new
+  heading is about the reader's day.
+- *"Be conversational and friendly without being frivolous"*, avoiding excessive
+  claims. "Move everyday work forward" was a claim with nothing under it.
+
+Sentence case, present tense and active voice were already right and stay.
+
+**The lede is deleted**, not relocated: `capabilitiesDocument.requireBody()` is
+no longer read and the paragraph is out of `05-capabilities.mdx`. It said the
+same thing twice — "each capability supports a distinct part of a teacher's
+work" is the grid restated in prose — and it carried the framing the owner is
+rejecting. `audiences` was already heading-only, so this follows a shape the
+page has. The CMS `capabilities` section never had a lede field, which is its
+own evidence the paragraph was page chrome rather than governed copy.
+
+**The journey acts stop naming the capability that closes them** (owner, on the
+"You understand / See each student holistically." act): the rule and the
+**Student Insights** line under each act's body are gone, and
+`capabilityLabel`/`actCapabilityCopyIds` are removed from the GA content model.
+The acts are the teacher's story; ending each one on a product noun sold the
+feature mid-sentence. The mapping survives where it is actually load-bearing —
+`capabilityCopyIds` in `landing-v2.ts` still ties each capability to its copy
+block for the governance contract.
+
+Guarded rather than trusted: `ga-landing-page.test.tsx` now asserts that no act
+block contains any of the four public labels. None of them appears anywhere in
+`03-story.mdx`, so the assertion is not merely tautological — if the sign-off
+line comes back, it fails.
+
+`src/cms/templates/homepage-v1.server.ts` carries the new heading too. That
+contract pins the approved teacher preview and `homepage-v1.test.ts` fails on
+drift, which is how this change was caught. Section and item IDs are untouched,
+so colleague comments on that page survive the edit.

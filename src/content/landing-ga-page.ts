@@ -79,39 +79,21 @@ const momentKeys = {
  * screen, so Behaviour/Family details can never appear on the public page.
  */
 
-/**
- * Which capability quietly closes each act, named by its copy block in
- * `05-capabilities.mdx` so the public label stays PM-editable there.
- */
-const actCapabilityCopyIds = {
-  promise: null,
-  notice: "student-insights",
-  "next-steps": "next-step",
-  words: "message-drafting",
-  "family-and-record": "posts",
-} as const satisfies Record<GaJourneyActId, string | null>
-
 export type GaJourneyAct = {
   readonly id: GaJourneyActId
   readonly moment: string
   readonly headline: string
   readonly body: string
-  readonly capabilityLabel: string | null
 }
 
 export const gaJourneyActs: ReadonlyArray<GaJourneyAct> = gaJourneyActIds.map(
   (id) => {
     const copy = itemCopy(storyDocument, id)
-    const capabilityCopyId = actCapabilityCopyIds[id]
     return {
       id,
       moment: storyDocument.text(momentKeys[id]),
       headline: copy.heading,
       body: copy.body,
-      capabilityLabel:
-        capabilityCopyId === null
-          ? null
-          : (capabilitiesDocument.item(capabilityCopyId).label ?? null),
     }
   }
 )
@@ -245,7 +227,6 @@ export const gaPageCopy = {
   },
   apps: {
     heading: capabilitiesDocument.requireHeading(),
-    lede: capabilitiesDocument.requireBody(),
   },
   audiences: {
     heading: audiencesDocument.requireHeading(),
