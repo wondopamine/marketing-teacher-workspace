@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router"
 
 import type { PublicPageData } from "@/server/public-page"
-import { SiteFooter } from "@/components/landing/footer"
-import { ScrollChoreography } from "@/components/landing/scroll-choreography/scroll-choreography"
+import { GaLandingPage } from "@/components/landing-ga/ga-landing-page"
+import { gaPageCopy } from "@/content/landing-ga-page"
 import { CmsPublishedPage } from "@/components/public/cms-public-page"
 import { PublicPageMessage } from "@/components/public/public-page-message"
 import {
@@ -30,6 +30,10 @@ export function publicHomeHead(data: PublicPageData | undefined) {
     }
   }
   return {
+    meta: [
+      { title: gaPageCopy.meta.title },
+      { name: "description", content: gaPageCopy.meta.description },
+    ],
     links: [
       {
         rel: "preload",
@@ -75,12 +79,5 @@ function HomePage() {
     )
   }
 
-  return (
-    <>
-      <main id="main" className="paper-page">
-        <ScrollChoreography />
-      </main>
-      <SiteFooter />
-    </>
-  )
+  return <GaLandingPage />
 }

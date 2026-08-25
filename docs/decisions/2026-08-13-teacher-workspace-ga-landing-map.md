@@ -102,3 +102,18 @@ interaction quality.
 | CMS | One append-only draft save after gates clear |
 | Preserved | Stable targets, all comment states, `/`, production aliases |
 | Deferred | Visual branding, imagery, motion, interactions, launch publication |
+
+## Amendment — 2026-08-20 (GA landing build, design review round 2)
+
+Two acceptance rows are reconciled against the build on `ga-landing-design`:
+
+- **Proof** ("One publicly approved Posts testimonial"): superseded in count by
+  the builder's 2026-08-20 direction (three curated verbatims, issue #3's
+  "kept brief" format) and in approval state by the ADR-0003 addendum — the
+  quotes render as proposed on unmerged review builds only; per-quote
+  `publicationApproved` (ticket #10) remains the publication gate.
+- **Product truth** ("Capability-owner-confirmed GA claims only"): unchanged
+  as the publication bar. The branch build presents AI next-step guidance
+  (a Release-2 flag-gated state, recorded in `content/screens.mdx` and
+  `docs/decisions/ga-landing-page.md`) as proposed content; ticket #6's
+  claims register must clear before merge.

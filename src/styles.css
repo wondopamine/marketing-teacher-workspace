@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
 @import "@fontsource-variable/plus-jakarta-sans";
 @import "@radix-ui/colors/mauve.css";
 @import "@radix-ui/colors/mauve-dark.css";
@@ -98,8 +97,34 @@
   --sidebar-ring: var(--blue-8);
 
   --nav-surface: rgb(255 255 255 / 0.8);
+  /* The centred GA nav cluster: opaque-ish pills on a softer plate, so the
+     4px seams between pills stay readable over the pale hero sky. */
+  --nav-pill: rgb(255 255 255 / 0.92);
+  --nav-pill-hover: rgb(255 255 255 / 1);
+  --nav-plate: rgb(255 255 255 / 0.38);
   --brand-orbit: var(--cyan-7);
-  --paper: #f6f3eb;
+  /* The page ground. It used to match the foot of the hero sky so the two met
+     with no visible seam (product owner, 2026-08-24); since the hero retracts
+     into a framed card and its sky now settles on pale blue rather than white
+     (owner, 2026-08-25), this is the colour of the gutter *around* the hero,
+     and the seam is the point. */
+  --paper: #fefefe;
+  /* The foot of the hero sky. The artwork in /public/hero/ is locked and fades
+     to #fdfdfd by ~75% of its height; this is laid over that tail so the sky
+     settles on a pale blue instead of washing out to white. Kept as channels so
+     the ramp can vary alpha without a second colour.
+
+     The exact value is load-bearing, and not for the reason it looks. The
+     teacher illustration over it is composited with `mix-blend-multiply`, which
+     maps white to the backdrop — so every enclosed white in the drawing (her
+     face, the frames on the wall, the laptop) renders in *this* colour. At
+     #dfeefd they read as tinted and the face looked transparent; #f2f7fd is
+     still blue against the #fefefe page around the hero card but close enough
+     to white that the drawing reads as drawn on paper (owner, 2026-08-25).
+     Darkening this makes the face blue again — separating an enclosed white
+     from the outside white is a flood fill, not a colour test, and her face
+     moves too much across the loop for one fixed mask to cover it. */
+  --hero-sky-foot: 242 247 253;
   --paper-ink: #1a1a1a;
   --paper-muted: #5f6f76;
   --paper-rule: rgb(14 23 41 / 0.08);
@@ -117,7 +142,7 @@
   --audience-mint: #c8e8d2;
   --audience-sky: #d6e2f7;
 
-  --footer-bg: #f6f3eb;
+  --footer-bg: #fefefe;
 
   /* Polish tokens — kept here so component-level utilities stay tight
        and reusable hover/shadow rhythms don't drift apart. */
@@ -211,18 +236,41 @@
     background-color: var(--paper-card);
   }
 
+  /* The locked sky artwork, with a pale-blue tail laid over its lower half so
+     the hero ends on sky rather than on white (owner, 2026-08-25). The
+     gradient is listed first, so it paints over the image; the drifting cloud
+     <img>s are separate elements and sit above both. The artwork itself is
+     untouched. */
   .hero-sky-bg {
-    background-image: image-set(
-      url("/hero/hero-bg.avif") type("image/avif"),
-      url("/hero/hero-bg.webp") type("image/webp")
-    );
-    background-image: -webkit-image-set(
-      url("/hero/hero-bg.avif") type("image/avif"),
-      url("/hero/hero-bg.webp") type("image/webp")
-    );
-    background-size: cover;
-    background-position: top center;
-    background-repeat: no-repeat;
+    background-image:
+      linear-gradient(
+        to bottom,
+        rgb(var(--hero-sky-foot) / 0) 32%,
+        rgb(var(--hero-sky-foot) / 0.7) 66%,
+        rgb(var(--hero-sky-foot) / 1) 100%
+      ),
+      image-set(
+        url("/hero/hero-bg.avif") type("image/avif"),
+        url("/hero/hero-bg.webp") type("image/webp")
+      );
+    background-image:
+      linear-gradient(
+        to bottom,
+        rgb(var(--hero-sky-foot) / 0) 32%,
+        rgb(var(--hero-sky-foot) / 0.7) 66%,
+        rgb(var(--hero-sky-foot) / 1) 100%
+      ),
+      -webkit-image-set(
+        url("/hero/hero-bg.avif") type("image/avif"),
+        url("/hero/hero-bg.webp") type("image/webp")
+      );
+    background-size:
+      100% 100%,
+      cover;
+    background-position:
+      top center,
+      top center;
+    background-repeat: no-repeat, no-repeat;
   }
 
   .nav-pill {
@@ -232,13 +280,46 @@
   }
 }
 
+/* One section per view is done with section *sizing* alone — no scroll-snap
+   (product owner, 2026-08-24, after watching it grab). `y proximity` was
+   tried and removed: CSS exposes no snap strength, and its pull was strong
+   enough to haul a half-entered section to centre against the reader. The
+   reference's anchored feel does not come from snap either — it free-scrolls
+   with inertia (Lenis) over full-viewport sections. Full-viewport sections are
+   the part that carries; the rest is the browser's own scrolling. */
+
+/* Reduced motion unpins the reveal: with no scroll-driven swap the two beats
+   must not sit stacked in one grid cell, and a two-viewport section with a
+   pinned stage would otherwise scroll past a statement that never changes.
+   The component already renders the flowing composition in this case; this
+   collapses the geometry to match it. */
+@media (prefers-reduced-motion: reduce) {
+  /* `relative`, not `static`: unpinning must not remove the stage's
+     containing block. It did, and the reveal's absolute fragment layer
+     escaped to the document and rendered over the journey's copy (design
+     review, 2026-08-24). The fragments are no longer drawn on this path at
+     all, and the stage stays a containing block regardless. */
+  .ga-reveal-stage {
+    position: relative;
+    height: auto;
+    padding-block: 5rem;
+  }
+
+  /* The second beat's snap rest exists only for the swap. Unpinned, it would
+     be a viewport of empty page under the statement. */
+  .ga-reveal-rest {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .review-pin {
     animation: none;
   }
 }
 
-/* Ambient cloud drift — used by the static-fallback hero. Paired with
+/* Ambient cloud drift — used by the static-fallback hero and, at the slower
+   GA pace below, by the GA hero. Paired with
    `animation-direction: alternate` so the browser ping-pongs A↔B forever
    with no seam. Translate-only keeps it on the GPU; ease-in-out gives the
    gentle accel/decel of wind-blown drift. The global prefers-reduced-motion
@@ -268,6 +349,57 @@
   }
 }
 
+/* GA hero sky. The v1 hero's drift, slowed to roughly half its pace (user,
+   2026-08-24): these clouds are larger and sit beside the copy, so the same
+   amplitude over a longer period is what reads as a peaceful sky rather than
+   weather. Different periods and a negative delay on the second keep the two
+   from ever moving in unison. The sky runs unattended (owner, 2026-08-25) —
+   the hero's Pause control is gone, so the reduced-motion reset below is the
+   only thing that stops it. */
+.ga-cloud-a {
+  animation: cloud-drift-a 18s cubic-bezier(0.455, 0.03, 0.515, 0.955) 0s
+    infinite alternate;
+}
+
+.ga-cloud-b {
+  animation: cloud-drift-b 26s cubic-bezier(0.455, 0.03, 0.515, 0.955) -7s
+    infinite alternate;
+}
+
+/* The hero is full-bleed at rest and retracts into a rounded card once the
+   page starts moving — the mechanic read off lassie.ai on 2026-08-25 rather
+   than inferred: `clip-path: inset(0)` → `inset(32px round 64px)` on a plain
+   "scrolled past 100px" boolean, over 1s of ease-out-quint, reversing when the
+   reader returns to the top.
+
+   `clip-path` is the whole trick. The section's box never changes size, so
+   nothing reflows and the frame costs a paint, not a layout — which is why the
+   reference animates the clip rather than width, padding or scale. */
+.ga-hero-frame {
+  clip-path: inset(0);
+}
+
+/* Below md the hero stays full-bleed: a 32px gutter on a 375px screen is a
+   third of the margin the copy already has, so the frame reads as a mistake
+   rather than as a card. Reduced motion holds the same still state — the frame
+   is decoration, and the page is complete without it. */
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .ga-hero-frame {
+    transition: clip-path 1s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: clip-path;
+  }
+
+  .ga-hero-frame.is-framed {
+    clip-path: inset(20px round 40px);
+  }
+}
+
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .ga-hero-frame.is-framed {
+    clip-path: inset(32px round 64px);
+  }
+}
+
 @keyframes scroll-hint {
   0%,
   100% {
@@ -294,4 +426,26 @@
   .scroll-choreography-only {
     display: none !important;
   }
+}
+
+/* GA landing hero entrance — pure CSS so the server-rendered state is never
+   hidden: without JS the animation still plays to the settled composition,
+   and the global reduced-motion reset above disables it entirely. */
+@keyframes ga-fade-up {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: none;
+  }
+}
+
+.ga-fade-up {
+  animation: ga-fade-up 200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.ga-fade-up-late {
+  animation: ga-fade-up 300ms cubic-bezier(0.4, 0, 0.2, 1) 100ms both;
 }

@@ -7,6 +7,7 @@ import {
   getLandingPageV2Readiness,
   getLandingPageV2StructureIssues,
 } from "./landing-v2-readiness"
+import { landingDocuments } from "./landing-copy"
 import {
   audienceIds,
   capabilityIds,
@@ -170,12 +171,25 @@ describe("Landing Page v2 content contract", () => {
     ].join("\n")
     const lowered = narrative.toLowerCase()
 
-    expect(lowered).toContain("no attention tag")
-    expect(lowered).toContain("term update letter")
-    // The guidance screen exists but is flag-gated, so the narrative must
-    // disclaim its availability rather than claim it as a GA capability.
-    expect(lowered).toContain("release 2 capability flag")
-    expect(lowered).toContain("will not have it at general availability")
+    expect(lowered).toContain("which families have read")
+    // The public copy (headings and bodies) carries the CNT-4 illustrative
+    // disclosure instead of wireframe-audit framing; the flag-gated
+    // availability honesty lives in the internal slot labels, the screen
+    // catalog (content/screens.mdx), and the decision record
+    // (docs/decisions/ga-landing-page.md), never in marketing copy.
+    const publicCopy = landingPageV2Content.journey
+      .flatMap((act) => [act.headline, act.body])
+      .join("\n")
+      .toLowerCase()
+    expect(publicCopy).not.toContain("release 2")
+    expect(publicCopy).not.toContain("wireframe")
+    expect(publicCopy).not.toContain("synthetic")
+    expect(
+      landingDocuments.story.text("syntheticNote").toLowerCase()
+    ).toContain("synthetic")
+    expect(
+      readFileSync("content/screens.mdx", "utf8").toLowerCase()
+    ).toContain("release 2 capability flag")
 
     for (const rejectedTerm of [
       "xiao ming",
@@ -562,7 +576,6 @@ describe("Landing Page v2 content contract", () => {
       "product-claims",
       "synthetic-demo-approval",
       "testimonial-approval",
-      "audience-copy",
       "support-strategy",
     ])
     expect(codes).not.toContain("primary-cta")
