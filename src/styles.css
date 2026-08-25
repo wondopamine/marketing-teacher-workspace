@@ -355,6 +355,62 @@
     infinite alternate;
 }
 
+/* The sheet of paper under the hero drawing. The illustration is line work on
+   white and it is composited with `mix-blend-multiply`, which maps white to the
+   backdrop — so every white area in it (her face, the wall frames, the laptop,
+   the pot) shows whatever is behind the figure. That was invisible while the
+   sky's foot was #fdfdfd and became obvious the moment it turned pale blue.
+
+   The ink occupies 10%-90% of the source square (measured off
+   teacher-working-poster.webp), which leaves only a tenth of the frame to fade
+   in — too little, and the sheet reads as a card pasted on the sky. So it is
+   oversized slightly, to 108% of the figure, and the fade is spent on the
+   overhang: solid from 10% to 90% of the sheet, which is 7%-93% of the figure,
+   so every drawn mark still sits on opaque white while ~45px of feather runs
+   out into the sky. Bigger than this and the wash reaches the hero card's
+   bottom edge and bleaches the pale blue the sky is supposed to end on — the
+   sheet has to stay local to the drawing. Two linear masks intersected rather
+   than one radial: a circle large
+   enough to reach the corners of that square is still solid where it crosses
+   the square's sides, which is exactly where a hard edge would show. */
+.ga-hero-paper {
+  position: absolute;
+  inset: -4%;
+  background-color: #ffffff;
+  -webkit-mask-image:
+    linear-gradient(
+      to right,
+      transparent 0%,
+      #000 10%,
+      #000 90%,
+      transparent 100%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 10%,
+      #000 90%,
+      transparent 100%
+    );
+  mask-image:
+    linear-gradient(
+      to right,
+      transparent 0%,
+      #000 10%,
+      #000 90%,
+      transparent 100%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 10%,
+      #000 90%,
+      transparent 100%
+    );
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
 /* The hero is full-bleed at rest and retracts into a rounded card once the
    page starts moving — the mechanic read off lassie.ai on 2026-08-25 rather
    than inferred: `clip-path: inset(0)` → `inset(32px round 64px)` on a plain

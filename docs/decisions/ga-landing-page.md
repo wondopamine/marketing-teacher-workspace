@@ -1343,3 +1343,55 @@ visible seam*. The seam is now the point, and the token's comment says so.
 The teacher illustration clears the bottom inset with room to spare at 1280, so
 nothing of her is cropped by the frame. Not re-checked at every width — worth a
 glance in the next capture set.
+
+### Follow-up: the drawing gets a sheet of paper back under it (2026-08-25)
+
+Owner: the teacher's face is transparent — fill the face and the frames white.
+
+**This was a regression from the pale-blue sky foot, not a pre-existing bug.**
+The illustration is line work on white composited with `mix-blend-multiply`,
+and multiply maps white to whatever is behind it. Her face is `#ffffff` in the
+source (sampled from `teacher-working-poster.webp`), as are the wall frames, the
+laptop screen and the pot. While the sky's foot was `#fdfdfd` those areas
+multiplied to near-white and read as white. The moment the foot became pale
+blue, every one of them filled with sky.
+
+`.ga-hero-paper` puts a sheet of white back under the drawing for multiply to
+land on. Three details decide whether it works:
+
+- **Paint order, no isolation.** The sheet and the media are both positioned
+  with `z-index: auto`, so DOM order alone puts the media above the sheet, and
+  neither opens a stacking context that would cut the media off from the
+  backdrop it has to multiply with. `isolation: isolate` on the figure would
+  break it outright — multiply against an isolated, transparent group leaves
+  white as white, which is the white square the sheet exists to avoid.
+- **Two intersected linear masks, not a radial.** The ink occupies 10%–90% of
+  the source square, so the sheet must be opaque across that span and fade
+  outside it. A circle big enough to reach the corners of a square is still
+  solid where it crosses the square's sides — precisely where a hard edge
+  shows. Intersecting a horizontal and a vertical gradient feathers all four
+  sides evenly.
+- **The feather has to stay local.** First attempt oversized the sheet to 128%
+  of the figure for a softer fade; the wash reached the hero card's bottom edge
+  and bleached the pale blue the sky is meant to end on. Settled at 108% with
+  the fade spent on the overhang — solid across 7%–93% of the figure, ~45px of
+  feather.
+
+**A second defect surfaced underneath it.** The figure sat flush with the
+section's bottom — measured `gap: 0` — which was invisible until the frame began
+clipping 32px off that edge. With the sheet in place the clip cut through white,
+so the card's bottom edge sampled `#ffffff` from x≈0.4 to 0.65 against
+`#e0effd` everywhere else: a white notch in the card's silhouette. The hero
+column now carries `pb-12 sm:pb-16`, which puts the drawing 64px clear of the
+section bottom at ≥640 and 48px below it. Measured after: the bottom edge is
+uniform pale blue across its full width.
+
+Verified on all three paths — 1280 with the video, 390 with the frame off, and
+reduced motion at 1280 where the poster `<img>` renders and the clip stays
+`inset(0px)`. `mask-composite: intersect` resolves in Chrome; the `-webkit-`
+`source-in` pair is kept alongside it for Safari.
+
+Worth knowing for anyone who touches the sky again: the sky's foot colour and
+the drawing's whites are now coupled. Darkening the foot further does not just
+tint the sky — it changes what the sheet has to cover, and the sheet's extent is
+bounded by the card's bottom edge.
