@@ -1281,3 +1281,65 @@ line comes back, it fails.
 contract pins the approved teacher preview and `homepage-v1.test.ts` fails on
 drift, which is how this change was caught. Section and item IDs are untouched,
 so colleague comments on that page survive the edit.
+
+### Follow-up: the hero retracts into a frame, and its sky stops going white (2026-08-25)
+
+Owner, pointing at lassie.ai again: the hero should be full-bleed by default and
+shrink on scroll so the frame around it is visible, and the sky should end on a
+pale light blue instead of fading to white.
+
+**The mechanic was measured off the reference, not inferred** — the standing
+rule for this reference, and the thing that went wrong twice in round 4. What
+lassie.ai actually does:
+
+| scroll | `clip-path` on the hero's media wrapper |
+| --- | --- |
+| 0–100px | `inset(0px)` |
+| 101px and beyond | `inset(32px round 64px)` |
+
+with `transition: clip-path 1s cubic-bezier(0.22, 1, 0.36, 1)` and
+`will-change: clip-path`. Sampled at 0/100/101/105/110/120/140/150/160/180/200/
+300/500/700, and it reverses: back at scrollY 0 the clip returns to `inset(0px)`.
+
+Three things that matter fell out of the measurement:
+
+1. **It is a boolean, not a scrub.** The threshold is a flat 100px — "has this
+   page moved at all" — and the 1s ease-out-quint does all the work. There is no
+   scroll-linked interpolation to get wrong, and none of the motion-12 hazards
+   that have bitten this repo twice apply.
+2. **`clip-path`, not width, padding or scale.** The element's box never changes
+   size — measured 1280×633 at every sample — so the frame is a paint and never
+   a reflow. This is what keeps it inside the performance floor.
+3. **The top gutter is meant to scroll away.** Captured at scrollY 250, the
+   reference shows side gutters and a rounded bottom with the top corners
+   already off-screen. The frame is not a fixed border around the viewport; it
+   is a clip on a section that scrolls normally. Ours matches.
+
+Ours is `.ga-hero-frame` with the same geometry and easing at ≥1024, a smaller
+`inset(20px round 40px)` in the 768–1023 band, and no frame at all below 768 —
+a 32px gutter on a 375px screen is a third of the margin the copy already has,
+so it reads as a mistake rather than as a card. `prefers-reduced-motion` holds
+the full-bleed still state; the frame is decoration and the page is complete
+without it. **All four gated states were opened and measured**, per the round-4
+lesson that a breakpoint- or reduced-motion-gated override is a layout change
+and must be verified from the gated state: 1280 → `inset(32px round 64px)`,
+900 → `inset(20px round 40px)`, 700 and 390 → `inset(0px)`, reduced motion at
+1280 → `inset(0px)` with the poster rendered and no video mounted.
+
+**The sky's foot is now pale blue.** The artwork is locked, and it is genuinely
+the source of the white: sampled down `/hero/hero-bg.webp`, it runs `#a9d2fa` at
+the top through `#d6eafd` at 25% to `#fdfdfd` from about 75% down. Rather than
+touch a locked asset, `.hero-sky-bg` lays a `linear-gradient` over the image's
+tail — transparent to 32%, `--hero-sky-foot` at 0.7 by 66%, opaque at the
+bottom. The drifting clouds are separate `<img>` elements above both layers and
+are unaffected.
+
+Measured on the built page: the card's foot samples `#dfedfc` against a
+`#fefefe` gutter, so the frame's edge is a real boundary rather than an implied
+one. That inverts the reason `--paper` was set to `#fefefe` — it was chosen on
+2026-08-24 to match the sky's foot *so the hero would meet the page with no
+visible seam*. The seam is now the point, and the token's comment says so.
+
+The teacher illustration clears the bottom inset with room to spare at 1280, so
+nothing of her is cropped by the frame. Not re-checked at every width — worth a
+glance in the next capture set.

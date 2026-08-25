@@ -8,11 +8,25 @@ import { cn } from "@/lib/utils"
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)"
 
 /**
+ * How far the page has to move before the hero retracts into its frame. Read
+ * off lassie.ai rather than picked: its hero is still full-bleed at 100px and
+ * collapsed by 101px, so the trigger is a plain "has this page moved at all",
+ * not a proportion of the viewport.
+ */
+const FRAME_SCROLL_THRESHOLD_PX = 100
+
+/**
  * The peaceful hero (stakeholder feedback, 2026-08-21): copy on the locked
  * illustrated sky, and the hand-drawn teacher quietly working below the
  * fold — no product UI, no zoom. The animation is the looping illustration
  * video; `mix-blend-multiply` melts its white ground into the paper sky so
  * it reads as drawn on the page.
+ *
+ * The hero is full-bleed at rest and retracts into a rounded card as soon as
+ * the reader scrolls (owner, 2026-08-25, after lassie.ai). All of that lives in
+ * `.ga-hero-frame`: a `clip-path` inset that the section's box never feels, so
+ * the frame is a paint and not a reflow. This component only decides *when* —
+ * the geometry, the breakpoints and the reduced-motion still state are CSS.
  *
  * One ambient layer sits under the copy: the v1 hero's cloud drift, slowed
  * (`.ga-cloud-a` / `.ga-cloud-b`). The pointer-drawn ASCII field that used to
@@ -33,6 +47,7 @@ const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)"
 export function GaHero() {
   const hero = gaPageCopy.hero
   const [motionAllowed, setMotionAllowed] = useState(false)
+  const [framed, setFramed] = useState(false)
 
   useEffect(() => {
     const mq = window.matchMedia(REDUCED_MOTION_QUERY)
@@ -42,10 +57,34 @@ export function GaHero() {
     return () => mq.removeEventListener("change", update)
   }, [])
 
+  // Read on a frame rather than on every scroll event: this only ever flips a
+  // boolean, so coalescing a burst of events into one read costs nothing and
+  // keeps a fast wheel off the render path. `scrollY` needs no layout to read.
+  useEffect(() => {
+    let pending = 0
+    const read = () => {
+      pending = 0
+      setFramed(window.scrollY > FRAME_SCROLL_THRESHOLD_PX)
+    }
+    const onScroll = () => {
+      if (pending === 0) pending = requestAnimationFrame(read)
+    }
+    // Scroll position survives a reload, so the first read cannot assume zero.
+    read()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      if (pending !== 0) cancelAnimationFrame(pending)
+    }
+  }, [])
+
   return (
     <section
       aria-labelledby="ga-hero-title"
-      className="relative flex min-h-svh flex-col overflow-hidden"
+      className={cn(
+        "ga-hero-frame relative flex min-h-svh flex-col overflow-hidden",
+        framed && "is-framed"
+      )}
     >
       {/* Illustrated paper sky — the locked v1 hero world, unchanged. */}
       <div aria-hidden className="hero-sky-bg absolute inset-0 overflow-hidden">

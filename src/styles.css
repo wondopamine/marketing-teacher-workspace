@@ -103,10 +103,17 @@
   --nav-pill-hover: rgb(255 255 255 / 1);
   --nav-plate: rgb(255 255 255 / 0.38);
   --brand-orbit: var(--cyan-7);
-  /* Matches the foot of the hero sky gradient (/hero/hero-bg.*, which
-     resolves to #fefefe below ~70% height) so the hero meets the page with
-     no visible seam. Product owner, 2026-08-24. */
+  /* The page ground. It used to match the foot of the hero sky so the two met
+     with no visible seam (product owner, 2026-08-24); since the hero retracts
+     into a framed card and its sky now settles on pale blue rather than white
+     (owner, 2026-08-25), this is the colour of the gutter *around* the hero,
+     and the seam is the point. */
   --paper: #fefefe;
+  /* The foot of the hero sky. The artwork in /public/hero/ is locked and
+     fades to #fdfdfd by ~75% of its height; this is laid over that tail so the
+     sky settles on a pale blue instead of washing out to white. Kept as
+     channels so the ramp can vary alpha without a second colour. */
+  --hero-sky-foot: 223 238 253;
   --paper-ink: #1a1a1a;
   --paper-muted: #5f6f76;
   --paper-rule: rgb(14 23 41 / 0.08);
@@ -218,18 +225,41 @@
     background-color: var(--paper-card);
   }
 
+  /* The locked sky artwork, with a pale-blue tail laid over its lower half so
+     the hero ends on sky rather than on white (owner, 2026-08-25). The
+     gradient is listed first, so it paints over the image; the drifting cloud
+     <img>s are separate elements and sit above both. The artwork itself is
+     untouched. */
   .hero-sky-bg {
-    background-image: image-set(
-      url("/hero/hero-bg.avif") type("image/avif"),
-      url("/hero/hero-bg.webp") type("image/webp")
-    );
-    background-image: -webkit-image-set(
-      url("/hero/hero-bg.avif") type("image/avif"),
-      url("/hero/hero-bg.webp") type("image/webp")
-    );
-    background-size: cover;
-    background-position: top center;
-    background-repeat: no-repeat;
+    background-image:
+      linear-gradient(
+        to bottom,
+        rgb(var(--hero-sky-foot) / 0) 32%,
+        rgb(var(--hero-sky-foot) / 0.7) 66%,
+        rgb(var(--hero-sky-foot) / 1) 100%
+      ),
+      image-set(
+        url("/hero/hero-bg.avif") type("image/avif"),
+        url("/hero/hero-bg.webp") type("image/webp")
+      );
+    background-image:
+      linear-gradient(
+        to bottom,
+        rgb(var(--hero-sky-foot) / 0) 32%,
+        rgb(var(--hero-sky-foot) / 0.7) 66%,
+        rgb(var(--hero-sky-foot) / 1) 100%
+      ),
+      -webkit-image-set(
+        url("/hero/hero-bg.avif") type("image/avif"),
+        url("/hero/hero-bg.webp") type("image/webp")
+      );
+    background-size:
+      100% 100%,
+      cover;
+    background-position:
+      top center,
+      top center;
+    background-repeat: no-repeat, no-repeat;
   }
 
   .nav-pill {
@@ -323,6 +353,40 @@
 .ga-cloud-b {
   animation: cloud-drift-b 26s cubic-bezier(0.455, 0.03, 0.515, 0.955) -7s
     infinite alternate;
+}
+
+/* The hero is full-bleed at rest and retracts into a rounded card once the
+   page starts moving — the mechanic read off lassie.ai on 2026-08-25 rather
+   than inferred: `clip-path: inset(0)` → `inset(32px round 64px)` on a plain
+   "scrolled past 100px" boolean, over 1s of ease-out-quint, reversing when the
+   reader returns to the top.
+
+   `clip-path` is the whole trick. The section's box never changes size, so
+   nothing reflows and the frame costs a paint, not a layout — which is why the
+   reference animates the clip rather than width, padding or scale. */
+.ga-hero-frame {
+  clip-path: inset(0);
+}
+
+/* Below md the hero stays full-bleed: a 32px gutter on a 375px screen is a
+   third of the margin the copy already has, so the frame reads as a mistake
+   rather than as a card. Reduced motion holds the same still state — the frame
+   is decoration, and the page is complete without it. */
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .ga-hero-frame {
+    transition: clip-path 1s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: clip-path;
+  }
+
+  .ga-hero-frame.is-framed {
+    clip-path: inset(20px round 40px);
+  }
+}
+
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .ga-hero-frame.is-framed {
+    clip-path: inset(32px round 64px);
+  }
 }
 
 @keyframes scroll-hint {
