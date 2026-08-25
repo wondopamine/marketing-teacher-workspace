@@ -1190,3 +1190,41 @@ were about those link rows and nothing else: the A11Y-1 contrast measurement
 (5.32:1 after `opacity-80` came off) and the LAY-6 shared link baseline at
 y≈699. Neither has a surface left to fail on. The section-inset half of LAY-6 is
 untouched and stays open.
+
+### Follow-up: the hero drops its cursor trail and its Pause control (2026-08-25)
+
+Owner, direct, two changes to the hero: remove the cursor interaction, and
+remove the Pause button — the illustration should simply loop.
+
+**The ASCII pointer trail is deleted**, not disabled. `ga-hero-ink.tsx` and its
+test are gone and `GaHeroInk` no longer mounts in the sky layer. Nothing of it
+survives to be re-enabled; the reference reading that produced it (the 11×12px
+cell, the `_ - > o 0` density ramp, occluded-not-cleared) stays recorded above
+for whoever wants the technique, but the hero carries no pointer-driven layer
+now. Removing it takes a `<canvas>`, a rAF loop and two pointer listeners off
+the hero — a small unmeasured saving that runs the other way from the glyph
+filter added yesterday.
+
+**The Pause control is deleted, and this is a WCAG 2.2.2 regression** — recorded
+plainly rather than argued away. The hero video is 5.21s (read from the mvhd
+atom) and `loop`s indefinitely, and the two cloud layers are infinite CSS
+animations. SC 2.2.2 (Pause, Stop, Hide — Level **A**) asks for a mechanism, *in
+the content*, to pause moving content that starts automatically and runs beyond
+five seconds. That mechanism was the button, and it froze the video and the sky
+together; `.ga-hero-motion-paused` went with it.
+
+What is left is `prefers-reduced-motion`: that path still renders the still
+poster instead of the video, and the global reduced-motion reset still
+neutralises the cloud keyframes. It is a real mitigation and it covers the
+visitors most likely to need it, but it is an operating-system preference, not a
+mechanism in the page, so it does not satisfy the success criterion as written.
+A visitor who is distracted by looping motion but has not set that preference
+now has no way to stop it.
+
+This is the owner's call and it is made. It is logged here because the round-3
+review graded accessibility 100 and this page is a government surface: anyone
+running an audit against WCAG 2.1 A will find it, and should find this entry
+first. If it needs to come back, the cheapest form that satisfies the criterion
+is a single control that sets the same state `prefers-reduced-motion` does —
+swap the video for its poster and pause the sky — rather than the video-only
+toggle that was here.

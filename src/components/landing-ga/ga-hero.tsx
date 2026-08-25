@@ -1,6 +1,4 @@
-import { useEffect, useRef, useState } from "react"
-
-import { GaHeroInk } from "./ga-hero-ink"
+import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { TEACHER_WORKSPACE_APP_URL } from "@/content/landing"
@@ -16,25 +14,25 @@ const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)"
  * video; `mix-blend-multiply` melts its white ground into the paper sky so
  * it reads as drawn on the page.
  *
- * Two ambient layers sit under the copy (user, 2026-08-24): the v1 hero's
- * cloud drift, slowed (`.ga-cloud-a` / `.ga-cloud-b`), and a field of white
- * ASCII characters the pointer draws through (`GaHeroInk`). Both live in the
- * sky layer, so this column paints over them and cuts them to its own shapes
- * — the field is occluded by the copy rather than cleared around it. The
- * Pause control stops the video and the drift together; the trail needs no
- * control, since it only ever moves while the visitor is moving the pointer.
+ * One ambient layer sits under the copy: the v1 hero's cloud drift, slowed
+ * (`.ga-cloud-a` / `.ga-cloud-b`). The pointer-drawn ASCII field that used to
+ * sit beside it is gone (owner, 2026-08-25) — the hero carries no cursor
+ * interaction now.
+ *
+ * The loop runs unattended (owner, 2026-08-25): no Pause control, so the video
+ * and the sky simply run. `prefers-reduced-motion` is still honoured, and it is
+ * now the only way to stop either — the reduced-motion visitor gets the still
+ * frame and a still sky, and everyone else gets motion they cannot turn off.
+ * That is a known WCAG 2.2.2 gap, recorded in the decision record.
  *
  * Entrances stay pure CSS keyframes (`ga-fade-up`), so the server-rendered
  * markup never hides content. The server (and no-JS, and reduced-motion)
  * renders the still frame; the video only mounts after hydration when the
- * visitor allows motion, and a visible control can pause the looping video
- * (WCAG 2.2.2 — moving content longer than 5s must be pausable).
+ * visitor allows motion.
  */
 export function GaHero() {
   const hero = gaPageCopy.hero
   const [motionAllowed, setMotionAllowed] = useState(false)
-  const [paused, setPaused] = useState(false)
-  const videoRef = useRef<HTMLVideoElement | null>(null)
 
   useEffect(() => {
     const mq = window.matchMedia(REDUCED_MOTION_QUERY)
@@ -44,31 +42,15 @@ export function GaHero() {
     return () => mq.removeEventListener("change", update)
   }, [])
 
-  const togglePaused = () => {
-    const video = videoRef.current
-    if (!video) return
-    if (video.paused) {
-      void video.play()
-      setPaused(false)
-    } else {
-      video.pause()
-      setPaused(true)
-    }
-  }
-
   return (
     <section
       aria-labelledby="ga-hero-title"
-      className={cn(
-        "relative flex min-h-svh flex-col overflow-hidden",
-        paused && "ga-hero-motion-paused"
-      )}
+      className="relative flex min-h-svh flex-col overflow-hidden"
     >
       {/* Illustrated paper sky — the locked v1 hero world, unchanged. */}
       <div aria-hidden className="hero-sky-bg absolute inset-0 overflow-hidden">
         <HeroCloud className="ga-cloud-a top-[4%] left-[74%] w-[20%]" />
         <HeroCloud className="ga-cloud-b top-[20%] -left-[6%] w-[34%]" />
-        <GaHeroInk />
       </div>
 
       <div className="relative mx-auto flex w-full max-w-[1024px] flex-1 flex-col items-center px-5 pt-36 text-center sm:px-8 sm:pt-40">
@@ -115,7 +97,6 @@ export function GaHero() {
                 muted
                 playsInline
                 poster="/hero/teacher-working-poster.webp"
-                ref={videoRef}
                 src="/hero/teacher-working.mp4"
                 width={624}
               />
@@ -129,15 +110,6 @@ export function GaHero() {
                 width={624}
               />
             )}
-            {motionAllowed ? (
-              <button
-                className="absolute -right-2 -bottom-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-[color:var(--paper-rule-strong)] bg-[color:var(--paper-card)]/80 px-4 font-body text-sm leading-5 font-medium text-[color:var(--paper-ink)] backdrop-blur-sm transition-colors duration-200 ease-out hover:bg-[color:var(--paper-card)] focus-visible:ring-3 focus-visible:ring-primary focus-visible:outline-none sm:-right-8"
-                onClick={togglePaused}
-                type="button"
-              >
-                {paused ? "Play animation" : "Pause animation"}
-              </button>
-            ) : null}
           </figure>
         </div>
       </div>

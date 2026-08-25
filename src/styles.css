@@ -312,9 +312,9 @@
    2026-08-24): these clouds are larger and sit beside the copy, so the same
    amplitude over a longer period is what reads as a peaceful sky rather than
    weather. Different periods and a negative delay on the second keep the two
-   from ever moving in unison. The hero's Pause control freezes the sky along
-   with the looping illustration, so one control stops all of the hero's
-   automatic motion (WCAG 2.2.2). */
+   from ever moving in unison. The sky runs unattended (owner, 2026-08-25) —
+   the hero's Pause control is gone, so the reduced-motion reset below is the
+   only thing that stops it. */
 .ga-cloud-a {
   animation: cloud-drift-a 18s cubic-bezier(0.455, 0.03, 0.515, 0.955) 0s
     infinite alternate;
@@ -323,11 +323,6 @@
 .ga-cloud-b {
   animation: cloud-drift-b 26s cubic-bezier(0.455, 0.03, 0.515, 0.955) -7s
     infinite alternate;
-}
-
-.ga-hero-motion-paused .ga-cloud-a,
-.ga-hero-motion-paused .ga-cloud-b {
-  animation-play-state: paused;
 }
 
 @keyframes scroll-hint {
