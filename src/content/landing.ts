@@ -1,41 +1,131 @@
+import type { StageCopyContent } from "@/components/landing/scroll-choreography/types"
+import { siteConfig } from "@/config/site"
+
+export const TEACHER_WORKSPACE_APP_URL = siteConfig.links.product
+
 export const navItems = [
   { label: "Features", href: "#features" },
-  { label: "Testimonials", href: "#testimonials" },
-]
+  { label: "Testimonials", href: "#schools" },
+  { label: "Use cases", href: "#audiences" },
+] as const
 
-export const heroCopy = {
-  headline: "See every student's full picture.",
-  headlineSecond: "One screen.",
-  body: "Your plan, classes, grading queue, and the parent email you have been meaning to send, all in one calm place.",
-  emailPlaceholder: "Enter your school email",
-  cta: "Start",
-  ctaHref: "https://teacherworkspace-alpha.vercel.app/students",
+export const siteCtaCopy = {
+  primary: "Get started",
+  access: "Only accessible on MOE-issued devices (SSoE)",
+} as const
+
+export const stages: ReadonlyArray<StageCopyContent> = [
+  {
+    id: "hero",
+    copy: {
+      headline: "See the full picture of every student",
+      description:
+        "View key student data in one view. Save hours on scattered data.",
+    },
+  },
+  {
+    id: "wow",
+    copy: {},
+  },
+  {
+    id: "docked",
+    copy: {
+      kicker: "STUDENT INSIGHTS",
+      heading: "Spot the pattern.\nEarly.",
+      paragraph:
+        "Find the cohort in seconds — the moment it changes, you'll know.",
+      bullets: [
+        {
+          title: "Quick filters",
+          body: "Low attendance, low mood, FAS, learning support — identify students in seconds",
+        },
+        {
+          title: "Saved groups",
+          body: "Track and monitor groups of students easily",
+        },
+        {
+          title: "One source of truth",
+          body: "Form Teachers, Year Heads and School Leaders — same view, same evidence (data access control applies)",
+        },
+      ],
+      cta: { label: "Take a closer look", href: TEACHER_WORKSPACE_APP_URL },
+    },
+  },
+] as const
+
+export type SchoolMemo = {
+  readonly number: string
+  readonly tape: 1 | 2 | 3
+  readonly quote: string
+  readonly body: string
+  readonly role: string
+  readonly school: string
 }
 
-export const productCopy = {
-  kicker: "A calmer teaching day",
-  headline: "One tab for the work around teaching.",
-  body: "See today's classes, take attendance, clear the grading queue, message home, and pull tomorrow's lesson materials without opening seven different tools.",
-  cta: "See today's workspace",
-}
+export const schoolsTodayCopy = {
+  heading: "Real schools. Real time saved.",
+  subheading:
+    "Pilot schools shaped what Teacher Workspace does. Three notes from the people using it.",
+  cases: [
+    {
+      number: "Note · 01",
+      tape: 1,
+      quote:
+        "“One filter, one shortlist. The bursary list takes minutes now, not an afternoon.”",
+      body: "FAS, results, offences and Cockpit reports — all in one saved view. Fewer steps. Fewer errors. Hours back.",
+      role: "— Year Heads",
+      school: "Lianhua Primary",
+    },
+    {
+      number: "Note · 02",
+      tape: 2,
+      quote:
+        "“Week one stopped being a scavenger hunt. We knew the class before we walked in.”",
+      body: "Custody, SEN, counselling and offence history — known before the first conversation, not after the first incident.",
+      role: "— Form Teachers",
+      school: "Lianhua Primary",
+    },
+    {
+      number: "Note · 03",
+      tape: 3,
+      quote:
+        "“The student we'd missed showed up — SEN, peer isolation, pre-LTA — on the same view.”",
+      body: "A student flagged only on the FAS list — surfaced earlier with the right context. Days of prep, one focused session.",
+      role: "— Year Heads",
+      school: "Westwood Secondary",
+    },
+  ] as const satisfies ReadonlyArray<SchoolMemo>,
+} as const
 
-export const modules = [
-  {
-    title: "Today's classes, surfaced automatically",
-    body: "Start the morning with the right schedule, lesson notes, attendance prompts, and reminders already in view.",
-  },
-  {
-    title: "Grading queue with rubrics built in",
-    body: "Move through assignments faster with reusable rubrics and optional AI pre-checks you can accept, edit, or ignore.",
-  },
-  {
-    title: "Parent comms, translated and logged",
-    body: "Draft a message, translate it, send it, and keep the conversation attached to the student record.",
-  },
-]
+export const audienceCopy = {
+  heading: "One view that fits the way schools work.",
+  subheading:
+    "The same data. Three roles. Each sees the slice that lets them act — nothing more, nothing missing.",
+  columns: [
+    {
+      label: "Form Teachers",
+      body: "Engage students and parents confidently. Context is already on the profile.",
+    },
+    {
+      label: "Year Heads & SDT",
+      body: "Nominations, SwAN identification, level briefings — from one place.",
+    },
+    {
+      label: "School Leaders",
+      body: "Adoption in real time. Whole school in one lens — access mirrors source systems.",
+    },
+  ],
+} as const
 
-export const proofPoints = [
-  "Plan lessons and reuse them across terms",
-  "Track attendance before the bell stops ringing",
-  "Close the laptop with nothing hiding in another tab",
-]
+export const finalCtaCopy = {
+  headline: "Know every student before tomorrow's bell.",
+  subtitle:
+    "View behaviour, wellbeing and academic data in one place to understand each student at a glance.",
+} as const
+
+export const footerCopy = {
+  copyright: "© MOE 2026",
+  brand: "Teacher Workspace",
+  feedbackUrl: siteConfig.links.feedback,
+  feedbackLabel: "Send feedback",
+} as const

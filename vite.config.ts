@@ -5,9 +5,12 @@ import viteReact from "@vitejs/plugin-react"
 import viteTsConfigPaths from "vite-tsconfig-paths"
 import tailwindcss from "@tailwindcss/vite"
 import { nitro } from "nitro/vite"
+import { madeRefine } from 'made-refine/vite'
+import { mdxContent } from "./src/content/mdx-plugin"
 
 const config = defineConfig({
   plugins: [
+    mdxContent(),
     devtools(),
     nitro(),
     // this is the plugin that enables path aliases
@@ -17,6 +20,7 @@ const config = defineConfig({
     tailwindcss(),
     tanstackStart(),
     viteReact(),
+    madeRefine(),
   ],
 })
 

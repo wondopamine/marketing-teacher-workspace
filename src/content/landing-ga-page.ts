@@ -1,0 +1,246 @@
+import metaSource from "/content/landing/01-meta.mdx"
+import heroSource from "/content/landing/02-hero.mdx"
+import storySource from "/content/landing/03-story.mdx"
+import revealSource from "/content/landing/04-reveal.mdx"
+import capabilitiesSource from "/content/landing/05-capabilities.mdx"
+import audiencesSource from "/content/landing/07-audiences.mdx"
+import proofSource from "/content/landing/08-proof.mdx"
+import closeSource from "/content/landing/10-close.mdx"
+
+import { MdxDocument, itemBody, itemHeading } from "./mdx-document"
+
+/**
+ * View-model for the GA landing page (issue #3's seven-section IA, direction
+ * "One screen, carried" — see docs/decisions/ga-landing-page.md).
+ *
+ * This module is part of the PUBLIC bundle, so it imports only the public
+ * copy files it renders — never `landing-copy.ts` (whose glob would pull the
+ * wireframe and screen-catalog notes into the public output) and never
+ * `landing-v2.ts` (whose governance dataset carries internal capability ids,
+ * source URLs, and unpublished quotes). `landing-ga-page.test.ts` keeps this
+ * module in sync with the governance source of truth at test time.
+ */
+
+const metaDocument = new MdxDocument(metaSource)
+const heroDocument = new MdxDocument(heroSource)
+const storyDocument = new MdxDocument(storySource)
+const revealDocument = new MdxDocument(revealSource)
+const capabilitiesDocument = new MdxDocument(capabilitiesSource)
+const audiencesDocument = new MdxDocument(audiencesSource)
+const proofDocument = new MdxDocument(proofSource)
+const closeDocument = new MdxDocument(closeSource)
+
+/**
+ * Splits prose after a full stop that ends a sentence. Returns a tuple whose
+ * first element is always present, so callers do not have to guard a heading
+ * that the document layer already required.
+ */
+function splitSentences(text: string): ReadonlyArray<string> {
+  return text
+    .split(/(?<=\.)\s+/)
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 0)
+}
+
+function itemCopy(document: MdxDocument, id: string) {
+  const item = document.item(id)
+  return {
+    heading: itemHeading(document, item),
+    body: itemBody(document, item),
+    label: item.label,
+  }
+}
+
+/** The story acts, in issue #3's care-journey order. */
+export const gaJourneyActIds = [
+  "promise",
+  "notice",
+  "next-steps",
+  "words",
+  "family-and-record",
+] as const
+
+export type GaJourneyActId = (typeof gaJourneyActIds)[number]
+
+/** Public eyebrow line per act — issue #3's care-journey moments. */
+const momentKeys = {
+  promise: "momentPromise",
+  notice: "momentNotice",
+  "next-steps": "momentNextSteps",
+  words: "momentWords",
+  "family-and-record": "momentFamilyAndRecord",
+} as const satisfies Record<GaJourneyActId, string>
+
+/**
+ * Round 3 (stakeholder feedback, 2026-08-21): the acts no longer render
+ * product captures. Each act is illustrated by a coded feature vignette
+ * (`ga-vignettes.tsx`) that shows only the key component of the capability —
+ * information categories, filter criteria, read states — never a full product
+ * screen, so Behaviour/Family details can never appear on the public page.
+ */
+
+export type GaJourneyAct = {
+  readonly id: GaJourneyActId
+  readonly moment: string
+  readonly headline: string
+  readonly body: string
+}
+
+export const gaJourneyActs: ReadonlyArray<GaJourneyAct> = gaJourneyActIds.map(
+  (id) => {
+    const copy = itemCopy(storyDocument, id)
+    return {
+      id,
+      moment: storyDocument.text(momentKeys[id]),
+      headline: copy.heading,
+      body: copy.body,
+    }
+  }
+)
+
+export type GaCapability = {
+  readonly copyId: string
+  readonly publicLabel: string
+  readonly job: string
+  readonly scenario: string
+}
+
+export const gaCapabilities: ReadonlyArray<GaCapability> = (
+  ["student-insights", "next-step", "message-drafting", "posts"] as const
+).map((copyId) => {
+  const copy = itemCopy(capabilitiesDocument, copyId)
+  return {
+    copyId,
+    publicLabel: copy.label ?? copyId,
+    job: copy.heading,
+    scenario: copy.body,
+  }
+})
+
+export const gaAudienceIds = [
+  "teachers",
+  "key-personnel",
+  "school-leaders",
+] as const
+
+export type GaAudienceId = (typeof gaAudienceIds)[number]
+
+export type GaAudience = {
+  readonly id: GaAudienceId
+  readonly label: string
+  readonly question: string | null
+  readonly answer: string | null
+}
+
+export const gaAudiences: ReadonlyArray<GaAudience> = gaAudienceIds.map(
+  (id) => {
+    const item = audiencesDocument.item(id)
+    return {
+      id,
+      label: item.label ?? id,
+      question: item.heading,
+      answer: item.body.length === 0 ? null : item.body.join(" "),
+    }
+  }
+)
+
+export type GaTestimonial = {
+  readonly id: string
+  readonly quote: string
+  readonly role: string
+  readonly schoolLevel: string
+}
+
+/**
+ * Proof stays scoped to what the verbatims evidence (Posts only — ADR 0003).
+ *
+ * Three of the six staff quotes, re-curated 2026-08-25 to say three different
+ * things: how fast a post reaches families, how much work it takes off a
+ * school, and how easy it is to use. The previous set spent two of its three
+ * cards on speed ("so fast" and "almost instant"), which read as one point made
+ * twice — `pg-immediacy` is the one that went, being the thinner version of the
+ * claim `pg-read-speed` makes with a number in it.
+ *
+ * The quotes naming "PG" stay unpublished so another product's name never
+ * appears on this page. Only these public fields ship; the governance records
+ * (source, approval state) stay in `landing-v2.ts`, and
+ * `landing-ga-page.test.ts` asserts each entry matches its governance record
+ * verbatim. Publication approval per quote is still pending on ticket #10.
+ */
+export const gaTestimonials: ReadonlyArray<GaTestimonial> = [
+  {
+    id: "pg-read-speed",
+    quote:
+      "Wow, so fast! Within 10 minutes, so many parents had already checked and read it. It's even faster than Facebook and Instagram.",
+    role: "Corporate Comms & Education Outreach Staff",
+    schoolLevel: "Secondary School",
+  },
+  {
+    id: "pg-work-reduction",
+    quote:
+      "A lot of enhancements have been made to facilitate and cut down some of the work done in school. We are quite grateful.",
+    role: "Vice Principal",
+    schoolLevel: "Primary School",
+  },
+  {
+    id: "pg-intuitive",
+    quote:
+      "The system is quite intuitive — it's easy to go from one point to another.",
+    role: "Corporate Comms & Education Outreach Staff",
+    schoolLevel: "Secondary School",
+  },
+]
+
+export const gaSectionAnchors = {
+  journey: "journey",
+  apps: "apps",
+  audiences: "audiences",
+  schools: "schools",
+} as const
+
+export const gaNavItems = [
+  { label: "The apps", href: `#${gaSectionAnchors.apps}` },
+  { label: "The journey", href: `#${gaSectionAnchors.journey}` },
+  { label: "Real schools", href: `#${gaSectionAnchors.schools}` },
+] as const
+
+export const gaPageCopy = {
+  meta: {
+    title: metaDocument.requireHeading(),
+    description: metaDocument.requireBody(),
+  },
+  hero: {
+    headline: heroDocument.requireHeading(),
+    body: heroDocument.requireBody(),
+    action: heroDocument.text("action"),
+    actionNote: heroDocument.text("actionNote"),
+  },
+  journey: {},
+  reveal: {
+    eyebrow: revealDocument.text("eyebrow"),
+    headline: revealDocument.requireHeading(),
+    /**
+     * The headline split at its sentence boundaries. The reveal discloses one
+     * sentence per scroll beat (product owner, 2026-08-24), and the copy stays
+     * one governed heading rather than becoming two fields nobody proofreads
+     * together. One sentence yields one beat, which the section handles.
+     */
+    headlineBeats: splitSentences(revealDocument.requireHeading()),
+    body: revealDocument.requireBody(),
+    launchLine: revealDocument.optionalText("launchLine"),
+  },
+  apps: {
+    heading: capabilitiesDocument.requireHeading(),
+  },
+  audiences: {
+    heading: audiencesDocument.requireHeading(),
+  },
+  schools: {
+    heading: proofDocument.requireHeading(),
+    lede: proofDocument.text("publicLede"),
+  },
+  close: {
+    headline: closeDocument.requireHeading(),
+    body: closeDocument.requireBody(),
+  },
+} as const

@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
 @import "@fontsource-variable/plus-jakarta-sans";
 @import "@radix-ui/colors/mauve.css";
 @import "@radix-ui/colors/mauve-dark.css";
@@ -17,219 +16,397 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: 'Plus Jakarta Sans Variable', sans-serif;
-    --font-sans: 'Plus Jakarta Sans Variable', sans-serif;
-    --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
-    --color-chart-1: var(--chart-1);
-    --color-ring: var(--ring);
-    --color-input: var(--input);
-    --color-border: var(--border);
-    --color-destructive: var(--destructive);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-accent: var(--accent);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-muted: var(--muted);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-secondary: var(--secondary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-primary: var(--primary);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-popover: var(--popover);
-    --color-card-foreground: var(--card-foreground);
-    --color-card: var(--card);
-    --color-foreground: var(--foreground);
-    --color-background: var(--background);
-    --color-interface-ink: var(--interface-ink);
-    --color-interface-panel: var(--interface-panel);
-    --color-interface-surface: var(--interface-surface);
-    --color-paper: var(--paper);
-    --color-paper-ink: var(--paper-ink);
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
+  --font-heading: "Plus Jakarta Sans Variable", sans-serif;
+  --font-body: "Inter Variable", sans-serif;
+  --font-sans: "Plus Jakarta Sans Variable", sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-paper: var(--paper);
+  --color-paper-ink: var(--paper-ink);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 :root {
-    --background: var(--mauve-1);
-    --foreground: var(--mauve-12);
-    --card: var(--mauve-1);
-    --card-foreground: var(--mauve-12);
-    --popover: var(--mauve-1);
-    --popover-foreground: var(--mauve-12);
-    --primary: var(--blue-9);
-    --primary-foreground: white;
-    --secondary: var(--mauve-3);
-    --secondary-foreground: var(--mauve-12);
-    --muted: var(--mauve-3);
-    --muted-foreground: var(--mauve-11);
-    --accent: var(--cyan-3);
-    --accent-foreground: var(--cyan-12);
-    --destructive: #c62a2f;
-    --border: var(--mauve-6);
-    --input: var(--mauve-6);
-    --ring: var(--blue-8);
-    --chart-1: var(--blue-8);
-    --chart-2: var(--cyan-8);
-    --chart-3: var(--amber-8);
-    --chart-4: var(--grass-8);
-    --chart-5: var(--mauve-10);
-    --radius: 0.625rem;
-    --sidebar: var(--mauve-2);
-    --sidebar-foreground: var(--mauve-12);
-    --sidebar-primary: var(--blue-9);
-    --sidebar-primary-foreground: white;
-    --sidebar-accent: var(--mauve-4);
-    --sidebar-accent-foreground: var(--mauve-12);
-    --sidebar-border: var(--mauve-6);
-    --sidebar-ring: var(--blue-8);
+  --masthead-h: 28px;
+  --background: var(--mauve-1);
+  --foreground: var(--mauve-12);
+  --card: var(--mauve-1);
+  --card-foreground: var(--mauve-12);
+  --popover: var(--mauve-1);
+  --popover-foreground: var(--mauve-12);
+  --primary: #0066ff;
+  --primary-foreground: white;
+  --secondary: var(--mauve-3);
+  --secondary-foreground: var(--mauve-12);
+  --muted: var(--mauve-3);
+  --muted-foreground: var(--mauve-11);
+  --accent: var(--cyan-3);
+  --accent-foreground: var(--cyan-12);
+  --destructive: #c62a2f;
+  --border: var(--mauve-6);
+  --input: var(--mauve-6);
+  --ring: var(--blue-8);
+  --chart-1: var(--blue-8);
+  --chart-2: var(--cyan-8);
+  --chart-3: var(--amber-8);
+  --chart-4: var(--grass-8);
+  --chart-5: var(--mauve-10);
+  --radius: 0.625rem;
+  --sidebar: var(--mauve-2);
+  --sidebar-foreground: var(--mauve-12);
+  --sidebar-primary: var(--blue-9);
+  --sidebar-primary-foreground: white;
+  --sidebar-accent: var(--mauve-4);
+  --sidebar-accent-foreground: var(--mauve-12);
+  --sidebar-border: var(--mauve-6);
+  --sidebar-ring: var(--blue-8);
 
-    --nav-surface: color-mix(in oklab, var(--mauve-12) 78%, transparent);
-    --brand-orbit: var(--cyan-7);
-    --interface-ink: #111019;
-    --interface-panel: color-mix(in oklab, var(--mauve-12) 86%, var(--blue-9));
-    --interface-surface: color-mix(in oklab, var(--mauve-12) 82%, var(--cyan-12));
-    --interface-accent: var(--cyan-9);
-    --interface-accent-soft: color-mix(in oklab, var(--cyan-9) 18%, transparent);
-    --paper: var(--amber-2);
-    --paper-ink: #1a1a1a;
-    --paper-muted: color-mix(in oklab, var(--mauve-11) 72%, var(--grass-10));
-    --paper-rule: color-mix(in oklab, var(--mauve-7) 68%, var(--amber-6));
-    --paper-card: #ffffff;
-    --cta-ground: color-mix(in oklab, var(--mauve-12) 88%, var(--blue-12));
+  --nav-surface: rgb(255 255 255 / 0.8);
+  /* The centred GA nav cluster: opaque-ish pills on a softer plate, so the
+     4px seams between pills stay readable over the pale hero sky. */
+  --nav-pill: rgb(255 255 255 / 0.92);
+  --nav-pill-hover: rgb(255 255 255 / 1);
+  --nav-plate: rgb(255 255 255 / 0.38);
+  --brand-orbit: var(--cyan-7);
+  /* The page ground. It used to match the foot of the hero sky so the two met
+     with no visible seam (product owner, 2026-08-24); since the hero retracts
+     into a framed card and its sky now settles on pale blue rather than white
+     (owner, 2026-08-25), this is the colour of the gutter *around* the hero,
+     and the seam is the point. */
+  --paper: #fefefe;
+  /* The foot of the hero sky. The artwork in /public/hero/ is locked and fades
+     to #fdfdfd by ~75% of its height; this is laid over that tail so the sky
+     settles on a pale blue instead of washing out to white. Kept as channels so
+     the ramp can vary alpha without a second colour.
+
+     The exact value is load-bearing, and not for the reason it looks. The
+     teacher illustration over it is composited with `mix-blend-multiply`, which
+     maps white to the backdrop — so every enclosed white in the drawing (her
+     face, the frames on the wall, the laptop) renders in *this* colour. At
+     #dfeefd they read as tinted and the face looked transparent; #f2f7fd is
+     still blue against the #fefefe page around the hero card but close enough
+     to white that the drawing reads as drawn on paper (owner, 2026-08-25).
+     Darkening this makes the face blue again — separating an enclosed white
+     from the outside white is a flood fill, not a colour test, and her face
+     moves too much across the loop for one fixed mask to cover it. */
+  --hero-sky-foot: 242 247 253;
+  --paper-ink: #1a1a1a;
+  --paper-muted: #5f6f76;
+  --paper-rule: rgb(14 23 41 / 0.08);
+  --paper-card: #ffffff;
+  --cta-blue: #245adb;
+  --cta-ground: color-mix(in oklab, var(--mauve-12) 88%, var(--blue-12));
+
+  --memo-bg: #fdfaf2;
+  --memo-section-bg: #cfe6ff;
+  --memo-tape-1: rgb(229 86 65 / 0.55);
+  --memo-tape-2: rgb(229 86 65 / 0.45);
+  --memo-tape-3: rgb(229 86 65 / 0.65);
+
+  --audience-cream: #fde7c2;
+  --audience-mint: #c8e8d2;
+  --audience-sky: #d6e2f7;
+
+  --footer-bg: #fefefe;
+
+  /* Polish tokens — kept here so component-level utilities stay tight
+       and reusable hover/shadow rhythms don't drift apart. */
+  --paper-shadow-card: 0 18px 40px -22px rgb(15 23 42 / 0.3);
+  --paper-shadow-card-hover: 0 24px 50px -22px rgb(15 23 42 / 0.35);
+  --paper-shadow-peek: 0 -6px 20px -10px rgb(15 23 42 / 0.15);
+  --paper-shadow-cta: 0 8px 22px -12px rgb(36 90 219 / 0.7);
+  --paper-shadow-cta-hover: 0 14px 30px -10px rgb(36 90 219 / 0.55);
+  --paper-hover-bg: rgb(14 23 41 / 0.04);
+  --paper-rule-strong: rgb(14 23 41 / 0.14);
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+  }
   body {
     @apply bg-background text-foreground;
     min-width: 320px;
     overflow-x: hidden;
-    }
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
   html {
     @apply font-sans;
     scroll-behavior: smooth;
-    }
+    position: relative;
+    background-color: var(--paper);
+  }
 }
 
 @layer components {
+  @keyframes review-pin-arrival {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+    45% {
+      box-shadow: 0 0 0 8px var(--border);
+    }
+  }
+
+  .review-pin {
+    animation: review-pin-arrival 900ms ease-out 2;
+  }
+
+  [data-review-focus] {
+    outline: 3px solid currentColor !important;
+    outline-offset: 6px !important;
+  }
+
   .paper-page {
-    background-color: #cfe6ff;
-    background-image: url("/hero/blue-paper.png");
-    background-size: 100vw auto;
-    background-position: top center;
-    background-repeat: repeat-y;
-    background-attachment: scroll;
+    background-color: var(--paper);
   }
 
   .paper-card {
-    background-color: #ffffff;
+    background-color: var(--paper-card);
   }
 
-  .hero-media {
-    filter: brightness(1.05) contrast(1.03);
-    mix-blend-mode: multiply;
+  /* The locked sky artwork, with a pale-blue tail laid over its lower half so
+     the hero ends on sky rather than on white (owner, 2026-08-25). The
+     gradient is listed first, so it paints over the image; the drifting cloud
+     <img>s are separate elements and sit above both. The artwork itself is
+     untouched. */
+  .hero-sky-bg {
+    background-image:
+      linear-gradient(
+        to bottom,
+        rgb(var(--hero-sky-foot) / 0) 32%,
+        rgb(var(--hero-sky-foot) / 0.7) 66%,
+        rgb(var(--hero-sky-foot) / 1) 100%
+      ),
+      image-set(
+        url("/hero/hero-bg.avif") type("image/avif"),
+        url("/hero/hero-bg.webp") type("image/webp")
+      );
+    background-image:
+      linear-gradient(
+        to bottom,
+        rgb(var(--hero-sky-foot) / 0) 32%,
+        rgb(var(--hero-sky-foot) / 0.7) 66%,
+        rgb(var(--hero-sky-foot) / 1) 100%
+      ),
+      -webkit-image-set(
+        url("/hero/hero-bg.avif") type("image/avif"),
+        url("/hero/hero-bg.webp") type("image/webp")
+      );
+    background-size:
+      100% 100%,
+      cover;
+    background-position:
+      top center,
+      top center;
+    background-repeat: no-repeat, no-repeat;
   }
 
-  .cloud-drift-left,
-  .cloud-drift-right {
-    filter: brightness(1.06) contrast(1.02);
+  .nav-pill {
+    background-color: var(--nav-surface);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
   }
+}
 
-  .cloud-drift-left {
-    animation: cloud-drift-left 18s ease-in-out infinite;
-  }
+/* One section per view is done with section *sizing* alone — no scroll-snap
+   (product owner, 2026-08-24, after watching it grab). `y proximity` was
+   tried and removed: CSS exposes no snap strength, and its pull was strong
+   enough to haul a half-entered section to centre against the reader. The
+   reference's anchored feel does not come from snap either — it free-scrolls
+   with inertia (Lenis) over full-viewport sections. Full-viewport sections are
+   the part that carries; the rest is the browser's own scrolling. */
 
-  .cloud-drift-right {
-    animation: cloud-drift-right 22s ease-in-out infinite;
-  }
-
-  @keyframes cloud-drift-left {
-    0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
-    50%  { transform: translate3d(56px, -22px, 0) rotate(1.2deg); }
-    100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  }
-
-  @keyframes cloud-drift-right {
-    0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
-    50%  { transform: translate3d(-64px, 18px, 0) rotate(-1.4deg); }
-    100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .cloud-drift-left,
-    .cloud-drift-right { animation: none; }
-  }
-
-  .chart-path {
+/* Reduced motion unpins the reveal: with no scroll-driven swap the two beats
+   must not sit stacked in one grid cell, and a two-viewport section with a
+   pinned stage would otherwise scroll past a statement that never changes.
+   The component already renders the flowing composition in this case; this
+   collapses the geometry to match it. */
+@media (prefers-reduced-motion: reduce) {
+  /* `relative`, not `static`: unpinning must not remove the stage's
+     containing block. It did, and the reveal's absolute fragment layer
+     escaped to the document and rendered over the journey's copy (design
+     review, 2026-08-24). The fragments are no longer drawn on this path at
+     all, and the stage stays a containing block regardless. */
+  .ga-reveal-stage {
     position: relative;
-    height: 220px;
-    overflow: hidden;
-    border-radius: 16px;
-    background:
-      linear-gradient(180deg, rgb(255 255 255 / 6%), transparent),
-      repeating-linear-gradient(0deg, transparent 0 43px, rgb(255 255 255 / 7%) 44px 45px);
+    height: auto;
+    padding-block: 5rem;
   }
 
-  .chart-path::before {
-    position: absolute;
-    inset: 18% 6% 20%;
-    content: "";
-    border: 3px solid var(--interface-accent);
-    border-top: 0;
-    border-right: 0;
-    clip-path: polygon(0 72%, 10% 58%, 21% 62%, 34% 34%, 47% 44%, 58% 22%, 70% 29%, 82% 12%, 100% 18%, 100% 100%, 0 100%);
-    filter: drop-shadow(0 0 18px color-mix(in oklab, var(--interface-accent) 70%, transparent));
+  /* The second beat's snap rest exists only for the swap. Unpinned, it would
+     be a viewport of empty page under the statement. */
+  .ga-reveal-rest {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .review-pin {
+    animation: none;
+  }
+}
+
+/* Ambient cloud drift — used by the static-fallback hero and, at the slower
+   GA pace below, by the GA hero. Paired with
+   `animation-direction: alternate` so the browser ping-pongs A↔B forever
+   with no seam. Translate-only keeps it on the GPU; ease-in-out gives the
+   gentle accel/decel of wind-blown drift. The global prefers-reduced-motion
+   reset below neutralizes these. */
+@keyframes cloud-drift-a {
+  from {
+    transform: translate3d(-8%, 0, 0);
+  }
+  to {
+    transform: translate3d(8%, 0, 0);
+  }
+}
+@keyframes cloud-drift-b {
+  from {
+    transform: translate3d(5%, 0, 0);
+  }
+  to {
+    transform: translate3d(-5%, 0, 0);
+  }
+}
+@keyframes cloud-drift-c {
+  from {
+    transform: translate3d(-12%, 0, 0);
+  }
+  to {
+    transform: translate3d(12%, 0, 0);
+  }
+}
+
+/* GA hero sky. The v1 hero's drift, slowed to roughly half its pace (user,
+   2026-08-24): these clouds are larger and sit beside the copy, so the same
+   amplitude over a longer period is what reads as a peaceful sky rather than
+   weather. Different periods and a negative delay on the second keep the two
+   from ever moving in unison. The sky runs unattended (owner, 2026-08-25) —
+   the hero's Pause control is gone, so the reduced-motion reset below is the
+   only thing that stops it. */
+.ga-cloud-a {
+  animation: cloud-drift-a 18s cubic-bezier(0.455, 0.03, 0.515, 0.955) 0s
+    infinite alternate;
+}
+
+.ga-cloud-b {
+  animation: cloud-drift-b 26s cubic-bezier(0.455, 0.03, 0.515, 0.955) -7s
+    infinite alternate;
+}
+
+/* The hero is full-bleed at rest and retracts into a rounded card once the
+   page starts moving — the mechanic read off lassie.ai on 2026-08-25 rather
+   than inferred: `clip-path: inset(0)` → `inset(32px round 64px)` on a plain
+   "scrolled past 100px" boolean, over 1s of ease-out-quint, reversing when the
+   reader returns to the top.
+
+   `clip-path` is the whole trick. The section's box never changes size, so
+   nothing reflows and the frame costs a paint, not a layout — which is why the
+   reference animates the clip rather than width, padding or scale. */
+.ga-hero-frame {
+  clip-path: inset(0);
+}
+
+/* Below md the hero stays full-bleed: a 32px gutter on a 375px screen is a
+   third of the margin the copy already has, so the frame reads as a mistake
+   rather than as a card. Reduced motion holds the same still state — the frame
+   is decoration, and the page is complete without it. */
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .ga-hero-frame {
+    transition: clip-path 1s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: clip-path;
+  }
+
+  .ga-hero-frame.is-framed {
+    clip-path: inset(20px round 40px);
+  }
+}
+
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .ga-hero-frame.is-framed {
+    clip-path: inset(32px round 64px);
+  }
+}
+
+@keyframes scroll-hint {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
   }
 }
 
@@ -242,4 +419,33 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Mobile gate: prevents flash of desktop choreography on hydration. */
+@media (max-width: 1023px) {
+  .scroll-choreography-only {
+    display: none !important;
+  }
+}
+
+/* GA landing hero entrance — pure CSS so the server-rendered state is never
+   hidden: without JS the animation still plays to the settled composition,
+   and the global reduced-motion reset above disables it entirely. */
+@keyframes ga-fade-up {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: none;
+  }
+}
+
+.ga-fade-up {
+  animation: ga-fade-up 200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.ga-fade-up-late {
+  animation: ga-fade-up 300ms cubic-bezier(0.4, 0, 0.2, 1) 100ms both;
 }

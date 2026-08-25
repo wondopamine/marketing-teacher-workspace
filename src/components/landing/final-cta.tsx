@@ -1,26 +1,48 @@
-import { EmailCapture } from "@/components/landing/email-capture"
+import { RevealOnScroll } from "./reveal-on-scroll"
+
+import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
+  TEACHER_WORKSPACE_APP_URL,
+  finalCtaCopy,
+  siteCtaCopy,
+} from "@/content/landing"
 
 export function FinalCta() {
   return (
     <section
-      className="overflow-hidden bg-[color:var(--cta-ground)] px-5 py-24 text-white sm:px-8"
+      className="relative overflow-hidden px-5 py-14 sm:px-8 sm:py-24 lg:py-32"
       id="pricing"
     >
-      <div className="mx-auto max-w-5xl text-center">
-        <p className="text-sm font-medium tracking-[0.16em] text-white/62 uppercase">
-          Free for individual teachers
-        </p>
-        <h2 className="mt-5 font-heading text-4xl leading-tight font-semibold text-balance sm:text-7xl">
-          Close the laptop with nothing hiding in another tab.
-        </h2>
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/66">
-          Join the early list for Teacher Workspace. Schools are welcome, and
-          individual teachers can start free.
-        </p>
-        <div className="mx-auto mt-10 max-w-xl">
-          <EmailCapture />
+      <RevealOnScroll>
+        <div className="mx-auto flex w-full max-w-[1024px] flex-col items-center gap-5 px-4 text-center sm:px-10">
+          <h2 className="font-heading text-[clamp(1.75rem,4vw,3.5rem)] leading-[1.12] font-medium tracking-tight text-balance text-[color:var(--paper-ink)]">
+            {finalCtaCopy.headline}
+          </h2>
+          <p className="max-w-[34rem] text-base leading-[1.7] text-balance text-[color:var(--paper-muted)] sm:text-lg">
+            {finalCtaCopy.subtitle}
+          </p>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                asChild
+                className="mt-2 h-10 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition-[background-color,translate,scale] duration-200 ease-out hover:-translate-y-px hover:bg-primary/90 active:scale-[0.96]"
+              >
+                <a href={TEACHER_WORKSPACE_APP_URL} rel="noreferrer">
+                  {siteCtaCopy.primary}
+                </a>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              Accessible on MOE-issued devices
+            </TooltipContent>
+          </Tooltip>
         </div>
-      </div>
+      </RevealOnScroll>
     </section>
   )
 }

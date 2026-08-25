@@ -1,0 +1,294 @@
+import { describe, expect, it } from "vitest"
+
+import {
+  addCmsSection,
+  canAddCmsSection,
+  cmsEditorReducer,
+  createCmsEditorState,
+  duplicateCmsSection,
+  isCmsEditorDirty,
+  moveCmsSection,
+  replaceCmsValue,
+  setCmsSectionState,
+} from "./cms-editor-model"
+import type { CmsVersionSnapshot } from "@/db/content-repository.server"
+import type { CmsVersionContract } from "@/cms/document"
+import { digestCmsVersionContract } from "@/cms/canonical.server"
+import { homepageV1Contract } from "@/cms/templates/homepage-v1.server"
+import {
+  isCmsVersionContract,
+  projectCmsPageDocumentForEditor,
+} from "@/cms/validation"
+
+function snapshot(versionNumber = 1): CmsVersionSnapshot {
+  return {
+    ...homepageV1Contract,
+    pageId: "b7a1e972-1758-4815-87b9-9697a324a667",
+    head: {
+      versionId: `00000000-0000-4000-8000-${String(versionNumber).padStart(12, "0")}`,
+      versionNumber,
+      digest: digestCmsVersionContract(homepageV1Contract),
+    },
+    attributionKind: versionNumber === 1 ? "system-import" : "self-declared",
+    editorDisplayName: versionNumber === 1 ? null : "Alex Tan",
+    createdAt: "2026-08-12T00:00:00.000Z",
+    parentVersionId: null,
+    restoredFromVersionId: null,
+  }
+}
+
+describe("CMS editor model", () => {
+  it("moves through editing, undo, redo, and an unchanged finish", () => {
+    let state = createCmsEditorState(snapshot(), snapshot().head)
+    state = cmsEditorReducer(state, { type: "start-editing" })
+    const changed = replaceCmsValue(
+      state.present,
+      ["pageDocument", "page", "title"],
+      "A clearer page title"
+    )
+    state = cmsEditorReducer(state, { type: "apply", contract: changed })
+    expect(isCmsEditorDirty(state)).toBe(true)
+    expect(state.past).toHaveLength(1)
+
+    state = cmsEditorReducer(state, { type: "undo" })
+    expect(isCmsEditorDirty(state)).toBe(false)
+    state = cmsEditorReducer(state, { type: "redo" })
+    expect(isCmsEditorDirty(state)).toBe(true)
+    state = cmsEditorReducer(state, { type: "undo" })
+    state = cmsEditorReducer(state, { type: "request-finish" })
+    expect(state.mode).toBe("viewing")
+    expect(state.finishChoiceOpen).toBe(false)
+  })
+
+  it("offers all three finish choices without silently losing work", () => {
+    let state = cmsEditorReducer(
+      createCmsEditorState(snapshot(), snapshot().head),
+      {
+        type: "start-editing",
+      }
+    )
+    const changed = replaceCmsValue(
+      state.present,
+      ["pageDocument", "page", "description"],
+      "Changed locally"
+    )
+    state = cmsEditorReducer(state, { type: "apply", contract: changed })
+    state = cmsEditorReducer(state, { type: "request-finish" })
+    expect(state.finishChoiceOpen).toBe(true)
+    expect(state.present.pageDocument.page.description).toBe("Changed locally")
+
+    const kept = cmsEditorReducer(state, { type: "keep-editing" })
+    expect(kept.mode).toBe("editing")
+    expect(isCmsEditorDirty(kept)).toBe(true)
+
+    const discarded = cmsEditorReducer(state, { type: "discard-and-finish" })
+    expect(discarded.mode).toBe("viewing")
+    expect(isCmsEditorDirty(discarded)).toBe(false)
+
+    const savedSnapshot = {
+      ...snapshot(2),
+      pageDocument: changed.pageDocument,
+    }
+    const saved = cmsEditorReducer(state, {
+      type: "save-succeeded",
+      snapshot: savedSnapshot,
+      finish: true,
+    })
+    expect(saved.mode).toBe("viewing")
+    expect(saved.baseline.head.versionNumber).toBe(2)
+    expect(isCmsEditorDirty(saved)).toBe(false)
+  })
+
+  it("groups one typing run into a single undo step", () => {
+    let state = cmsEditorReducer(
+      createCmsEditorState(snapshot(), snapshot().head),
+      { type: "start-editing" }
+    )
+    const first = replaceCmsValue(
+      state.present,
+      ["pageDocument", "page", "title"],
+      "A"
+    )
+    state = cmsEditorReducer(state, {
+      type: "apply",
+      contract: first,
+      historyGroup: "page.title",
+    })
+    const second = replaceCmsValue(
+      state.present,
+      ["pageDocument", "page", "title"],
+      "A clearer title"
+    )
+    state = cmsEditorReducer(state, {
+      type: "apply",
+      contract: second,
+      historyGroup: "page.title",
+    })
+
+    expect(state.past).toHaveLength(1)
+    state = cmsEditorReducer(state, { type: "undo" })
+    expect(state.present.pageDocument.page.title).toBe(
+      homepageV1Contract.pageDocument.page.title
+    )
+    state = cmsEditorReducer(state, { type: "redo" })
+    expect(state.present.pageDocument.page.title).toBe("A clearer title")
+  })
+
+  it("keeps the complete local document after a stale save", () => {
+    let state = cmsEditorReducer(
+      createCmsEditorState(snapshot(), snapshot().head),
+      {
+        type: "start-editing",
+      }
+    )
+    const local = replaceCmsValue(
+      state.present,
+      ["pageDocument", "page", "title"],
+      "My local title"
+    )
+    state = cmsEditorReducer(state, { type: "apply", contract: local })
+    state = cmsEditorReducer(state, {
+      type: "save-conflicted",
+      latest: snapshot(2),
+    })
+    expect(state.present.pageDocument.page.title).toBe("My local title")
+    expect(state.conflict?.head.versionNumber).toBe(2)
+    expect(isCmsEditorDirty(state)).toBe(true)
+  })
+
+  it("tracks publication and unpublication without changing the draft", () => {
+    const initial = snapshot()
+    let state = createCmsEditorState(initial, null)
+    state = cmsEditorReducer(state, {
+      type: "publish-succeeded",
+      publishedHead: initial.head,
+    })
+    expect(state.publishedHead).toEqual(initial.head)
+    expect(state.baseline).toBe(initial)
+
+    state = cmsEditorReducer(state, { type: "unpublish-succeeded" })
+    expect(state.publishedHead).toBeNull()
+    expect(state.baseline).toBe(initial)
+  })
+
+  it("supports section duplicate, reorder, hide, archive, and undo as documents", () => {
+    const source = homepageV1Contract.pageDocument.sections.find(
+      (
+        section
+      ): section is Extract<
+        (typeof homepageV1Contract.pageDocument.sections)[number],
+        { readonly type: "connected-story" }
+      > => section.type === "connected-story"
+    )
+    if (!source) throw new Error("Expected a connected-story source section")
+    const sourceIndex = homepageV1Contract.pageDocument.sections.findIndex(
+      (section) => section.id === source.id
+    )
+    const ids = Array.from(
+      { length: 20 },
+      (_, i) => `10000000-0000-4000-8000-${String(i).padStart(12, "0")}`
+    )
+    const duplicate = duplicateCmsSection(
+      homepageV1Contract,
+      source.id,
+      () => ids.shift() ?? ""
+    )
+    const copied = duplicate.pageDocument.sections[sourceIndex + 1]
+    expect(copied.id).not.toBe(source.id)
+    if (copied.type === "connected-story") {
+      expect(copied.fields.steps[0].id).not.toBe(source.fields.steps[0].id)
+      expect(copied.fields.steps[0].screen.id).not.toBe(
+        source.fields.steps[0].screen.id
+      )
+      expect(duplicate.reviewDocument.targets[copied.id]).toEqual(
+        homepageV1Contract.reviewDocument.targets[source.id]
+      )
+      expect(
+        duplicate.reviewDocument.targets[copied.fields.steps[0].screen.id]
+      ).toEqual(
+        Object.entries(homepageV1Contract.reviewDocument.targets).find(
+          ([targetId]) => targetId === source.fields.steps[0].screen.id
+        )?.[1]
+      )
+    }
+
+    const moved = moveCmsSection(homepageV1Contract, source.id, 1)
+    expect(moved.pageDocument.sections[sourceIndex + 1]?.id).toBe(source.id)
+    expect(
+      moveCmsSection(homepageV1Contract, source.id, -1).pageDocument.sections[
+        sourceIndex - 1
+      ]?.id
+    ).toBe(source.id)
+    expect(
+      setCmsSectionState(homepageV1Contract, source.id, "hidden").pageDocument
+        .sections[sourceIndex]?.state
+    ).toBe("hidden")
+    expect(
+      setCmsSectionState(homepageV1Contract, source.id, "archived").pageDocument
+        .sections[sourceIndex]?.id
+    ).toBe(source.id)
+    expect(
+      setCmsSectionState(
+        homepageV1Contract,
+        homepageV1Contract.pageDocument.sections[0].id,
+        "archived"
+      )
+    ).toBe(homepageV1Contract)
+  })
+
+  it("adds only approved section types within their saved limits", () => {
+    let nextId = 0
+    const createId = () =>
+      `20000000-0000-4000-8000-${String(nextId++).padStart(12, "0")}`
+    let contract: CmsVersionContract = homepageV1Contract
+
+    expect(canAddCmsSection(contract, "connected-story")).toBe(true)
+    contract = addCmsSection(contract, "connected-story", createId)
+    contract = addCmsSection(contract, "connected-story", createId)
+    contract = addCmsSection(contract, "connected-story", createId)
+    expect(
+      contract.pageDocument.sections.filter(
+        (section) =>
+          section.type === "connected-story" && section.state !== "archived"
+      )
+    ).toHaveLength(4)
+    expect(canAddCmsSection(contract, "connected-story")).toBe(false)
+    expect(addCmsSection(contract, "connected-story", createId)).toBe(contract)
+
+    const archived = setCmsSectionState(
+      contract,
+      contract.pageDocument.sections.find(
+        (section) => section.type === "connected-story"
+      )!.id,
+      "archived"
+    )
+    expect(canAddCmsSection(archived, "connected-story")).toBe(true)
+    const added = addCmsSection(archived, "connected-story", createId)
+    expect(added.pageDocument.sections.at(-1)?.type).toBe("footer-feedback")
+    expect(addCmsSection(added, "promise", createId)).toBe(added)
+  })
+
+  it.each(["connected-story", "reveal", "capabilities", "close"] as const)(
+    "adds and projects the approved %s section",
+    (type) => {
+      let nextId = 0
+      const visibleBefore = homepageV1Contract.pageDocument.sections.filter(
+        (section) => section.type === type
+      ).length
+      const added = addCmsSection(
+        homepageV1Contract,
+        type,
+        () => `30000000-0000-4000-8000-${String(nextId++).padStart(12, "0")}`
+      )
+
+      expect(added).not.toBe(homepageV1Contract)
+      expect(isCmsVersionContract(added)).toBe(true)
+      expect(projectCmsPageDocumentForEditor(added.pageDocument)).not.toBeNull()
+      expect(
+        added.pageDocument.sections.filter(
+          (section) => section.type === type && section.state === "visible"
+        )
+      ).toHaveLength(visibleBefore + 1)
+    }
+  )
+})
