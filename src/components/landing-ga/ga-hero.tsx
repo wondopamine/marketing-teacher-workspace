@@ -92,7 +92,14 @@ export function GaHero() {
         <HeroCloud className="ga-cloud-b top-[20%] -left-[6%] w-[34%]" />
       </div>
 
-      <div className="relative mx-auto flex w-full max-w-[1024px] flex-1 flex-col items-center px-5 pt-36 pb-16 text-center sm:px-8 sm:pt-40 md:pb-24">
+      {/* The top padding has to clear two fixed layers, not one: the SG
+          masthead and the nav tray floating under it. Below `sm` the masthead
+          wraps — 68px at 320, 48px at 360 — so a flat `pt-36` left the
+          headline 12px under the tray at 320 while 375 got 32px. Reading the
+          measured masthead height here holds that clearance at 32px across
+          every narrow width. From `sm` up the masthead is one 28px line and
+          `pt-40` is the designed 68px of air. */}
+      <div className="relative mx-auto flex w-full max-w-[1024px] flex-1 flex-col items-center px-5 pt-[calc(var(--masthead-h,0px)+6rem)] pb-16 text-center sm:px-8 sm:pt-40 md:pb-24">
         <div className="ga-fade-up">
           <h1
             className="font-heading text-[clamp(2.25rem,5vw,3.75rem)] leading-[1.08] font-semibold tracking-tight text-balance text-[color:var(--paper-ink)]"
@@ -101,9 +108,15 @@ export function GaHero() {
             {hero.headline}
           </h1>
           <div className="mt-8 flex flex-col items-center gap-3">
+            {/* `border-0` is the fix for a pale halo around the fill, not a
+                style choice (owner, 2026-08-26). The shared Button carries
+                `border border-transparent bg-clip-padding`, which holds the
+                background out of the border box — so a 1px ring of the sky
+                behind showed through, and at this size against the blue it
+                read as a drawn outline. */}
             <Button
               asChild
-              className="h-12 rounded-full bg-primary px-7 text-base font-semibold text-primary-foreground shadow-[var(--paper-shadow-cta)] transition-[background-color,translate,scale,box-shadow] duration-200 ease-out hover:-translate-y-px hover:bg-primary/90 hover:shadow-[var(--paper-shadow-cta-hover)] focus-visible:ring-[3px] focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.96]"
+              className="h-12 rounded-full border-0 bg-primary px-7 text-base font-semibold text-primary-foreground shadow-[var(--paper-shadow-cta)] transition-[background-color,translate,scale,box-shadow] duration-200 ease-out hover:-translate-y-px hover:bg-primary/90 hover:shadow-[var(--paper-shadow-cta-hover)] focus-visible:ring-[3px] focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.96]"
             >
               <a href={TEACHER_WORKSPACE_APP_URL} rel="noreferrer">
                 {hero.action}

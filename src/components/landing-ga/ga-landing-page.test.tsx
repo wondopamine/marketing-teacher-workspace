@@ -67,6 +67,66 @@ describe("GaLandingPage", () => {
     ])
   })
 
+  it("floats the nav over the hero at every width, offset by the masthead", () => {
+    // The header was `static` below `md` (round 4), which made it 88px of page
+    // rather than 88px of nothing: the hero started below it instead of under
+    // the masthead, so a narrow viewport opened on a white band with the tray
+    // ruled across it, and crossing 768px in either direction jumped the whole
+    // document 88px. Reported by the owner on 2026-08-26 after a resize.
+    //
+    // The offset is the other half. Going static once dropped
+    // `top-[var(--masthead-h)]`, and the SG masthead is `fixed` at z-51 over
+    // this header's z-50 — the wordmark was 93% covered at 320 and the nav's
+    // only control was unclickable (A11Y-2, L0, 2026-08-24). Both halves have
+    // to hold together, so they are pinned together.
+    render(<GaLandingPage />)
+    const nav = screen.getByRole("navigation", { name: "Primary navigation" })
+    const header = nav.closest("header")
+    expect(header).not.toBeNull()
+    // Token-exact, not `toContain`: "md:fixed" contains "fixed", so a substring
+    // check passes against the very markup this test exists to reject.
+    const tokens = (header?.className ?? "").split(/\s+/)
+    expect(tokens).toContain("fixed")
+    expect(tokens).toContain("top-[var(--masthead-h,0px)]")
+    // No breakpoint may own the position or the offset: one path at all widths.
+    // Anchored per token so `2xl:` is caught too — it has no word boundary
+    // before the colon, which a `\b`-based regex on the whole string misses.
+    expect(
+      tokens.filter((token) =>
+        /^(sm|md|lg|xl|2xl):(fixed|static|absolute|top-|pt-)/.test(token)
+      )
+    ).toEqual([])
+
+    // At 320 the cluster is 7px wider than the padding box allows. The spacer
+    // is what gives those 7px up; flex used to take them out of the wordmark
+    // image instead, drawing the lockup 5px narrow.
+    for (const item of within(nav).getAllByRole("link")) {
+      expect(item.className).toContain("shrink-0")
+    }
+  })
+
+  it("lets the page through everywhere except the two pills", () => {
+    // The tray is 296–398px of fixed overlay pinned to the top of the viewport.
+    // While `pointer-events-auto` sat on the `nav`, all of it took clicks — the
+    // decorative plate and the spacer between the pills included — and the
+    // hero's filled "Get started" was dead where it scrolled under: 0 of 60
+    // sampled points live at 375, 20 of 60 at 1440 (design review,
+    // 2026-08-26). Only the two controls may take the pointer.
+    render(<GaLandingPage />)
+    const nav = screen.getByRole("navigation", { name: "Primary navigation" })
+    expect(nav.className).toContain("pointer-events-none")
+    expect(nav.className).not.toContain("pointer-events-auto")
+    for (const item of within(nav).getAllByRole("link")) {
+      expect(item.className).toContain("pointer-events-auto")
+    }
+    // The plate and the spacer are decoration; neither may reclaim it.
+    const decoration = [...nav.querySelectorAll(":scope > span")]
+    expect(decoration).toHaveLength(2)
+    for (const span of decoration) {
+      expect(span.className).not.toContain("pointer-events-auto")
+    }
+  })
+
   it("tells each journey act in its own words, never by feature name", () => {
     // The acts are the teacher's story; naming the capability that closes one
     // sold the product mid-sentence (owner, 2026-08-25). None of the four
@@ -128,13 +188,31 @@ describe("GaLandingPage", () => {
     expect(html).not.toContain("<canvas")
   })
 
-  it("ships no product captures — the vignettes carry every visual", () => {
-    // Round 3 (stakeholder feedback): journey visuals are coded vignettes
-    // showing information categories only, so no prototype capture — and
-    // nothing under Behaviour/Family — can appear on the public page.
+  it("ships no product captures — the coded screens carry every visual", () => {
+    // Round 3 (stakeholder feedback) took the captures off the page; the
+    // Paper-style screens (owner, 2026-08-26) keep them off. Every screen is
+    // coded from synthetic data, and the profile's Behaviour and Family
+    // sections are redaction bars, so nothing from them can appear here.
     const html = renderToStaticMarkup(<GaLandingPage />)
     expect(html).not.toContain("/content-review/screens/")
     expect(html).toContain("Sensitive sections stay inside the profile.")
+  })
+
+  it("ships the stages empty and leaves the screens to the client", () => {
+    // The five product screens are illustration — aria-hidden, described in
+    // an sr-only line — and the heaviest thing on the page. Server-rendered
+    // they pushed the document past TCP's first congestion window and cost
+    // Lighthouse mobile four points, so the server sends each act's words,
+    // description and caption with an empty stage; the screens' chunk mounts
+    // when an act comes within a viewport of the fold.
+    const html = renderToStaticMarkup(<GaLandingPage />)
+    for (const act of gaJourneyActs) {
+      expect(html).toContain(`id="act-${act.id}"`)
+    }
+    expect(html).toContain("A demonstration:")
+    expect(html).toContain("Sensitive sections stay inside the profile.")
+    expect(html).not.toContain("Show records")
+    expect(html).not.toContain("Jump to")
   })
 
   it("keeps internal capability names off the page", () => {

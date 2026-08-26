@@ -72,11 +72,13 @@ const momentKeys = {
 } as const satisfies Record<GaJourneyActId, string>
 
 /**
- * Round 3 (stakeholder feedback, 2026-08-21): the acts no longer render
- * product captures. Each act is illustrated by a coded feature vignette
- * (`ga-vignettes.tsx`) that shows only the key component of the capability —
- * information categories, filter criteria, read states — never a full product
- * screen, so Behaviour/Family details can never appear on the public page.
+ * The acts render no product captures (round 3, 2026-08-21). Each is
+ * illustrated by a coded screen of the product performing a scripted
+ * demonstration (`ga-screen-*.tsx`; owner, 2026-08-26, after paper.design —
+ * decision record, "the journey becomes Paper-style screens"). Everything on
+ * those screens is authored synthetic data, and Behaviour/Family sections
+ * render as headers and redaction bars, so nothing sensitive can appear on
+ * the public page.
  */
 
 export type GaJourneyAct = {

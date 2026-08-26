@@ -61,8 +61,39 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/**
+ * The masthead's height, before JavaScript can measure it.
+ *
+ * `MastheadSg` writes the real value from a `ResizeObserver` and that stays the
+ * source of truth — an inline style on `:root`, so it beats everything here.
+ * These are what the page uses until then: the whole of a scripts-blocked
+ * visit, and the first ~100ms of every other one. A single 28px default was
+ * the desktop one-line height, so at 320 the masthead's three wrapped lines
+ * covered the nav's own controls at first paint — both of them down to 27 live
+ * points of 60, with the wordmark sliced in half (design review, 2026-08-26).
+ *
+ * Measured off the running masthead at 5px steps: three lines below 336, two
+ * to 467, one from 468. The wrap points move with the rendered font, which is
+ * why the observer exists; being approximately right before it runs beats
+ * being confidently wrong.
+ */
 :root {
-  --masthead-h: 28px;
+  --masthead-h: 68px;
+}
+
+@media (min-width: 336px) {
+  :root {
+    --masthead-h: 48px;
+  }
+}
+
+@media (min-width: 468px) {
+  :root {
+    --masthead-h: 28px;
+  }
+}
+
+:root {
   --background: var(--mauve-1);
   --foreground: var(--mauve-12);
   --card: var(--mauve-1);
@@ -97,18 +128,29 @@
   --sidebar-ring: var(--blue-8);
 
   --nav-surface: rgb(255 255 255 / 0.8);
-  /* The centred GA nav cluster: opaque-ish pills on a softer plate, so the
-     4px seams between pills stay readable over the pale hero sky. */
+  /* The centred GA nav cluster: near-white pills over the tinted plate
+     below, so the 4px seams between them stay readable on any ground. */
   --nav-pill: rgb(255 255 255 / 0.92);
   --nav-pill-hover: rgb(255 255 255 / 1);
-  --nav-plate: rgb(255 255 255 / 0.38);
+  /* The plate is a scrim, not a wash (owner, 2026-08-26, against lassie.ai's
+     nav). It was white at 38%, which separated from the hero's sky by tone
+     but vanished into the near-white page the fixed header spends most of
+     the scroll over — and a shadow to rescue it was rejected. Ink at low
+     alpha instead: it darkens whatever is behind it, so the plate is always
+     a step below its ground and always a step below the white pills on it,
+     on sky and on paper alike, with no edge drawn and nothing to tune per
+     section. 5% lands ~12 levels under the page ground, which is the
+     separation the reference carries. */
+  --nav-plate: rgb(14 23 41 / 0.05);
   --brand-orbit: var(--cyan-7);
   /* The page ground. It used to match the foot of the hero sky so the two met
      with no visible seam (product owner, 2026-08-24); since the hero retracts
      into a framed card and its sky now settles on pale blue rather than white
      (owner, 2026-08-25), this is the colour of the gutter *around* the hero,
-     and the seam is the point. */
-  --paper: #fefefe;
+     and the seam is the point. Nudged off #fefefe to #fcfcfd (owner,
+     2026-08-26) so the ground carries a trace of tone and the white nav
+     cluster and cards sitting on it are not white-on-white. */
+  --paper: #fcfcfd;
   /* The foot of the hero sky. The artwork in /public/hero/ is locked and fades
      to #fdfdfd by ~75% of its height; this is laid over that tail so the sky
      settles on a pale blue instead of washing out to white. Kept as channels so
@@ -119,7 +161,7 @@
      maps white to the backdrop — so every enclosed white in the drawing (her
      face, the frames on the wall, the laptop) renders in *this* colour. At
      #dfeefd they read as tinted and the face looked transparent; #f2f7fd is
-     still blue against the #fefefe page around the hero card but close enough
+     still blue against the #fcfcfd page around the hero card but close enough
      to white that the drawing reads as drawn on paper (owner, 2026-08-25).
      Darkening this makes the face blue again — separating an enclosed white
      from the outside white is a flood fill, not a colour test, and her face
@@ -142,7 +184,7 @@
   --audience-mint: #c8e8d2;
   --audience-sky: #d6e2f7;
 
-  --footer-bg: #fefefe;
+  --footer-bg: #fcfcfd;
 
   /* Polish tokens — kept here so component-level utilities stay tight
        and reusable hover/shadow rhythms don't drift apart. */
@@ -153,6 +195,45 @@
   --paper-shadow-cta-hover: 0 14px 30px -10px rgb(36 90 219 / 0.55);
   --paper-hover-bg: rgb(14 23 41 / 0.04);
   --paper-rule-strong: rgb(14 23 41 / 0.14);
+
+  /* The product's own language, for the journey's coded screens (owner,
+     2026-08-26, after paper.design). These are read off the prototype
+     captures — white surfaces on a #f7f7f8 ground, #e5e7eb hairlines, Inter
+     at 13px — and kept apart from the paper tokens on purpose: the screens
+     are the product appearing on the page, not the page's own chrome, and
+     they must not drift with it. Nothing here is a capture; every screen is
+     built from these. */
+  --app-surface: #ffffff;
+  --app-ground: #f7f7f8;
+  --app-ink: #1a1a1a;
+  /* #64707d, not the product's #6b7280: that grey is 4.49:1 on the grey
+     ground and fails AA by a hair; this is 4.7:1 there and 5:1 on white. */
+  --app-muted: #64707d;
+  --app-rule: #e5e7eb;
+  --app-rule-soft: #f0f0f1;
+  --app-accent: #0066ff;
+  /* Accent as *text* on the soft accent ground: #0066ff on #e6f0ff is 4.2:1
+     and fails AA; this is 5.9:1. Fills keep the brand blue. */
+  --app-accent-ink: #0052cc;
+  --app-accent-soft: rgb(0 102 255 / 0.1);
+  --app-selection: rgb(0 102 255 / 0.55);
+  --app-tag-bg: #f1f1f3;
+  --app-tag-green-bg: #e8f5d8;
+  --app-tag-green-ink: #3f6212;
+  --app-tag-orange-bg: #fff1e6;
+  --app-tag-orange-ink: #c2410c;
+  /* green-700, not the product's green-600 (3.3:1 as text on white). */
+  --app-trend-up: #15803d;
+  --app-trend-down: #e11d48;
+  --app-shadow-screen:
+    0 24px 60px -30px rgb(15 23 42 / 0.28), 0 1px 2px rgb(15 23 42 / 0.05);
+  --app-shadow-panel:
+    0 16px 40px -16px rgb(15 23 42 / 0.3), 0 1px 2px rgb(15 23 42 / 0.06);
+
+  /* Easings for the screens' motion, from the animation blueprint: entering
+     and leaving elements ease out, elements already on screen ease in-out. */
+  --ease-out-quart: cubic-bezier(0.165, 0.84, 0.44, 1);
+  --ease-in-out-cubic: cubic-bezier(0.645, 0.045, 0.355, 1);
 }
 
 .dark {
@@ -261,9 +342,9 @@
         rgb(var(--hero-sky-foot) / 1) 100%
       ),
       -webkit-image-set(
-        url("/hero/hero-bg.avif") type("image/avif"),
-        url("/hero/hero-bg.webp") type("image/webp")
-      );
+          url("/hero/hero-bg.avif") type("image/avif"),
+          url("/hero/hero-bg.webp") type("image/webp")
+        );
     background-size:
       100% 100%,
       cover;

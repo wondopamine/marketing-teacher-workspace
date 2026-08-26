@@ -69,8 +69,16 @@ export function MastheadSg() {
     const el = ref.current
     if (!el) return
     const root = document.documentElement
-    const update = () =>
-      root.style.setProperty("--masthead-h", `${el.offsetHeight}px`)
+    // A zero is never the masthead's height — it is the frame where the SGDS
+    // custom element has replaced the fallback and has not laid out yet. The
+    // observer fires there, and writing that 0 put every offset on the page at
+    // the top of the viewport for a frame or two: a flicker below `md`, and a
+    // 200ms slide from 0 above it, where `top` transitions (design review,
+    // 2026-08-26, MOT-1). Holding the last good value keeps the swap invisible.
+    const update = () => {
+      const height = el.offsetHeight
+      if (height > 0) root.style.setProperty("--masthead-h", `${height}px`)
+    }
     update()
     const ro = new ResizeObserver(update)
     ro.observe(el)
