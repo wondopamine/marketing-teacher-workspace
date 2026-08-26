@@ -185,10 +185,14 @@ export const gaTestimonials: ReadonlyArray<GaTestimonial> = [
     schoolLevel: "Primary School",
   },
   {
-    id: "pg-intuitive",
-    quote:
-      "The system is quite intuitive — it's easy to go from one point to another.",
-    role: "Corporate Comms & Education Outreach Staff",
+    // `pg-immediacy`, not `pg-intuitive`. The quote that was here is one of the
+    // three the output scanner guards as unapproved (ticket #10 is still open
+    // on per-quote publication), so it failed the build's own gate — and it was
+    // reaching the page while it did. This is the third quote the decision
+    // record says this page publishes.
+    id: "pg-immediacy",
+    quote: "It's the immediacy of the outreach — it's almost instant.",
+    role: "Head of Department",
     schoolLevel: "Secondary School",
   },
 ]
