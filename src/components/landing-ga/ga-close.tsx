@@ -24,9 +24,6 @@ export function GaClose() {
           >
             {close.headline}
           </h2>
-          <p className="max-w-[44ch] font-body text-base leading-[1.7] text-balance text-[color:var(--paper-muted)] sm:text-lg">
-            {close.body}
-          </p>
           <div className="mt-2 flex flex-col items-center gap-3">
             <Button
               asChild

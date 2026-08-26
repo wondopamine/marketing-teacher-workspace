@@ -236,11 +236,14 @@ export const gaPageCopy = {
     heading: audiencesDocument.requireHeading(),
   },
   schools: {
+    // Heading only (owner, 2026-08-26). `publicLede` is gone from
+    // `08-proof.mdx` with it — the cards say what the band is.
     heading: proofDocument.requireHeading(),
-    lede: proofDocument.text("publicLede"),
   },
   close: {
+    // Headline and the button under it, nothing between them (owner,
+    // 2026-08-26). `10-close.mdx` keeps its paragraph: v1, v2 and the CMS
+    // homepage template all read the same document and require it.
     headline: closeDocument.requireHeading(),
-    body: closeDocument.requireBody(),
   },
 } as const
