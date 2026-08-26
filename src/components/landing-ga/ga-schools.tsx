@@ -134,12 +134,17 @@ function SchoolCard({
         <p className="font-heading text-[1.375rem] leading-[1.24] font-medium tracking-[-0.015em] text-pretty text-[color:var(--paper-ink)] sm:text-[1.5rem]">
           {`“${testimonial.quote}”`}
         </p>
-        <footer className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <p className="font-body text-sm leading-5 font-medium text-[color:var(--paper-ink)]">
-            {testimonial.role}
-          </p>
+        {/* School level above the role (owner, 2026-08-26). The two used to sit
+            at opposite ends of one row, which read as two unrelated labels
+            pinned to the card's corners; stacked and left-aligned they read as
+            one attribution, and the tag is the line that says which kind of
+            school this is before you read who said it. */}
+        <footer className="flex flex-col items-start gap-2">
           <p className="rounded-[4px] bg-[color:var(--paper-hover-bg)] px-2 py-1 font-body text-[12px] leading-4 whitespace-nowrap text-[color:var(--paper-muted)]">
             {testimonial.schoolLevel}
+          </p>
+          <p className="font-body text-sm leading-5 font-medium text-[color:var(--paper-ink)]">
+            {testimonial.role}
           </p>
         </footer>
       </blockquote>
