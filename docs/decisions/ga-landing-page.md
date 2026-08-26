@@ -47,7 +47,7 @@ The plan was grilled; decisions resolved:
 - **Pinned journey costs mobile parity** — mobile gets the calm stacked read, not the choreography. Accepted: CLAUDE.md forbids engineering effort on mobile pinned scroll.
 - **Captures instead of the coded replica** — consistent, cheap, honest; sacrifices crisp text at very large zoom and interactivity. Accepted: the journey is narration, not a demo; claims live in copy.
 - **Story before specifics** — KPs must scroll past the narrative to reach briefing cards. Accepted: issue #3 orders discovery after the story deliberately. ~~Superseded 2026-08-24~~ — see "Capability row lifted above the journey" below.
-- **Act 3 shows a Release-2 state** — the guidance screen is flag-gated and not at GA. Accepted only as *proposed* content: capability-owner approval (ticket #6) gates the merge.
+- **Act 3 shows a Release-2 state** — the guidance screen is flag-gated and not at GA. Accepted only as _proposed_ content: capability-owner approval (ticket #6) gates the merge.
 
 ## Controls in scope
 
@@ -60,11 +60,11 @@ N/A: LAY-1 (no declared grid — no `.dx/design.json`); CMP-2/CMP-3/A11Y-11/CMP-
 No waivers were requested or granted this run.
 
 | Control | Tier | Reason | Approver | Where recorded |
-|---------|------|--------|----------|----------------|
+| ------- | ---- | ------ | -------- | -------------- |
 
 **Calibration notes (not waivers):**
 
-- **COL-1:** the filled primary uses the repo's `--primary` token (`#0066ff`, effectively the registered TW blue `#0064FF`), consistent with the v1 siblings. The close CTA's *text and border* use `--cta-blue #245adb` because `#0066ff` as 16px text on the paper ground measures 4.36:1 and fails AA (review round 1, finding 5). An earlier version of this note misnamed the filled CTA's token; corrected 2026-08-20.
+- **COL-1:** the filled primary uses the repo's `--primary` token (`#0066ff`, effectively the registered TW blue `#0064FF`), consistent with the v1 siblings. The close CTA's _text and border_ use `--cta-blue #245adb` because `#0066ff` as 16px text on the paper ground measures 4.36:1 and fails AA (review round 1, finding 5). An earlier version of this note misnamed the filled CTA's token; corrected 2026-08-20.
 - **TYP-1/TYP-3 (memo card, wordmark):** after review round 1 the inherited off-scale sizes moved onto the Tailwind scale (memo quote 22→20px, body 15→16px, attribution 13→14px; wordmark/footer 13→14px) rather than carrying an L1 waiver, and the memo numeral changed `font-mono` → Inter `tabular-nums`. Revert: restore the previous classes in `memo-card.tsx`, `ga-header.tsx`, `footer.tsx`. The dead `@fontsource-variable/geist` import was removed from `src/styles.css` (TYP-1 dead-import clause).
 - **TYP-2 line-height findings** from `type-scan` are display headings, not body (static scan cannot classify); body copy runs 1.6–1.7. Verified manually.
 - **CNT-13 "color" findings** are Tailwind `text-[color:var(--…)]` syntax, not copy. False positives; copy proofread manually (Singapore English).
@@ -74,7 +74,7 @@ No waivers were requested or granted this run.
 
 ## Content governance decisions this build carries
 
-- **Testimonials:** three of the six verbatims render (`pg-read-speed`, `pg-immediacy`, `pg-work-reduction`) as *proposed* content — per-quote publication approval (ticket #10) is still pending; `publicationApproved: false` stands in `landing-v2.ts`. The three unselected quotes (both PG-named ones included) are now what the output-leak scanner guards.
+- **Testimonials:** three of the six verbatims render (`pg-read-speed`, `pg-immediacy`, `pg-work-reduction`) as _proposed_ content — per-quote publication approval (ticket #10) is still pending; `publicationApproved: false` stands in `landing-v2.ts`. The three unselected quotes (both PG-named ones included) are now what the output-leak scanner guards.
 - **Audience copy:** the three Q&A blocks in `07-audiences.mdx` are drafted from approved assurance language only; PM review replaces in place (the wireframe now shows them as reviewable copy instead of pending slots).
 - **Reveal copy:** `04-reveal.mdx` now carries issue #3's thesis ("The care was always yours…"); the school-consistency assurance moved into the reveal body + school-leaders block.
 - **Act copy:** rewritten as public copy in `03-story.mdx`; wireframe slot labels unchanged. The flag-gated act-3 state and the synthetic profile (Rachel Wong Mei Ling, flag-on guidance capture) are disclosed on-page via the CNT-4 line ("Shown with a purpose-built synthetic student record") and internally via `content/screens.mdx`.
@@ -93,23 +93,23 @@ No waivers were requested or granted this run.
 - **Dark mode:** N/A — the public landing page has no dark mode (the paper world is deliberately light; no theme toggle on the marketing site).
 - **Verification ledger:**
 
-  | Control | Method | Evidence |
-  |---------|--------|----------|
-  | TOK-1..3 | script | `checks/token-audit.py` clean on `landing-ga/`, `landing-ga-page.ts`, `memo-card.tsx` |
-  | A11Y-1 | manual | `checks/contrast.py --tokens src/styles.css` clean; ink #1a1a1a / muted #5f6f76 on paper grounds inspected in frames |
-  | A11Y-2 | manual | `checks/a11y-static.py` clean; tab traversal operated — skip link and nav focus rings photographed |
-  | A11Y-5 | manual | reduced-motion frames: stacked presentation, no animation, zero information loss |
-  | A11Y-6 | manual | captures `aria-hidden` inside labelled `role="img"` figures; decorative sketches `aria-hidden` |
-  | A11Y-7/9/10 | manual | accessibility snapshot: skip link first, landmarks, h1→h2→h3 hierarchy, GA title from 01-meta.mdx |
-  | TYP-1 | script | `type-scan --rules TYP-1` clean after mono→Inter fix |
-  | TYP-2/3 | manual | remaining findings are headings / inherited v1 memo sizes (calibration notes above) |
-  | CNT set | manual | `content-lint` findings triaged (false positives + one deliberate line, above); copy proofread |
-  | CMP-1 | manual | CMP-1: asserted, no manifest — manifest absent for tw. Evidence source (a): reviewed the product codebase directly; composed from Button, RevealOnScroll, MemoCard, SiteFooter, MastheadSg, SkipLink |
-  | CMP-5 | script | `ga-landing-page.test.tsx` asserts exactly one filled primary ("Sign in with Google") |
-  | LAY-2 | manual | 320px frame: single column, no horizontal scroll |
-  | SLP-1..9,11 | manual | no gradients/glow/nested cards; apps grid cells are interactive links with distinct evidence |
+  | Control          | Method | Evidence                                                                                                                                                                                                     |
+  | ---------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+  | TOK-1..3         | script | `checks/token-audit.py` clean on `landing-ga/`, `landing-ga-page.ts`, `memo-card.tsx`                                                                                                                        |
+  | A11Y-1           | manual | `checks/contrast.py --tokens src/styles.css` clean; ink #1a1a1a / muted #5f6f76 on paper grounds inspected in frames                                                                                         |
+  | A11Y-2           | manual | `checks/a11y-static.py` clean; tab traversal operated — skip link and nav focus rings photographed                                                                                                           |
+  | A11Y-5           | manual | reduced-motion frames: stacked presentation, no animation, zero information loss                                                                                                                             |
+  | A11Y-6           | manual | captures `aria-hidden` inside labelled `role="img"` figures; decorative sketches `aria-hidden`                                                                                                               |
+  | A11Y-7/9/10      | manual | accessibility snapshot: skip link first, landmarks, h1→h2→h3 hierarchy, GA title from 01-meta.mdx                                                                                                            |
+  | TYP-1            | script | `type-scan --rules TYP-1` clean after mono→Inter fix                                                                                                                                                         |
+  | TYP-2/3          | manual | remaining findings are headings / inherited v1 memo sizes (calibration notes above)                                                                                                                          |
+  | CNT set          | manual | `content-lint` findings triaged (false positives + one deliberate line, above); copy proofread                                                                                                               |
+  | CMP-1            | manual | CMP-1: asserted, no manifest — manifest absent for tw. Evidence source (a): reviewed the product codebase directly; composed from Button, RevealOnScroll, MemoCard, SiteFooter, MastheadSg, SkipLink         |
+  | CMP-5            | script | `ga-landing-page.test.tsx` asserts exactly one filled primary ("Sign in with Google")                                                                                                                        |
+  | LAY-2            | manual | 320px frame: single column, no horizontal scroll                                                                                                                                                             |
+  | SLP-1..9,11      | manual | no gradients/glow/nested cards; apps grid cells are interactive links with distinct evidence                                                                                                                 |
   | Output isolation | script | build-time `verify-content-review-public-output.mjs` + `verify-content-review-routes.mjs` clean; unpublished quotes, internal ids, reviewer notes absent from public bundle (public-safe module + sync test) |
-  | Test suite | script | 347/347 vitest, tsc clean, production build green (`pnpm lint` broken pre-existing — eslint not a direct dep on either lineage) |
+  | Test suite       | script | 347/347 vitest, tsc clean, production build green (`pnpm lint` broken pre-existing — eslint not a direct dep on either lineage)                                                                              |
 
 - **Evaluator verdict:**
 
@@ -215,7 +215,7 @@ Grades: design quality — acceptable · originality — strong · craft — acc
 
 VERDICT: pass
 
-*(In the standard's three-value vocabulary this is `pass-with-findings` — the advisories are all L2 or record-level, and none is a blocking control failure.)*
+_(In the standard's three-value vocabulary this is `pass-with-findings` — the advisories are all L2 or record-level, and none is a blocking control failure.)_
 
 ### Post-round-2 touch-ups (same day)
 
@@ -342,6 +342,7 @@ ADVISORY (should fix):
 - **SLP-5 (L2) close call, not graded fail** — the apps row is now the icon-above-heading 4-up shape, though without card chrome. L2 permits a specific reason and the decision record carries one ("Craft-style icon row", stakeholder direction, round 3 §4). Recorded, so not a finding — noted so the next reviewer does not re-litigate it.
 
 SUGGESTIONS (not violations — improvements the builder may take):
+
 - Delete the outer journey frame (`ga-journey.tsx:106` and `:172`) and let the vignette sit on the paper ground — closes SLP-4 and SLP-11 and removes the empty white plate in one edit.
 - De-emphasise non-matching rows with muted text + no border instead of `opacity-30`, keeping them ≥4.5:1 — serves A11Y-1 and keeps the "narrowing" idea legible to everyone.
 - `min-h-11 md:min-h-6` on the filter chips (or an expanded hit area) — serves A11Y-4 and makes the one interactive vignette actually tappable on the phone it mostly renders on.
@@ -349,6 +350,7 @@ SUGGESTIONS (not violations — improvements the builder may take):
 - Give the vignette ambient cycles the same pause treatment the hero got, and fire the `aria-live` count only on user-initiated toggles — closes the two UNCOVERED items below at their source.
 
 QUALITY GRADES:
+
 - **Design quality — acceptable.** The hero is genuinely peaceful and the copy/CTA hierarchy is unambiguous at all four widths; the journey undercuts itself with a double frame around a small card and a copy column pinned hard to the viewport edge.
 - **Originality — strong.** Replacing product captures with coded, partly-interactive vignettes is the right and distinctive call, and it solves the privacy problem structurally rather than by cropping; the paper world still reads as nobody else's. The capabilities row drifting toward the generic icon-grid is the one pull in the other direction. No slop tells: no gradients, no glow, no side-tab borders, standard `cubic-bezier(0.4,0,0.2,1)` easing throughout, and the blue/mint/sky coding is the registered paper system, not decoration.
 - **Craft — weak.** A 1.9:1 text state in the default rendering, 24px touch targets, three levels of nested card, an empty frame, a stale section label, a video with no intrinsic dimensions, and three evidence frames that do not show their subject. Individually small; together they say the round was not re-read after it was built.
@@ -356,6 +358,7 @@ QUALITY GRADES:
 - **Dark mode — N/A: product has no dark mode** (deliberately light paper world; no toggle, no re-rendering `.dark` layer on this route).
 
 UNCOVERED (defects no control covers — feed the ratchet):
+
 1. **Auto-updating content with no pause control.** The vignette cycles run indefinitely at 2.2s (holistic), 2.8s (identify) and 3.4s (guidance) intervals (`ga-vignettes.tsx:71,177,257`) with no pause/stop/hide affordance. The catalogue's declared floor is WCAG 2.2 AA and SC 2.2.2 covers auto-updating information, but A11Y-5 reaches only `prefers-reduced-motion` and MOT-1 only duration/placement. The page proves the gap: the hero got a pause control for exactly this reason, and the vignettes beside it did not.
 2. **Timer-driven live region.** `aria-live="polite"` on the match count (`ga-vignettes.tsx:96`) re-announces every 2.8s while the identify act is on screen and untouched. A11Y-11's four fails_when clauses are all about async state changes the user initiated; none reaches an unattended announcer.
 3. **Hydration-swap layout shift.** No control governs a media element mounted after hydration without intrinsic dimensions (`ga-hero.tsx:105-114`), even though it produces a visible reflow of the hero's focal image.
@@ -427,7 +430,7 @@ output-leak scanner + route verifiers pass.
 
 1. **Text meets WCAG AA contrast (A11Y-1, L0) — RESOLVED.** `opacity-30` is gone from the row (`src/components/landing-ga/ga-vignettes.tsx:141-168`); I pixel-sampled the dimmed names in all three rendering branches and every one returns the same rgb(95,111,118) on rgb(253,250,242) = **5.01:1** — `1280-act-identify.png` ("Priya Nair"), `360-journey.png`, `1280-reduced-journey.png`; the muted avatar initials on `--paper-hover-bg` over `--memo-bg` compute to 4.62:1, also passing.
 2. **Interactive targets ≥24×24px, 44px on mobile (A11Y-4, L1) — RESOLVED.** `min-h-11 px-3 … lg:min-h-6 lg:px-2.5` at `ga-vignettes.tsx:120`; column-scanning the "Attendance" chip borders gives y=397→440 = **44px** in `360-journey.png` and the same 44px band in `768-journey.png` / `320-journey.png`, with 24px (y=237→260) only in the ≥1024px pinned stage of `1280-act-identify.png`.
-3. **No nested cards (SLP-4, L1) — RESOLVED (close call noted).** The bordered/shadowed `<figure>` is deleted from the pinned stage (`ga-journey.tsx:104-126`, now a bare `relative` div) and from the fallback branch (`:167-171`, now `flex justify-center`); `1280-act-identify/guidance/draft/holistic/posts.png`, `768-journey.png` and `1280-reduced-journey.png` all show a single card on the paper ground. Close call for the record: the `VignetteCard` (`:425`) still contains `rounded-lg border … bg-[--paper-card]` panels/rows (`:141`, `:231`, `:253`, `:388`), which a strict read of SLP-4's *verify* sentence ("no card-styled container nested inside another") still catches, though it no longer matches the `fails_when` ("cards inside cards inside cards") and it is exactly the remedy round 3 prescribed. Recommend a human confirm the two-level read once, so round 4 does not re-litigate it.
+3. **No nested cards (SLP-4, L1) — RESOLVED (close call noted).** The bordered/shadowed `<figure>` is deleted from the pinned stage (`ga-journey.tsx:104-126`, now a bare `relative` div) and from the fallback branch (`:167-171`, now `flex justify-center`); `1280-act-identify/guidance/draft/holistic/posts.png`, `768-journey.png` and `1280-reduced-journey.png` all show a single card on the paper ground. Close call for the record: the `VignetteCard` (`:425`) still contains `rounded-lg border … bg-[--paper-card]` panels/rows (`:141`, `:231`, `:253`, `:388`), which a strict read of SLP-4's _verify_ sentence ("no card-styled container nested inside another") still catches, though it no longer matches the `fails_when` ("cards inside cards inside cards") and it is exactly the remedy round 3 prescribed. Recommend a human confirm the two-level read once, so round 4 does not re-litigate it.
 
 **ADVISORIES**
 
@@ -450,7 +453,8 @@ output-leak scanner + route verifiers pass.
 Regression sweep of the fixed surfaces against A11Y-1/2/4/5/6, the SLP set and the TYP floors found nothing else: focus rings present on chips, apps links and the pause button (`focus-visible:ring-2/3 ring-primary`, photographed); all decorative icons and the tw-icon are `aria-hidden`/`alt=""`; type stays on scale (20/14/12px, no new off-scale value); `320-journey.png` reflows with no horizontal overflow; the settled composition is complete in the reduced-motion and fallback branches.
 
 Two minor items worth an advisory, neither a control fail:
-- Flipping `aria-live` from `"off"` to `"polite"` in the same React commit as the count change (`ga-vignettes.tsx:105`) means the **first** post-touch announcement may be swallowed, since the region is not yet live when the mutation lands. Rendering the region always-live and gating the *content* would be more robust. A11Y-11 close call.
+
+- Flipping `aria-live` from `"off"` to `"polite"` in the same React commit as the count change (`ga-vignettes.tsx:105`) means the **first** post-touch announcement may be swallowed, since the region is not yet live when the mutation lands. Rendering the region always-live and gating the _content_ would be more robust. A11Y-11 close call.
 - `opacity-40` on unrevealed posts rows (`ga-vignettes.tsx:391`) is transient (settles at 900ms intervals, and the settled/no-JS render is fully revealed), so not a contrast fail — but it is the same opacity-on-text pattern the audit script cannot see.
 
 ## VERDICT: fail
@@ -507,7 +511,7 @@ Every round-3 blocking finding, every advisory that claimed a fix, and the one n
 - **One term per thing (CNT-10, L1)** — "Message drafting" vs "AI Draft" is still pass-with-caveat, not fail, but it is L1 with `waiver: documented` and the "Waivers granted" table in `docs/decisions/ga-landing-page.md` is still empty. It needs the rename or a waiver row with a named human approver — correctly outside an agent's authority to supply.
 - **Performance budget** — CLAUDE.md pins "must not regress current Lighthouse scores" and no measured run exists for the round that added the autoplaying 8.9s / 3.1MB MP4. Uncovered by any control; flagged for a measured run before merge.
 
-Advisory, non-gating: the LAY-6 section-inset rationale (being added), and the SLP-4 close call I recorded — `VignetteCard` still contains bordered/filled panels and rows, which the control's *verify* sentence catches on a strict read even though it no longer matches its `fails_when`. Worth one human confirmation so round 4 does not re-open it.
+Advisory, non-gating: the LAY-6 section-inset rationale (being added), and the SLP-4 close call I recorded — `VignetteCard` still contains bordered/filled panels and rows, which the control's _verify_ sentence catches on a strict read even though it no longer matches its `fails_when`. Worth one human confirmation so round 4 does not re-open it.
 
 ### Hero video swap + blend repair (same day, stakeholder asset)
 
@@ -526,11 +530,10 @@ entrance). Verified by pixel-diff across the video edges: identical values
 inside/outside (≤3/255 codec noise at the top edge). Reduced-motion still
 renders the still image (DOM-verified), tests 349/349, build + verifiers green.
 
-*Post-confirmation touch-up (same day):* the reviewer's sr-only suggestion was
+_Post-confirmation touch-up (same day):_ the reviewer's sr-only suggestion was
 taken — a static `sr-only` description of the list now sits beside the gated
 live region, so screen-reader users get the summary without an ambient
 announcer. Tests re-run green (349/349).
-
 
 ### Capability row lifted above the journey (2026-08-24, product owner)
 
@@ -565,7 +568,6 @@ adds is Real schools. Removing it would undo a recorded accessibility fix, so
 it stands until someone decides; revert note if it goes: delete the `<nav
 aria-label="Page sections">` block in `ga-landing-page.tsx`.
 
-
 ### Page ground unified with the hero (2026-08-24, product owner)
 
 The hero's sky gradient resolves to `#fefefe` from roughly 70% of its height
@@ -597,7 +599,6 @@ Consequences checked:
   reference the vignettes were modelled on — but any future surface that
   relies on ground contrast alone will disappear. Worth a human eye before the
   next round adds one.
-
 
 ### Hero ambient layers: cloud drift and a pointer ink trail (2026-08-24, user)
 
@@ -643,7 +644,6 @@ Consequences handled:
 Two numbers are judgment calls left visible for a human: the drift periods and
 the 0.4 mark alpha, both single constants. Revert: drop `<GaHeroInk />` and the
 `ga-cloud-*` classes from `ga-hero.tsx`.
-
 
 ### The measured Lighthouse run, and the two fixes it forced (2026-08-24)
 
@@ -708,7 +708,6 @@ Findings recorded and not fixed, for a human call:
   left for a decision rather than taken here.
 - **`total-byte-weight` still scores 0.5** at 2.38MB, dominated by that video.
 
-
 ### The hero trail redrawn as a white ASCII field, occluded not cleared (2026-08-24, user)
 
 The user filmed the reference (`cursor interaction.mov`, 17.7s of the
@@ -727,12 +726,12 @@ actually is:
   10–11px. The first port used a 26px grid, which is why it read as scattered
   ticks rather than a field of type.
 - **A density ramp, not one glyph set.** Fresh cells under the pointer carry
-  `0`, `o`, `>`; older ones show `-` and `_`. One trail decays *through* the
+  `0`, `o`, `>`; older ones show `-` and `_`. One trail decays _through_ the
   ramp — that is what makes the reference read as ASCII.
 - **A band 4–6 cells across**, ragged-edged, persisting for seconds.
 - **Occlusion, not exclusion.** The decisive frame is the pointer crossing the
   "Download for macOS" pill (`round-3` reference frame at 11.00s): the band
-  runs into the pill's *rounded* edge with no padding and resumes on the far
+  runs into the pill's _rounded_ edge with no padding and resumes on the far
   side at the same rows. The field is behind the content and cut to the
   content's own shape; nothing is cleared around it.
 
@@ -808,7 +807,7 @@ The four capability glyphs are no longer Lucide's clean strokes inside a tinted
 disc. They are the same four Lucide shapes distorted by rough.js under the
 "Pencil" preset of the tf(x) Icon Generator
 (<https://github.com/wondopamine/icon-generator>), exported in that tool's
-*portable* mode: the wobble is baked into the path data, so no `feTurbulence`
+_portable_ mode: the wobble is baked into the path data, so no `feTurbulence`
 filter paints at runtime and the performance floor holds. Paths live in
 `ga-capability-glyphs.tsx` with the Lucide notice (ISC, plus MIT for the
 Feather-derived subset) at the top of the file — the licence travels with the
@@ -903,7 +902,7 @@ horizontal overflow, tests green.
 ### Follow-up: section anchoring, and the glyphs go to Ink (2026-08-24)
 
 **Anchoring.** The owner named the thing they like most about the reference:
-sections *anchor* into the fold rather than the page free-scrolling past them.
+sections _anchor_ into the fold rather than the page free-scrolling past them.
 Probed live: lassie reaches this through the Lenis scroll library (`lenis`
 class on `html`, no CSS snap). The stack is locked, so ours is the native
 equivalent — `scroll-snap-type: y proximity` on `html` at ≥1024px, with
@@ -1068,7 +1067,7 @@ nudges settle where the wheel put them (5440 and 5920, previously hauled to
 5484). One-section-per-view still holds — that was always the section sizing,
 not the snap.
 
-Consequence worth naming: the reveal's two beats no longer have snap *rests*.
+Consequence worth naming: the reveal's two beats no longer have snap _rests_.
 The swap is now continuous, as in the reference, and the hold windows are wide
 enough that stopping anywhere but mid-swap leaves a sentence settled.
 
@@ -1081,7 +1080,7 @@ it at sentence boundaries, so the copy is still proofread as one sentence pair
 and a PM rewrite to a single sentence degrades to a single beat rather than
 breaking. Type went up to `clamp(2.25rem, 4.6vw, 3.75rem)` with the measure on
 the sentences at `15ch`; it was briefly on the wrapper, where `ch` resolves
-against the *wrapper's* 16px font and squeezed a 60px heading into a 260px
+against the _wrapper's_ 16px font and squeezed a 60px heading into a 260px
 column.
 
 **Open, and the owner's to place:** the GA launch line ("Now available to
@@ -1145,7 +1144,7 @@ wobblier, and its star arms bulged where the tool's are straight.
 
 **Retracted: "portable mode bakes the wobble in, so no `feTurbulence` paints at
 runtime and the performance floor holds."** That sentence appears twice above and
-is wrong about what portable mode *is*. It is not a cheaper rendering of the same
+is wrong about what portable mode _is_. It is not a cheaper rendering of the same
 icon. The tf(x) Icon Generator renders each preset two ways, and they are two
 different drawings:
 
@@ -1185,7 +1184,7 @@ sent a reader where the scroll was about to take them anyway. The `<a>` wrapper
 goes with the label, along with its hover plate and focus ring, and
 `actAnchor`/`capabilityActAnchors` are removed from `landing-ga-page.ts` as dead
 copy model. This **supersedes** the round-3 consequence recorded above —
-*"See it in the journey →" now points forward* — and retires two findings that
+_"See it in the journey →" now points forward_ — and retires two findings that
 were about those link rows and nothing else: the A11Y-1 contrast measurement
 (5.32:1 after `opacity-80` came off) and the LAY-6 shared link baseline at
 y≈699. Neither has a surface left to fail on. The section-inset half of LAY-6 is
@@ -1208,8 +1207,8 @@ filter added yesterday.
 **The Pause control is deleted, and this is a WCAG 2.2.2 regression** — recorded
 plainly rather than argued away. The hero video is 5.21s (read from the mvhd
 atom) and `loop`s indefinitely, and the two cloud layers are infinite CSS
-animations. SC 2.2.2 (Pause, Stop, Hide — Level **A**) asks for a mechanism, *in
-the content*, to pause moving content that starts automatically and runs beyond
+animations. SC 2.2.2 (Pause, Stop, Hide — Level **A**) asks for a mechanism, _in
+the content_, to pause moving content that starts automatically and runs beyond
 five seconds. That mechanism was the button, and it froze the video and the sky
 together; `.ga-hero-motion-paused` went with it.
 
@@ -1231,8 +1230,8 @@ toggle that was here.
 
 ### Follow-up: the capability section stops counting, and the acts stop naming features (2026-08-25)
 
-Owner, on the capability section's wording: *"given TW is beyond the 4 major
-JTBDs of the teachers, I want to reframe the wordings here"* — and render the
+Owner, on the capability section's wording: _"given TW is beyond the 4 major
+JTBDs of the teachers, I want to reframe the wordings here"_ — and render the
 heading only.
 
 **"Four ways to move everyday work forward" is retired.** The number was the
@@ -1244,13 +1243,13 @@ there.
 Written against Google's developer documentation style guide, which the owner
 named as the reference. Four of its rules decide this line:
 
-- *"Don't use numbers in headings to indicate a sequence."* The count goes.
-- *"For a task-based heading, start with a bare infinitive"* — "Start", not
+- _"Don't use numbers in headings to indicate a sequence."_ The count goes.
+- _"For a task-based heading, start with a bare infinitive"_ — "Start", not
   "Starting"; the guide asks that `-ing` forms never open a heading.
-- *"Use second person: 'you' rather than 'we.'"* The old lede was about us
+- _"Use second person: 'you' rather than 'we.'"_ The old lede was about us
   ("Teacher Workspace brings related capabilities into one product"); the new
   heading is about the reader's day.
-- *"Be conversational and friendly without being frivolous"*, avoiding excessive
+- _"Be conversational and friendly without being frivolous"_, avoiding excessive
   claims. "Move everyday work forward" was a claim with nothing under it.
 
 Sentence case, present tense and active voice were already right and stay.
@@ -1292,10 +1291,10 @@ pale light blue instead of fading to white.
 rule for this reference, and the thing that went wrong twice in round 4. What
 lassie.ai actually does:
 
-| scroll | `clip-path` on the hero's media wrapper |
-| --- | --- |
-| 0–100px | `inset(0px)` |
-| 101px and beyond | `inset(32px round 64px)` |
+| scroll           | `clip-path` on the hero's media wrapper |
+| ---------------- | --------------------------------------- |
+| 0–100px          | `inset(0px)`                            |
+| 101px and beyond | `inset(32px round 64px)`                |
 
 with `transition: clip-path 1s cubic-bezier(0.22, 1, 0.36, 1)` and
 `will-change: clip-path`. Sampled at 0/100/101/105/110/120/140/150/160/180/200/
@@ -1337,8 +1336,8 @@ are unaffected.
 Measured on the built page: the card's foot samples `#dfedfc` against a
 `#fefefe` gutter, so the frame's edge is a real boundary rather than an implied
 one. That inverts the reason `--paper` was set to `#fefefe` — it was chosen on
-2026-08-24 to match the sky's foot *so the hero would meet the page with no
-visible seam*. The seam is now the point, and the token's comment says so.
+2026-08-24 to match the sky's foot _so the hero would meet the page with no
+visible seam_. The seam is now the point, and the token's comment says so.
 
 The teacher illustration clears the bottom inset with room to spare at 1280, so
 nothing of her is cropped by the frame. Not re-checked at every width — worth a
@@ -1347,13 +1346,13 @@ glance in the next capture set.
 ### Follow-up: the drawing's whites, and why the sheet was the wrong fix (2026-08-25)
 
 Owner: the teacher's face is transparent — fill the face and the art frames
-white. Then, on the first attempt: *"this is not acceptable, it has a boundary
-around the illo. I asked the face and the art frames only."* Correct, and the
+white. Then, on the first attempt: _"this is not acceptable, it has a boundary
+around the illo. I asked the face and the art frames only."_ Correct, and the
 attempt is reverted.
 
 **Why a sheet of white behind the drawing was the wrong shape of fix.**
 `mix-blend-multiply` maps white to the backdrop, and it cannot tell an
-*enclosed* white (her face, the frame interiors, the laptop) from the *outside*
+_enclosed_ white (her face, the frame interiors, the laptop) from the _outside_
 white that should stay sky. That is a topological property, not a colour one —
 separating them needs a flood fill inward from the image border. Any backdrop
 big enough to cover the enclosed regions also covers the outside ones, which is
@@ -1362,13 +1361,13 @@ the boundary the owner saw.
 **So the question became whether a mask could do it, and it was measured rather
 than assumed.** Flood-filling the exterior of the real video frames:
 
-| | result |
-| --- | --- |
-| Art frames, laptop, pot | **stable** — survive a 9-frame intersection intact |
-| Her face | **moves and reshapes** — the intersection loses it entirely |
-| Intersection ∩ union ratio | 0.501 across nine frames |
-| Union mask (covers every position) | smears white over ~4,100 background px per frame, 17% of the mask |
-| Live per-frame keying | exact; 3.5ms per frame at half resolution × 23.8fps ≈ 8.4% of a core |
+|                                    | result                                                               |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| Art frames, laptop, pot            | **stable** — survive a 9-frame intersection intact                   |
+| Her face                           | **moves and reshapes** — the intersection loses it entirely          |
+| Intersection ∩ union ratio         | 0.501 across nine frames                                             |
+| Union mask (covers every position) | smears white over ~4,100 background px per frame, 17% of the mask    |
+| Live per-frame keying              | exact; 3.5ms per frame at half resolution × 23.8fps ≈ 8.4% of a core |
 
 A fixed mask therefore fixes the art frames exactly and cannot fix the face at
 all; only per-frame keying can, and it costs about a twelfth of a core for the
@@ -1452,3 +1451,533 @@ VP9 in `.webm`.
 
 `--memo-section-bg` stays in the tokens — the v1 landing's `schools-today.tsx`
 still uses it.
+
+### Follow-up: the journey becomes Paper-style screens (2026-08-26)
+
+Owner, with two references and a recording: the journey's visuals should behave
+like paper.design's homepage demo — _the real interface_, large, bleeding off
+the right edge, with a foreground panel performing a scripted demonstration
+while the screen behind it responds — composed the way the owner's mockup shows
+(copy left; the filter popover left of and on top of the student list; the list
+running off the page), with Linear's layout as the fallback if that proved hard.
+It did not.
+
+**What was measured, not inferred.** The recording (`narrative-section-asset.mov`,
+18.5s, sampled every 0.5s via AVFoundation — the only ffmpeg on the machine is
+Playwright's stripped build and cannot open a `.mov`): a foreground terminal
+resets, types a prompt (~1.5s), streams tool-call lines every ~0.4s while the
+canvas behind fills row by row (~0.4s apart, each new row flashing a blue
+selection outline), holds ~3s and loops at ~13s a pass. On paper.design live,
+the hero is `<canvas>` elements — the product itself running a script, not a
+video — and the feature sections below are stacked ~1680px blocks with no sticky
+positioning. So the equivalent here is a _coded replica of the real Teacher
+Workspace screens, scripted_, and not a capture and not a video.
+
+**This reverses round 3** (2026-08-21, stakeholder: "never show the whole
+product screen"), at the owner's explicit direction. What round 3 protected
+survives structurally rather than by policy: **no capture ships** — every screen
+is coded, so the `no /content-review/screens/` regression test stands unchanged;
+**only synthetic data renders** (`ga-screen-data.ts`, fourteen invented students
+of class 4A; Rachel Wong Mei Ling's attendance values are the prototype's own
+synthetic record); **Behaviour, Academic and Family render as headers and
+redaction bars**, and the caption "Sensitive sections stay inside the profile."
+stays under act 2. Attention tags are limited to the set in the owner's mockup
+(FAS, SwAN, LTA) — no SEN.
+
+**Four decisions, put to the owner and taken (2026-08-26):**
+
+1. **Stacked, one block per act** — Paper's structure — was the first cut,
+   and it lasted a day. Seen on the page the owner missed what the journey had
+   before: _"it should anchor the section and show contents upon scrolling"_
+   (owner, 2026-08-26, later the same day). **The stage is anchored again:** on
+   desktop with motion allowed, one sticky full-viewport frame on the right
+   holds all five screens stacked in place, and as the copy scrolls past — one
+   act per view — the frame crossfades (opacity only, 200ms) to the act in the
+   middle band of the viewport and that act's script plays. This is the round-3
+   structure (`IntersectionObserver`, `rootMargin -45%`) carrying the new
+   screens. Stacked blocks survive as the fallback: narrow viewports, reduced
+   motion and the server get each act with its own stage at the settled frame.
+2. **Scripted demonstration only.** The screens perform; they are not controls
+   (the cursor in the recording is the recorder's own). Round 3's "limited
+   interactive part" is gone with the filter chips — and with it the 44px
+   target, focus-management and live-region obligations inside a decorative
+   replica. The whole stage is `aria-hidden`; an sr-only line per act says what
+   the demonstration shows.
+3. **Play twice, then rest on the final frame; replay on re-entry.** The
+   posture the vignettes already used: auto-updating content that stops on its
+   own, so WCAG 2.2.2 needs no Pause control and the hero's recorded gap does
+   not widen to the journey. Scripts run only when the block holds ≥50% of the
+   viewport (`useInView`), on ≥1024 with motion allowed.
+4. **All five acts now.** Acts 4–5 had no captures in the tree; they were
+   committed in `ff67622` and later removed, and were recovered from git as
+   build references only.
+
+**Architecture.** `ga-demo-script.ts` — `useDemoScript(script, active)`: a
+keyframe timeline `[at, state]` played as one batch of `setTimeout`s per pass,
+`passes: 2`, returning the last frame whenever it is not playing (server,
+pre-hydration, off screen, reduced motion). `ga-screen-chrome.tsx` — the
+product's language as primitives (`Screen`, `Panel`, `AppSelect`, `AppInput`,
+`AppChip`, `Redaction`…) on new `--app-*` tokens read off the captures, kept
+apart from the paper tokens so the product on the page never drifts with the
+page. One file per act: `ga-screen-insights` (class list + filter popover),
+`ga-screen-profile` (profile + "Jump to" rail), `ga-screen-guidance`
+(suggestion over the dimmed profile), `ga-screen-composer` (composer + AI Draft
+picker + Parents Gateway preview), `ga-screen-post` (posted letter + delivery
+overview). `ga-screens.tsx` maps acts to screens and exports `ScreenStill`,
+which the reveal's scatter cards now flip to instead of the deleted vignettes —
+the reveal and the journey show the same product.
+
+**Layout.** Anchored (desktop, motion): `grid-cols-[minmax(320px,4fr)_minmax(0,
+8fr)]`, the copy column a stack of `min-h-svh` acts, the right column a
+`sticky top-0 h-svh` wrapper that centres the stage. The stage is a fixed-height
+box (`min(680px, 100svh − 8rem)`) with `overflow-x: visible; overflow-y: clip`,
+the section carrying `overflow-x: clip` so a screen can run off the right edge
+without widening the page. Inactive screens sit `inert` at opacity 0 at their
+settled frame; the caption under the stage follows the active act. The background screen starts at
+`--screen-x: clamp(200px, 30%, 320px)`; the foreground panel sits at the
+stage's left edge, over the gutter, overlapping the screen — the mockup's
+composition. The whole composition is authored at the product's own size and
+drawn at `scale(0.9)` on desktop, `0.85` at `sm`, `0.72` below — transform
+only — so a phone still sees the panel whole. Headline cap lowered to `2rem`
+for the narrower copy column.
+
+**What the server sends — and what it does not.** The first cut server-rendered
+all five screens at their settled frames. Measured, that took the document from
+11.7KB to 15.6KB compressed (58KB → 110KB raw, 396 → 947 tags): past TCP's
+first congestion window, which on Lighthouse's mobile simulation is an extra
+round trip in front of the render-blocking CSS — FCP and LCP moved ~0.3s and the
+mobile performance score fell 85 → 81 with byte weight otherwise unchanged. The
+screens are illustration (`aria-hidden`, described by an sr-only line), so the
+server now sends each act's words, description and caption with an **empty
+stage**, and the screens are one lazily-loaded chunk (`ga-screens.tsx` and the
+`ga-screen-*` files; `ga-screen-meta.ts` holds the strings the journey needs
+without them) that mounts a viewport before its act arrives (`useInView`,
+`margin: 100%`, `once`) and fades up. The reveal's stills come from the same
+chunk behind a `Suspense`. This is the hero video's pattern (poster on the
+server, motion after hydration) applied to the screens, and it is the one place
+this work departs from "the settled frame everywhere": a no-JS reader gets the
+journey's copy and descriptions, and empty stages.
+
+**`content-visibility: auto` was tried on the act blocks and removed** (owner,
+same day: "it keeps scrolling down"). A skipped block is laid out at its
+`contain-intrinsic-size` estimate and a rendered one at its real `min-h-svh`,
+so on any viewport that is not exactly the estimate the blocks change height as
+the reader scrolls past them — measured at 1440×760: rendered acts 760/788px,
+the far one held at 900. Chromium's scroll anchoring hides the shift, which is
+why the 1440×900 checks showed nothing; Safari has no scroll anchoring, so the
+content above the viewport grows and the page walks downward on its own. It had
+contributed nothing to the Lighthouse recovery (FCP/LCP were unchanged with it
+on), so nothing is lost by taking it out.
+
+**Motion** follows the blueprint: panels and menus enter over 200ms and leave
+over 150ms on `--ease-out-quart`; rows leave on opacity and the rest reflow
+through motion's `layout` (FLIP → transforms) on `--ease-in-out-cubic` 300ms;
+the profile pane translates 400ms; typed values land a keystroke at a time
+(160ms; 45ms for the title). Transform and opacity only; no blur; every closed
+panel is unmounted rather than hidden, so nothing ever sits at `opacity:0`, on
+the server or after.
+
+**Honesty choices.** The count reads "N of 14 found", not the mockup's "of 68":
+the number must be true of the rows on screen, and the filter is computed from
+the data. The templates in act 4 (Term Update Letter, Excursion Consent, Event
+Reminder, Meet-the-Parents Invitation) and the whole of acts 4–5 are the
+landing page's synthetic rendering of screens whose captures are no longer in
+the tree — **owner confirmation of the Posts screens is needed**, as
+`screens.mdx` already asks. The claims register is unchanged: "We send the
+reminders" and the school-voice drafting stay PROPOSED, and the guidance act
+still never prints its flag.
+
+**Verification.** `pnpm typecheck` clean; `pnpm test` 363 passing (new:
+`ga-demo-script.test.ts` — two passes then rest, inactive → last frame,
+deactivate clears timers; `ga-journey.test.tsx` — plays 14 → 7 → 3 of 14 when
+in view on desktop, mounts nothing while the journey is far from the viewport,
+rests on the settled frame with zero timers under reduced motion, the act block
+carries only the act's words). The anchored stage, measured in the browser at
+1440×900: exactly one screen visible per act as the copy scrolls (10000 → 01000
+→ 00100 → 00010 → 00001), the other four `inert`; act 1's script starts on
+arrival (14 of 14 at 1.6s, 7 of 14 at 4.8s); the sticky frame's top holds at 0
+through the whole section at 1440×900 and 1440×760, and the section is exactly
+five viewports tall. The stage clears the fixed nav (stage top 124–142px vs nav
+bottom 88px) at 1280×800, 1366×680, 1440×900 and 1512×860, and the copy and
+stage centre within 4px of each other at each. `ga-landing-page.test.tsx` asserts the server
+ships the five act blocks, their descriptions and the caption with no screen
+markup. Repo lint 42 → 41 problems (none in these files). `document.
+documentElement.scrollWidth === innerWidth` at 1440/1280/1024/768/390, at every
+act. Reduced-motion emulation renders every settled frame with no script
+scheduled. A 14s `agent-browser` recording of act 1 at 1440 was sampled at 4fps
+(contact sheet in the session scratchpad): the popover's press, the menu walk,
+the two cuts of the list with rows leaving and reflowing, the typed values and
+the rest frame all land on the beat table in the plan. Evidence:
+`docs/design-evidence/ga-landing-page/round-5/1280-act-*.png` (the stacked
+fallback's settled frames, reduced-motion emulation, after the fixes below) and
+`1280-anchored-act-{promise,words}.png` (the anchored stage mid-demonstration).
+
+**Two regressions Lighthouse found, and what fixed them.** Measured per the
+round-3 method (both builds served from `.output`, fronted by the brotli proxy,
+3 runs × mobile/desktop), against a detached-HEAD worktree of `c7020d2`:
+
+1. _Accessibility 100 → 96, `color-contrast`._ All eleven failing nodes were in
+   the screens: accent text on the soft accent ground (4.2:1 — the rail's lit
+   entry, the Draft chip), the profile dimmed to 60% behind the guidance card
+   (its muted labels at 2.3:1), the not-yet-postable "Post" button drawn at half
+   opacity (white on pale blue, 2.1:1), and "Read" in the product's green
+   (3.3:1). Fixed at the source: `--app-accent-ink #0052cc` for accent _text_
+   (5.9:1; fills keep the brand blue), `--app-muted #64707d` (the product's
+   `#6b7280` is 4.49:1 on the grey ground), `--app-trend-up #15803d` (green-700,
+   5:1), the profile veiled by one scrim element instead of dimmed, and the
+   button drawn on the soft ground in accent ink. Back to 100, zero findings.
+2. _Mobile performance 85 → 81._ Diagnosed in two steps. Main-thread Style &
+   Layout had tripled (96–108ms → 210–350ms); `content-visibility: auto` on the
+   act blocks (since removed, above) and glyphs instead of SVGs for the fourteen
+   trend arrows brought it to ~156ms — and moved FCP/LCP not at all, because
+   observed FCP was identical within noise (70 vs 75ms). The simulated +0.3s
+   was the document crossing TCP's first congestion window (above). Moving the
+   screens to the lazy chunk is the fix; the table below is the result.
+
+**A measurement trap, recorded so it is not walked into again.** The first
+comparison was meaningless: `node .output/server/index.mjs` processes from the
+2026-08-24 Lighthouse session were still bound to ports 4173 and 4174, so both
+"servers" started for this run failed to bind silently and Lighthouse measured
+the round-3 build (old vignettes) as the candidate and the v1 page as the
+baseline — plausible numbers, wrong pages. Now every run checks a marker string
+in each origin's HTML before measuring, and tears down by PID.
+
+**Lighthouse** (round-3 method: `CONTENT_SOURCE=static` builds of both trees
+served from `.output`, fronted by the brotli proxy, `pnpm dlx lighthouse` 3× per
+row with `--headless=new --autoplay-policy=no-user-gesture-required`; medians,
+individual performance runs in brackets; baseline = detached-HEAD worktree of
+`c7020d2`, candidate = this change as it ships):
+
+| build                                                    | preset      | perf                   | a11y    | best-practices | seo     | FCP s    | LCP s    | TBT ms | CLS   | doc KB (br) | total KB |
+| -------------------------------------------------------- | ----------- | ---------------------- | ------- | -------------- | ------- | -------- | -------- | ------ | ----- | ----------- | -------- |
+| baseline                                                 | mobile      | 85 (83, 85, 85)        | 100     | 100            | 100     | 2.79     | 3.46     | 0      | 0.089 | 11.7        | 2329     |
+| baseline                                                 | desktop     | 100 (100, 100, 100)    | 100     | 100            | 100     | 0.59     | 0.71     | 0      | 0.000 | 11.7        | 2329     |
+| first cut (screens SSR'd)                                | mobile      | 81 (81, 81, 81)        | 96      | 100            | 100     | 3.01     | 3.77     | 0      | 0.089 | 15.6        | 2343     |
+| first cut (screens SSR'd)                                | desktop     | 99 (99, 99, 99)        | 96      | 96             | 100     | 0.61     | 0.76     | 0      | 0.000 | 15.6        | 2343     |
+| + contrast, `content-visibility` (later removed), glyphs | mobile      | 81 (81, 81, 81)        | 100     | 100            | 100     | 3.08     | 3.76     | 0      | 0.089 | 15.6        | 2343     |
+| **as shipped** (+ lazy chunk, empty stages)              | **mobile**  | **85 (83, 85, 85)**    | **100** | **100**        | **100** | **2.78** | **3.46** | 0      | 0.089 | **10.5**    | 2327     |
+| **as shipped**                                           | **desktop** | **100 (100, 100, 99)** | **100** | **100**        | **100** | **0.59** | **0.71** | 0      | 0.000 | **10.5**    | 2339     |
+
+No category regresses against the baseline; the document is smaller than it
+was, and the screens' chunk is fetched only when the journey is a viewport
+away. Raw JSON for every run is in the session scratchpad (`lh2/` baseline,
+`lh5/` as shipped).
+
+### Follow-up: the reveal's photographs, and its cards show one component (2026-08-26)
+
+Owner, two things about the reveal — the section carrying "The care was always
+yours." / "We removed the admin between the moments."
+
+**New photographs.** Five film frames of Singapore classrooms in the page's own
+powder-blue register (owner-supplied, `~/Desktop/classroom-powder-blue-9-pngs`)
+replace the five sources in `assets/reveal/`. The pipeline is unchanged —
+`pnpm gen:reveal-photos` regenerated all twenty variants — so nothing but the
+image bytes moved. Each photograph sits on the act whose card it is:
+
+| act               | frame                                                 | why                                                             |
+| ----------------- | ----------------------------------------------------- | --------------------------------------------------------------- |
+| promise           | teacher facing a full class, students' heads in front | "find the students you're looking for" is a class, not a person |
+| notice            | teacher bowed over a paper, students crowded in       | one student, closely — the act's own claim                      |
+| next-steps        | teacher laughing with students in a corridor          | never turns over; the judgement in this act is a human one      |
+| words             | teacher at a table with a laptop and a small group    | never turns over; the act about writing                         |
+| family-and-record | teacher addressing a group, all attentive             | everyone in the loop                                            |
+
+The two that keep their photographs are the two that do not flip, which is the
+2026-08-25 decision working as intended: the warmest frames are the ones that
+stay.
+
+**The cards that turn over show one component, not a screen** (owner: _"only
+show the specific component only. Do not try to show the whole part of assets in
+that narrative section. Like maybe a modal for the Filter options, or the AI
+card."_). `ScreenStill` was rendering the whole act screen at `scale(0.6)` in a
+640×400 box — at card size, a grey smudge. Each screen file now exports the one
+component its act is about, built from the same body the screen renders so there
+is no second copy: the filter popover (`InsightsComponent`), the rail that names
+every section of a record (`ProfileComponent`), the suggestion
+(`GuidanceComponent`), the AI Draft picker (`ComposerComponent`), the delivery
+overview (`PostComponent`). `PanelSurface` is the panel's look without its
+entrance, so a still does not animate on mount. All five exist even though three
+flip: which cards flip is a composition decision, and a partial map would be a
+landmine if it changes.
+
+The filter's still is the frame the demonstration rests on — both cuts applied,
+the options menu open — which is also the frame of the owner's mockup. It is
+nearly square, where the two rule rows alone are a thin band.
+
+**Card geometry, twice corrected.** Sizing each card to its component's aspect
+came first and was wrong: the filter panel made a 268×106 letterbox, and the
+square photograph on the _front_ of that card was cropped to a strip through the
+teacher. The card is the photograph's shape and the component is fitted inside it
+(`Math.min` contain fit against both axes). Three consequences: the flipping
+cards are wider (264/272/290 → 344/336/340), because a 440–520px panel scaled
+into a 250px card is not legible; `aspect` is a new optional per-piece number,
+used once, for the delivery overview — a band 2.9× wider than tall, which left
+two thirds of a square card empty (0.66, and a 1.5:1 centre crop of its
+photograph survives). Measured at 1280/1360/1440/1600: every card inside the
+viewport, `scrollWidth === innerWidth` at each.
+
+**The composer's preview stops pretending to be a phone.** Its 6px `#0f172a`
+slab was the heaviest line on any screen and read as a device bezel; it is a
+1px `--app-rule` card like every other card there (owner: _"the outline of the
+Preview card is too thick. Make it natural as other components."_).
+
+Verified: 363 tests pass, typecheck clean, repo lint 41 (one below the 42 this
+work started from). Reduced motion draws no scatter at all, as before.
+
+**Known gaps, recorded.** (1) `@fontsource-variable/inter` is imported only on
+the content-review route, so the landing page's `font-body` — and therefore the
+product screens — falls back to the system sans. The product is set in Inter;
+adding it costs a 48KB woff2 on the landing route. Owner's call, not taken here.
+(2) Without JavaScript the journey's stages are empty; the copy, the sr-only
+descriptions and the caption are complete. (3) `pnpm build`'s postbuild gate
+(`verify:content-review-output`, "unapproved testimonial fragment (intuitive)")
+fails identically on the untouched HEAD baseline — pre-existing, not from this
+change; the `.output` it guards is still produced. (4) Lint's pre-existing
+failures are untouched; none is in the files this change adds or edits (one
+`??` finding in `ga-landing-page.test.tsx` predates this change).
+
+## The header's two paths become one (2026-08-26, owner-reported)
+
+The owner resized the browser and the top of the page broke: a white band above
+the hero with the nav tray sitting on it as a bar ruled across the viewport, and
+the wordmark's pill and "Get started" reading as two loose objects on it rather
+than a floating cluster. Reproduced and measured before touching anything —
+`static` below `md`, `fixed` from `md` up, so the header was **88px of page**
+below 768 (108px at 375, 128px at 320, where the SG masthead wraps): the hero
+began _below_ the header instead of under the masthead, and crossing 768px in
+either direction jumped the whole document by that amount. Hero top measured at
+88–128px from 320 to 767, against 0 from 768 up.
+
+Nothing was overflowing — the tray is content-hugging at every width (296px at
+320, 351px at 640, 399px from 1024) and `scrollWidth === clientWidth`
+throughout. What looked like an overflowing button was the plate's 4px inset
+read against a white ground the tray was never meant to sit on.
+
+**Fixed at every width now, offset by `top-[var(--masthead-h,0px)]`.** That is
+what `site-header.tsx` has always done, and what round 4's re-check already
+concluded was the thing to compare against. The offset is the half that matters
+for A11Y-2: `masthead-sg` writes the variable from the masthead's measured
+height, so the tray clears it by 12px at 320, 360 and 767 alike, and
+`elementFromPoint` at the centre of both controls returns the control at 320,
+360, 375, 640, 700, 767, 768, 900 and 1300. Position and offset are now pinned
+together by a test in `ga-landing-page.test.tsx`, which fails against the old
+markup — no breakpoint may own either again.
+
+Two things the fix uncovered, both measured and both closed:
+
+- **The lockup was being squeezed.** At 320 the cluster's max-content width is
+  7px wider than the padding box allows, and flex took those 7px out of the
+  wordmark image — 105px drawn as 100px, the brand's own proportions off by 4%.
+  `shrink-0` on the items moves that give to the spacer, which is the one thing
+  in the cluster that is allowed to lose width. Image measured at 105px from 320
+  to 1300 after.
+- **The hero's top padding had been clearing a header that no longer takes up
+  space.** A flat `pt-36` left the headline 12px under the tray at 320 (where
+  the masthead is 68px) against 32px at 375. It reads the masthead height now,
+  so the clearance is a constant 32px below `sm` — measured at 320/360/375/430/
+  480/560 — and the designed 68px from `sm` up, unchanged at 640 through 1440.
+  No overlap at any width.
+
+**The trade-off, for the owner.** A fixed header on a narrow viewport floats
+over the page as it scrolls: sampled at six scroll positions at 375, text passes
+under the translucent tray at three of them (0 of 6 at 1440, where the tray
+covers 27% of the width against 81% at 375). Below `md` the static header used
+to scroll away instead. If that transit matters more than keeping the way in
+within reach, the same fix works with `absolute` below `md` and `fixed` from
+`md` up — still out of the flow, so the band and the jump stay gone, and the
+tray leaves with the page on mobile. Not taken here: one path at every width is
+what caused the defect to be a one-line fix rather than a third special case.
+
+Verified: 363 + 1 tests pass, typecheck clean, `eslint` clean on both files
+touched.
+
+## The card takes the component's shape, not the photograph's (2026-08-26)
+
+Reversed, on the owner's call and in their words: _"UIs should be priority when
+it comes to the proportion and size of the card. Then photograph can fit to that
+aspect ratio."_ Earlier the same day this record set the opposite order — the
+card was the photograph's shape and the component was contained inside it — to
+stop a filter panel letterboxing its card. That fixed the letterbox and paid for
+it in empty card, which is what the owner was looking at:
+
+| card                | component, as authored | card, before             | empty inside                                   |
+| ------------------- | ---------------------- | ------------------------ | ---------------------------------------------- |
+| `promise`           | 460×474                | 344×344                  | none                                           |
+| `notice`            | 236×300                | 336×336                  | 68px of width, and the rail drawn at **1.42×** |
+| `family-and-record` | 440×211                | 340×224 (`aspect: 0.66`) | 53px of height — a quarter of the card         |
+
+Every number above is `offsetWidth`/`offsetHeight` off the running page, not a
+guess; the two components that never turn were measured the same way by flipping
+them temporarily (`next-steps` 520×286, `words` 480×362).
+
+**Now:** the composition still owns each card's width — the settle offsets were
+authored against those — and everything else falls out of the component. It is
+drawn at `(width - 16) / STILL_SIZE.width` of its authored size, capped at 1;
+the card's height is that scale applied to the component's own height; and
+`object-cover` takes whatever crop of the square photograph that shape asks for.
+`aspect` is gone as a per-piece number, because the component now answers the
+question it was guessing at. Cards after: `promise` 344×354, `notice` 252×316,
+`family-and-record` 340×171 — a panel, a portrait and a band, each hugging its
+component with the 8px print margin and nothing else.
+
+`notice` is the one width that moved, 336 → 252. At 336 the 236px profile rail
+was drawn 1.42× larger than the product draws it — type, radii and hairlines
+belonging to no screen in the product — which is the failure mode the cap now
+forbids outright. At 252 the rail is at its own size and the card is the
+portrait its 236×300 makes.
+
+**The shape is known before the component arrives.** The screens are a lazy
+chunk, so a card that waited for a measurement to learn its shape would re-crop
+its photograph in front of the reader. `STILL_SIZE` in `ga-screen-meta.ts` now
+carries each component's authored height beside its width; the `ResizeObserver`
+stays as a correction for a font landing late, and `useLayoutEffect` applies it
+before any paint.
+
+Verified at 1280/1360/1440/1600 (the scatter is a ≥1280 enhancement), at four
+and five progress points each: 0 cards clipped by the section, 0 glyph-level
+overlaps with the statement, `scrollWidth === clientWidth` throughout. The one
+box-level graze the first sweep reported at 1280 was against the second
+sentence at effective opacity 0 — measured, not assumed. `cardFit` is now
+exported and `ga-reveal-scatter.test.ts` pins the ordering: no component drawn
+above 1×, a turning card's height equal to its component's at that scale, a
+photograph-only card square, and the band and the portrait held to 171px and
+316px by name.
+
+**Still true, and not a regression:** `promise`'s card crops its filter panel's
+open dropdown. The dropdown is absolutely positioned, so it is outside the
+`offsetHeight` the card is built from — it was cropped at the same row before
+this change. Reading as the top of a panel rather than a whole one is what the
+card is for.
+
+**Opportunity, not taken:** the 1280 gate exists because "five ~300px fragments
+cannot sit both clear of a centred statement and inside the viewport below
+1280". Two of the five are now materially smaller, so that inequality may have
+a solution at 1152. It wants its own measurement pass, not an assumption.
+
+## The nav's pills go fully rounded (2026-08-26, owner)
+
+_"The button on the nav bar should be all full rounded."_ `rounded-2xl` (16px)
+→ `rounded-full` on the shared item class, so the wordmark's hover pill and
+"Get started" match, and on the tray behind them. The tray's radius was the one
+number in this component that had to be restated by hand whenever the pill's
+moved — 16 + the 4px inset = 20 — and `rounded-full` now derives it: at 44px
+tall a pill's radius is 22, the tray is 52 tall for 26, and 26 = 22 + 4 keeps
+the two corners concentric with nothing to maintain. Measured after: pill and
+tray both fully rounded, the CTA still 118×44.
+
+## Design review of the header fix — three defects taken, one measurement corrected (2026-08-26, dx-design-review)
+
+**Verdict: fail**, and rightly. The reported defect was fixed and every geometric
+claim about the fixed state reproduced, but the reviewer measured three things
+the fix had made worse or left standing. All three are closed here.
+
+**The tray was eating the hero's primary action.** `pointer-events-auto` sat on
+the `<nav>`, so the whole tray — the decorative plate and the spacer between the
+pills included — intercepted clicks across 296–398px of fixed overlay. Where the
+hero's filled "Get started" scrolled under it, the page's one filled action did
+nothing: **0 of 60 sampled points live at 375 (scroll 200), 20 of 60 at 1440
+(scroll 300)**, blocker `SPAN.absolute -inset-1`. My own first sweep missed this
+because it selected the _nav's_ pill rather than the hero's — the class filter
+`bg-primary` matched both — and reported 60/60 live at every position. The
+reviewer's number was right and mine was measuring the wrong element.
+
+`pointer-events-none` moves to the `nav` and `pointer-events-auto` onto the two
+items, so only the controls take the pointer. After: 375/scroll 200 goes 0 → 26
+of 60, and 1440 goes 20 → 59 of 60. What remains is a pill genuinely over the
+button, which is what a fixed header is; the decorative area no longer counts.
+Pinned by `ga-landing-page.test.tsx`.
+
+**The skip link was under the masthead, at every route.** `focus:top-4` put the
+page's first tab stop at 16px while the SG masthead is `fixed` at z-51 and 68px
+tall at 320: **100% covered at 320, 84% at 360–430**, `elementFromPoint`
+returning `SGDS-MASTHEAD`, focus ring drawn underneath (A11Y-2, L0; A11Y-10, L1).
+Pre-existing and outside the change, but it is the same masthead seam this fix is
+about, so it is fixed here: the masthead's measured height as its offset, and
+`focus:z-[52]` over the masthead's 51 and both headers' 50 — because clearing the
+masthead dropped it into the GA tray's band, where the wordmark then covered it.
+Measured after at 320/360/375/430/480/1280: **0% covered, `elementFromPoint`
+returns the link itself, 2px ring visible** at every one.
+
+**The masthead wrote a zero, and everything on the page jumped to the top.**
+Un-gating `transition-[top]` exposed it as a 40px slide at ≤430px; the cause was
+not the transition. `MastheadSg`'s `ResizeObserver` fires on the frame where the
+SGDS custom element has replaced the fallback and not yet laid out, and
+`el.offsetHeight` is 0 there — so `--masthead-h: 0px` was written and every
+offset on the page went to the viewport top for a frame or two. Sampling the
+header's computed `top` for 90 frames after load showed two states per width
+(`68px` and `0px` at 320). The observer ignores a zero now, and the same sample
+shows **one state per width — 68 / 48 / 28 / 28px at 320 / 375 / 767 / 1440**.
+
+Two supporting changes came out of the same finding. `--masthead-h`'s CSS default
+was 28px, the desktop one-line height, which is what the whole of a
+scripts-blocked visit and the first ~100ms of every other one used: at 320 the
+masthead's three wrapped lines covered the nav's own controls, 27 live points of
+60, the lockup sliced in half. The default is narrow-first now — 68px, 48 from
+336, 28 from 468, off the masthead measured at 5px steps — so the pre-hydration
+state is approximately right instead of confidently wrong. And `transition-[top]`
+is `md:`-gated again: above `md` the default is exact, so there is nothing to
+animate away, and below it the value only ever changes as a correction.
+
+**A measurement of mine was wrong, and the reviewer's method is the right one.**
+I reported text passing under the tray at "3 of 6 positions at 375, 0 of 6 at
+1440" and framed the trade-off as narrow-widths-only. `html` carries
+`scroll-behavior: smooth` (`styles.css:253`), and my sweep read each sample
+before the scroll had landed. With `behavior: 'instant'` and a two-frame settle
+the reviewer measured **38 of 61 at 375, 36 of 61 at 768, 16 of 61 at 1440** —
+far more frequent, and not zero at desktop. The trade-off is real at every width,
+which is exactly what this record warned about at line 1021 the last time a sweep
+was built on an unsettled scroll.
+
+**Kept, on the reviewer's advice: fixed at every width.** One path is the right
+structural call and the `absolute`-below-`md` alternative would only have fixed
+the narrow half of a defect that measures at all widths.
+
+**Open, and the owner's:** whether the tray should hide or collapse on
+scroll-down below `md`. It would close the residual pill-over-CTA transit and the
+52%-of-viewport measurement at 320×256 (the WCAG reflow target) together. Not
+built unasked — it adds scroll-driven state to the header.
+
+**Also referred, not taken:** the plate's edge sits 12px from the viewport at 320
+against the masthead's and hero's 20px (LAY-6, L2) — three near-parallel edges
+8px apart, and closing it costs the cluster's internal spacer at the one width
+where it has 25px to give. The nav `Button`'s `border-0` has no recorded reason
+(CMP-7, L2). And the harness's own gaps the reviewer surfaced: no control
+expresses WCAG 2.2 SC 2.4.11, and `token-audit.py` does not see Tailwind
+arbitrary utilities in `className` — both worth a rule proposal.
+
+Evidence for this round is in the repo now, not just a session scratchpad:
+`docs/design-evidence/ga-landing-page/round-5/header-fix/`.
+
+## The turning card shows the suggestion, not the filter (2026-08-26, owner)
+
+_"Instead of the filter, use this UI"_ — the suggested-next-step card. The filter
+panel was the wrong thing for a card and the crop said so: its open dropdown is
+absolutely positioned, so it sits outside the `offsetHeight` the card is built
+from and was cropped mid-row at every size. The guidance card is a closed,
+self-contained panel — it has an end, and the card can show all of it.
+
+So the top-left slot turns over to `next-steps` and the `promise` photograph
+moves to the bottom-right slot and stops turning. Three cards still turn and two
+still keep their photographs; each card still shows its own act's component,
+which is what keeps "the photograph and the interface are the same card seen from
+two sides" true. Nothing here is a capture — this is the same coded component the
+journey's third act runs, drawn at 0.645 in a 344×196 card.
+
+**344, not 400.** The guidance card is 520px wide, so 344 draws it at 0.645 — the
+smallest thing in the field. 400 would draw it at 0.738, matching the delivery
+overview, and the arithmetic said it still cleared the statement by 31px at 1280.
+The measurement said otherwise: the taller card reached a _longer_ line of the
+statement and overlapped it by 19–26px at three progress points, then clipped
+11px on the section's left edge by the end of the travel. The binding glyph was
+not the one the arithmetic assumed.
+
+**A leak the swap exposed:** the reveal's stage is `text-center`, and that
+inherited straight into the card, re-ragging the guidance card's three-line
+paragraph down the middle and centring the profile rail's "Jump to". Both are
+authored left-aligned. The back face carries `text-left` now — a component brings
+its own alignment and the card must not impose one.
+
+Verified at 1280/1440/1600, eight progress points each, with effective opacity
+walked up the tree so an invisible beat cannot register as an overlap: 0 clipped,
+0 glyph overlaps, `scrollWidth === clientWidth` throughout. 370 tests pass,
+typecheck clean.

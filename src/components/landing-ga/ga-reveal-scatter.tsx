@@ -1,10 +1,26 @@
 import { motion, useTransform } from "motion/react"
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import {
+  Suspense,
+  lazy,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react"
 
-import { gaActVignettes } from "./ga-vignettes"
+import { STILL_SIZE } from "./ga-screen-meta"
 
 import type { GaJourneyActId } from "@/content/landing-ga-page"
 import type { MotionValue } from "motion/react"
+
+/**
+ * The stills come from the screens' chunk, which the journey loads a viewport
+ * before it is needed; the reveal sits between the journey's acts and the
+ * audiences, so by the time a card can turn the chunk is already here.
+ */
+const ScreenStill = lazy(() =>
+  import("./ga-screens").then((module) => ({ default: module.ScreenStill }))
+)
 
 /**
  * The reveal's scatter field: five cards drifting around the statement, one per
@@ -32,11 +48,11 @@ import type { MotionValue } from "motion/react"
  * Transform and opacity only, and the stage clips them: nothing here can reflow
  * the page or widen it. Decorative throughout — every claim lives in the
  * statement, so the whole layer is `aria-hidden` and inert to the pointer, and
- * the vignettes are handed `animate={false}` so no card runs a timer behind the
- * back of a card that is facing away.
+ * the screens are drawn at rest (`ScreenStill`) so no card runs a script behind
+ * the back of a card that is facing away.
  */
 
-type ScatterPiece = {
+export type ScatterPiece = {
   /** The act this card belongs to — also the photo's filename and its back. */
   id: GaJourneyActId
   /** Where the piece sits when the section is centred, px from the centre. */
@@ -45,6 +61,18 @@ type ScatterPiece = {
   drift: readonly [number, number]
   /** Paper things are rarely square to the page. */
   rotate: number
+  /**
+   * The card's width. On a card that turns over this is the only dimension the
+   * composition gets to choose: the height comes from the component (owner,
+   * 2026-08-26 — the UI sets the card's proportion and size, and the
+   * photograph crops to it). A card that never turns is a print of a square
+   * photograph, so its width is its height too.
+   *
+   * The width is also what decides how large the component is drawn, at
+   * `(width - 16) / STILL_SIZE.width`. That ratio may not exceed 1: a product
+   * panel drawn larger than it was authored has type and radii that belong to
+   * no screen in the product. `ga-landing-page.test.tsx` holds the line.
+   */
   width: number
   /**
    * Whether this card turns over to its act's interface when the statement
@@ -55,13 +83,28 @@ type ScatterPiece = {
   flips: boolean
 }
 
-const PIECES: ReadonlyArray<ScatterPiece> = [
+export const PIECES: ReadonlyArray<ScatterPiece> = [
   {
-    id: "promise",
+    // The suggested next step, in the slot the eye starts from (owner,
+    // 2026-08-26: "instead of the filter, use this UI"). The filter panel used
+    // to turn over here and it was the wrong thing for a card: its open
+    // dropdown is absolutely positioned, so it sits outside the height the card
+    // is built from and was cropped mid-row every time. The guidance card is a
+    // closed, self-contained panel — it has an end, and the card can show all
+    // of it. Nothing here is a capture; this is the same coded component the
+    // journey's third act runs.
+    id: "next-steps",
     settle: [-470, -168],
     drift: [-88, -240],
     rotate: -2.5,
-    width: 264,
+    // The width the filter panel had. 400 was tried, to draw the 520px
+    // guidance card at 0.738 instead of 0.645 and match the delivery
+    // overview's scale — and 1280 rejected it: the taller card reached a
+    // longer line of the statement and overlapped it by 19–26px, then clipped
+    // 11px on the section's left edge by the end of the travel. The arithmetic
+    // said 31px of room; the measurement said none. 344 measures clean at
+    // every width and progress point.
+    width: 344,
     flips: true,
   },
   {
@@ -69,11 +112,16 @@ const PIECES: ReadonlyArray<ScatterPiece> = [
     settle: [472, -182],
     drift: [112, -198],
     rotate: 2,
-    width: 272,
+    // 336 before, which drew the 236px rail at 1.42× — the one component in
+    // the field bigger than the product draws it. 252 is the rail at its own
+    // size, and the card is the portrait its 236×300 makes.
+    width: 252,
     flips: true,
   },
   {
-    id: "next-steps",
+    // The teacher who was act one, keeping her photograph: the two acts traded
+    // places when the guidance card took the turning slot above.
+    id: "promise",
     settle: [452, 198],
     drift: [58, -262],
     rotate: -1.5,
@@ -96,7 +144,7 @@ const PIECES: ReadonlyArray<ScatterPiece> = [
     // the three-line sentence by the end of the section.
     drift: [120, -110],
     rotate: -3,
-    width: 290,
+    width: 340,
     flips: true,
   },
 ]
@@ -108,13 +156,6 @@ const SETTLE_AT = 0.5
 
 /** The white margin around a card's face, matching the paper-print frame. */
 const CARD_PAD = 8
-
-/**
- * The width the vignettes are drawn at before being scaled into a card. They
- * are authored around 300px — scaling one down keeps its proportions, where
- * letting it reflow into a 230px column would restyle it.
- */
-const VIGNETTE_WIDTH = 300
 
 /**
  * The flip, as fractions of the section's travel.
@@ -148,20 +189,54 @@ function fieldScale(viewportWidth: number) {
 }
 
 /**
+ * A card's box, from its component.
+ *
+ * The component is drawn as large as the card's width allows and never larger
+ * than it was authored: a product panel scaled past 1 has type, radii and
+ * hairlines that belong to no screen in the product, and the profile rail was
+ * being drawn at 1.4× before the card widths were read this way. The card's
+ * height is then the component's own height at that scale, which is what makes
+ * the card the component's shape.
+ *
+ * A card that keeps its photograph has no component to obey, so it stays the
+ * square print it always was.
+ */
+export function cardFit(piece: ScatterPiece, panelHeight: number) {
+  const scale = Math.min(
+    1,
+    (piece.width - CARD_PAD * 2) / STILL_SIZE[piece.id].width
+  )
+  return {
+    scale,
+    cardHeight: piece.flips
+      ? Math.round(panelHeight * scale) + CARD_PAD * 2
+      : piece.width,
+  }
+}
+
+/**
  * A card, both faces.
  *
- * The interface sets the card's shape and the photograph is cropped to it.
- * That order matters: a panel is whatever height its content makes it, so
- * forcing one into a square leaves a band of empty card under it, and no
- * padding or alignment hides that. Measuring the panel and handing its aspect
- * ratio to the photograph puts the two faces in exactly the same box.
+ * On a card that turns over, the component sets the shape and the photograph
+ * crops to it (owner, 2026-08-26: "UIs should be priority when it comes to the
+ * proportion and size of the card. Then photograph can fit to that aspect
+ * ratio"). The order matters, and this is the second time it has been settled:
+ * with the card sized first, the delivery overview sat in the top three
+ * quarters of a square card and a quarter of that card was empty white, while
+ * the profile rail left 68px of empty width and was drawn 1.4× larger than the
+ * product draws it. Neither is something padding or alignment can hide.
  *
- * The panel is rendered at `VIGNETTE_WIDTH` and scaled down from its top-left
+ * So the width is the composition's — it is what the settle offsets were
+ * authored against — and everything else follows from the component: it is
+ * drawn at `inner / STILL_SIZE.width` of its authored size, the card's height
+ * is that ratio applied to the component's own height, and `object-cover` on
+ * the front takes whatever crop of the square photograph that shape asks for.
+ *
+ * The component is rendered at its authored width and scaled from its top-left
  * corner, so it keeps the proportions it was designed at rather than reflowing
  * into a column a third of its width. `offsetHeight` reads the layout height,
- * which a transform does not touch, so the measurement is of the panel as
- * authored — and `useLayoutEffect` takes it before the first paint, so the card
- * is never briefly the wrong shape.
+ * which a transform does not touch, so the correction below is a measurement of
+ * the component as authored.
  */
 function PieceBody({
   piece,
@@ -170,27 +245,28 @@ function PieceBody({
   piece: ScatterPiece
   turn: MotionValue<number>
 }) {
-  const Vignette = gaActVignettes[piece.id]
+  const still = STILL_SIZE[piece.id]
   const panelRef = useRef<HTMLDivElement | null>(null)
-  // Defaults to `VIGNETTE_WIDTH`, which makes the card square — which is
-  // exactly right for a card with no panel to measure, since the photographs
-  // are square. A card that does flip overwrites it on its first layout.
-  const [panelHeight, setPanelHeight] = useState(VIGNETTE_WIDTH)
+  // The authored height to begin with, the real one once it can be read. The
+  // card's shape depends on this, and the screens arrive in a lazy chunk — a
+  // card that waited for the measurement would re-crop its photograph in front
+  // of the reader. `useLayoutEffect` then corrects it before any paint, so a
+  // component that lays out taller than `STILL_SIZE` says is caught silently.
+  const [panelHeight, setPanelHeight] = useState(still.height)
 
   useLayoutEffect(() => {
     const panel = panelRef.current
     if (!panel) return
     const measure = () => setPanelHeight(panel.offsetHeight)
     measure()
-    // The vignettes rest rather than animate here, so their height is stable —
-    // but a font landing late is enough to change it.
+    // Components are laid out text-first, so a font landing late changes the
+    // height, and with it the card's shape.
     const observer = new ResizeObserver(measure)
     observer.observe(panel)
     return () => observer.disconnect()
   }, [])
 
-  const inner = piece.width - CARD_PAD * 2
-  const scale = inner / VIGNETTE_WIDTH
+  const { cardHeight, scale } = cardFit(piece, panelHeight)
   const face =
     "absolute inset-0 overflow-hidden rounded-2xl bg-[color:var(--paper-card)] shadow-[var(--paper-shadow-card)] [backface-visibility:hidden]"
 
@@ -208,9 +284,9 @@ function PieceBody({
       <motion.div
         className="relative"
         style={{
-          // The card's own box: the panel's shape, at the card's width — or a
-          // square, for a card that keeps its photograph.
-          height: panelHeight * scale + CARD_PAD * 2,
+          // The photographs are square, and a card that keeps its photograph is
+          // a print of one. A card that turns is its component's shape.
+          height: cardHeight,
           rotateY: piece.flips ? turn : 0,
           transformStyle: piece.flips ? "preserve-3d" : undefined,
         }}
@@ -235,18 +311,23 @@ function PieceBody({
 
         {piece.flips ? (
           <div
-            className={`${face} [transform:rotateY(180deg)]`}
+            // `text-left`: the reveal's stage is `text-center` and that
+            // inherits straight into the card, which re-ragged the guidance
+            // card's three-line paragraph down the middle. A component brings
+            // its own alignment; the card must not impose one.
+            className={`${face} flex [transform:rotateY(180deg)] items-center justify-center text-left`}
             style={{ padding: CARD_PAD }}
           >
             <div
               ref={panelRef}
               style={{
                 transform: `scale(${scale})`,
-                transformOrigin: "top left",
-                width: VIGNETTE_WIDTH,
+                width: still.width,
               }}
             >
-              <Vignette animate={false} />
+              <Suspense fallback={null}>
+                <ScreenStill id={piece.id} />
+              </Suspense>
             </div>
           </div>
         ) : null}

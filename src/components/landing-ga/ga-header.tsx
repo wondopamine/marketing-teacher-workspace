@@ -9,8 +9,14 @@ import { TEACHER_WORKSPACE_APP_URL } from "@/content/landing"
 // `relative` is load-bearing: the plate behind these is absolutely positioned
 // and its `backdrop-blur` makes it a stacking context, so a static sibling
 // paints underneath it and the whole cluster comes out of focus.
+//
+// `shrink-0` is load-bearing too, and it belongs on the items rather than the
+// spacer. At 320 the cluster's max-content width is 7px wider than the padding
+// box allows, and flex took those 7px out of the widest thing that could give:
+// the wordmark image, squeezed from 105px to 100px. The spacer gives them up
+// instead, so the lockup is never drawn out of proportion.
 const ITEM =
-  "relative flex h-11 items-center rounded-2xl px-4 font-heading text-sm leading-4 font-semibold transition-colors duration-300 ease-out focus-visible:ring-3 focus-visible:ring-primary focus-visible:outline-none"
+  "pointer-events-auto relative flex h-11 shrink-0 items-center rounded-full px-4 font-heading text-sm leading-4 font-semibold transition-colors duration-300 ease-out focus-visible:ring-3 focus-visible:ring-primary focus-visible:outline-none"
 
 /**
  * The wordmark carries no ground of its own (owner, 2026-08-25) — it sits
@@ -46,22 +52,44 @@ const QUIET = `${ITEM} text-[color:var(--paper-ink)] hover:bg-[color:var(--nav-p
  * action on the page, and it is the hero's. What the nav has is the same
  * destination kept in reach, not a second thing shouting.
  *
- * Static in the flow below `md` and fixed from `md` up. The masthead offset is
- * kept on both paths — as top padding while static. The SG masthead is `fixed`
- * at a higher z-index, so dropping that offset put it over the wordmark and
- * left the header's controls unclickable at 320–360 (design review,
- * 2026-08-24).
+ * Fixed at every width, offset by the masthead's measured height. It was
+ * `static` in the flow below `md` — round 4's cluster rebuild — and that is
+ * the defect reported on 2026-08-26 after a resize. A static header is 88px of
+ * *page*: the hero stopped below it instead of starting under the masthead, so
+ * the top of a narrow viewport was a white band with the tray sitting on it as
+ * the ruled bar the cluster is designed not to be, and crossing 768px in
+ * either direction jumped the whole document 88px. Measured before the fix at
+ * 320/360/375/640/700/767: hero top at 88–128px, against 0 from 768 up.
+ *
+ * `top-[var(--masthead-h,0px)]` is the part the static path was covering for.
+ * `masthead-sg` writes that variable from the live masthead height, so the
+ * offset holds where the masthead wraps to two and three lines (48px at 360,
+ * 68px at 320) and the wordmark stays clickable — the L0 finding of 2026-08-24
+ * (A11Y-2), when going static dropped the offset and left the SG masthead,
+ * `fixed` at z-51 over this header's z-50, covering the only control here.
+ * `site-header.tsx` has always done exactly this, at every width.
  */
 export function GaHeader() {
   return (
-    <header className="pointer-events-none z-50 flex justify-center px-4 pt-[calc(var(--masthead-h,0px)+1rem)] sm:px-8 md:fixed md:inset-x-0 md:top-[var(--masthead-h,0px)] md:pt-4 md:transition-[top] md:duration-200 md:ease-out">
+    <header className="pointer-events-none fixed inset-x-0 top-[var(--masthead-h,0px)] z-50 flex justify-center px-4 pt-4 sm:px-8 md:transition-[top] md:duration-200 md:ease-out">
       <nav
         aria-label="Primary navigation"
-        className="pointer-events-auto relative flex w-max items-stretch gap-1"
+        className="pointer-events-none relative flex w-max items-stretch gap-1"
       >
+        {/* The tray the cluster sits on. Its edge is tone alone — no line and
+            no shadow (owner, 2026-08-26): `--nav-plate` darkens whatever is
+            behind it, so the tray reads a step under its ground and the white
+            pills read a step over the tray, on the hero's sky and on the page
+            below it alike.
+
+            The pills are fully rounded (owner, 2026-08-26), so the tray is
+            too: at 44px tall a pill's radius is 22px, and the tray is 52px
+            tall for a radius of 26 — the pill's 22 plus the 4px the tray is
+            inset by, which is what `rounded-full` gives it here. The two
+            corners stay concentric with no number to restate. */}
         <span
           aria-hidden
-          className="absolute -inset-1 rounded-3xl bg-[color:var(--nav-plate)] backdrop-blur-[13px]"
+          className="absolute -inset-1 rounded-full bg-[color:var(--nav-plate)] backdrop-blur-[13px]"
         />
 
         <a aria-label="Teacher Workspace" className={QUIET} href="/">
@@ -80,12 +108,13 @@ export function GaHeader() {
         </a>
 
         {/* The distance between the two ends, held open by a spacer so the
-            plate stays content-hugging. */}
+            plate stays content-hugging. It is the one thing in the cluster
+            that may shrink, which is why the items carry `shrink-0`. */}
         <span aria-hidden className="w-8 sm:w-20 lg:w-32" />
 
         <Button
           asChild
-          className={`${ITEM} bg-[color:var(--nav-pill)] px-5 text-[color:var(--paper-ink)] hover:bg-[color:var(--nav-pill-hover)]`}
+          className={`${ITEM} border-0 bg-[color:var(--nav-pill)] px-5 text-[color:var(--paper-ink)] hover:bg-[color:var(--nav-pill-hover)]`}
         >
           <a href={TEACHER_WORKSPACE_APP_URL} rel="noreferrer">
             Get started
