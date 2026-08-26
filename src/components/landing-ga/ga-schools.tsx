@@ -266,9 +266,6 @@ export function GaSchools() {
       >
         {gaPageCopy.schools.heading}
       </h2>
-      <p className="mt-5 font-body text-base leading-[1.7] text-balance text-[color:var(--paper-muted)] sm:text-lg">
-        {gaPageCopy.schools.lede}
-      </p>
     </div>
   )
 
