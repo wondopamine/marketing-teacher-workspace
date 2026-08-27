@@ -41,7 +41,6 @@ const CARD_H: Record<ProfileSection, number> = {
   Wellbeing: 186,
   Academic: 148,
   Family: 148,
-  Reports: 120,
 }
 
 /** Where a section's card starts, from the top of the scrolling pane. */

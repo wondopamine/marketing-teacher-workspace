@@ -22,7 +22,7 @@ import {
   students,
 } from "./ga-screen-data"
 
-import type { AttentionTag, FilterField, FilterRule } from "./ga-screen-data"
+import type { FilterField, FilterRule } from "./ga-screen-data"
 import type { ScreenProps } from "./ga-screens"
 
 type FieldId = FilterField["id"]
@@ -166,14 +166,7 @@ function appliedRules(
   )
 }
 
-const TAG_TONE: Record<AttentionTag, "grey" | "orange"> = {
-  FAS: "grey",
-  LTA: "grey",
-  SwAN: "orange",
-}
-
-const COLUMNS =
-  "grid-cols-[44px_204px_68px_100px_140px_124px_132px_124px_112px]"
+const COLUMNS = "grid-cols-[44px_204px_68px_100px_140px_124px_124px_1fr]"
 
 const HEADERS: ReadonlyArray<{ label: string; sortable?: boolean }> = [
   { label: "#" },
@@ -182,7 +175,6 @@ const HEADERS: ReadonlyArray<{ label: string; sortable?: boolean }> = [
   { label: "Criteria met" },
   { label: "Criteria tag" },
   { label: "CCA", sortable: true },
-  { label: "Attention tag" },
   { label: "Attendance (%)", sortable: true },
   { label: "Late-coming (days)" },
 ]
@@ -278,19 +270,6 @@ export function InsightsScreen({ active }: ScreenProps) {
                       )}
                     </span>
                     <span className="truncate px-2">{student.cca}</span>
-                    <span className="flex gap-1 px-2">
-                      {student.tags.length === 0 ? (
-                        <span className="text-[color:var(--app-muted)]">
-                          None
-                        </span>
-                      ) : (
-                        student.tags.map((tag) => (
-                          <AppChip key={tag} tone={TAG_TONE[tag]}>
-                            {tag}
-                          </AppChip>
-                        ))
-                      )}
-                    </span>
                     <span className="flex items-center gap-1 px-2 tabular-nums">
                       {student.attendance}%
                       <TrendArrow trend={student.trend} />
