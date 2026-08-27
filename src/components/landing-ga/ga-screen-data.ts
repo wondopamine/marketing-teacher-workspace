@@ -7,13 +7,10 @@
  * from the product: it is all authored here, and the filter is computed from
  * this data so every count the demo shows is true of the rows on screen.
  *
- * Attention tags stay inside the set the owner's mockup used (FAS, SwAN,
- * LTA). No SEN, and nothing from the Behaviour or Family sections of a
- * profile appears in any screen: those sections render as headers and
- * redaction bars only.
+ * No attention tags — they are not in GA. No SEN either, and nothing from
+ * the Behaviour or Family sections of a profile appears in any screen: those
+ * sections render as headers and redaction bars only.
  */
-
-export type AttentionTag = "FAS" | "SwAN" | "LTA"
 
 export type Trend = "up" | "down" | "flat"
 
@@ -21,7 +18,6 @@ export type Student = {
   readonly id: string
   readonly name: string
   readonly cca: string
-  readonly tags: ReadonlyArray<AttentionTag>
   /** Attendance this term, %. */
   readonly attendance: number
   readonly trend: Trend
@@ -51,7 +47,6 @@ export const students: ReadonlyArray<Student> = [
     id: "s01",
     name: "Aaliyah Binte Rashid",
     cca: "Volleyball",
-    tags: ["LTA", "SwAN"],
     attendance: 40,
     trend: "up",
     late: 3,
@@ -65,7 +60,6 @@ export const students: ReadonlyArray<Student> = [
     id: "s02",
     name: "Brandon Lee Jun Wei",
     cca: "Red Cross",
-    tags: [],
     attendance: 81,
     trend: "down",
     late: 5,
@@ -79,7 +73,6 @@ export const students: ReadonlyArray<Student> = [
     id: "s03",
     name: "Chloe Ng Xin Yi",
     cca: "Red Cross",
-    tags: [],
     attendance: 57,
     trend: "up",
     late: 14,
@@ -93,7 +86,6 @@ export const students: ReadonlyArray<Student> = [
     id: "s04",
     name: "Darren Koh Jia Hao",
     cca: "Robotics",
-    tags: [],
     attendance: 70,
     trend: "down",
     late: 10,
@@ -107,7 +99,6 @@ export const students: ReadonlyArray<Student> = [
     id: "s05",
     name: "Farah Nur Aisyah",
     cca: "Badminton",
-    tags: ["FAS"],
     attendance: 85,
     trend: "flat",
     late: 5,
@@ -121,7 +112,6 @@ export const students: ReadonlyArray<Student> = [
     id: "s06",
     name: "Gabriel Tan Yi Xuan",
     cca: "Concert Band",
-    tags: [],
     attendance: 72,
     trend: "down",
     late: 9,
@@ -135,7 +125,6 @@ export const students: ReadonlyArray<Student> = [
     id: "s07",
     name: "Hannah Lim Hui Ling",
     cca: "Basketball",
-    tags: [],
     attendance: 52,
     trend: "down",
     late: 6,
@@ -149,7 +138,6 @@ export const students: ReadonlyArray<Student> = [
     id: "s08",
     name: "Ishaan Pillai",
     cca: "Choir",
-    tags: [],
     attendance: 64,
     trend: "up",
     late: 12,
@@ -163,7 +151,6 @@ export const students: ReadonlyArray<Student> = [
     id: "s09",
     name: "Jasmine Ong Mei Qi",
     cca: "Drama",
-    tags: ["FAS"],
     attendance: 48,
     trend: "down",
     late: 15,
@@ -177,7 +164,6 @@ export const students: ReadonlyArray<Student> = [
     id: "s10",
     name: "Kavya Ramasamy",
     cca: "Scouts",
-    tags: [],
     attendance: 89,
     trend: "up",
     late: 2,
@@ -191,7 +177,6 @@ export const students: ReadonlyArray<Student> = [
     id: "s11",
     name: "Lucas Chua Zhi Hao",
     cca: "Football",
-    tags: [],
     attendance: 59,
     trend: "flat",
     late: 8,
@@ -205,7 +190,6 @@ export const students: ReadonlyArray<Student> = [
     id: "s12",
     name: "Megan Toh Shu Fen",
     cca: "Swimming",
-    tags: [],
     attendance: 94,
     trend: "up",
     late: 1,
@@ -219,7 +203,6 @@ export const students: ReadonlyArray<Student> = [
     id: "s13",
     name: "Nadia Binte Hamid",
     cca: "Guzheng",
-    tags: ["LTA"],
     attendance: 45,
     trend: "down",
     late: 11,
@@ -233,7 +216,6 @@ export const students: ReadonlyArray<Student> = [
     id: "s14",
     name: "Owen Yeo Kai Wen",
     cca: "Table Tennis",
-    tags: [],
     attendance: 55,
     trend: "up",
     late: 7,
@@ -312,22 +294,24 @@ export function applyRules(
 }
 
 /**
- * The profile act 2 opens. Rachel's attendance values are the ones on the
- * prototype's own synthetic record; nothing from Behaviour or Family is here.
+ * The profile act 2 opens. Rachel's attendance reads 93% and rising, the
+ * figure act 3's suggestion reasons about, and her CCA attendance 60% and
+ * falling, so the two lines move in opposite directions the way a real record
+ * does; nothing from Behaviour or Family is here.
  */
 export const profile = {
   name: "Rachel Wong Mei Ling",
   className: "3B",
   cca: "Swimming",
   attendance: {
-    attendance: { label: "Attendance (%)", value: "100", trend: "up" as Trend },
+    attendance: { label: "Attendance (%)", value: "93", trend: "up" as Trend },
     nonVr: { label: "Non-VR absences (days)", value: "0" },
     privateVr: { label: "Private VR absences (days)", value: "0" },
     late: { label: "Late-coming (days)", value: "1" },
     mc: { label: "MC absences (days)", value: "1" },
     ccaAttendance: {
       label: "CCA attendance (%)",
-      value: "100%",
+      value: "60%",
       trend: "down" as Trend,
       note: "(Swimming)",
     },
@@ -341,7 +325,6 @@ export const profileSections = [
   "Wellbeing",
   "Academic",
   "Family",
-  "Reports",
 ] as const
 
 export type ProfileSection = (typeof profileSections)[number]
