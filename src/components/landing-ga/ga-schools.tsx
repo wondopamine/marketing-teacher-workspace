@@ -109,10 +109,17 @@ function SchoolCard({
         className
       )}
     >
-      {/* Decorative, and below sm there is no room for it beside the words. */}
-      <div className="hidden sm:block sm:w-[42%] sm:shrink-0">
+      {/* Decorative. Below sm it stacks above the quote at its own size
+          rather than beside it: there is no room for a 42% column next to the
+          words on a phone, and hiding it left the mobile page with none of the
+          three drawings (owner, 2026-08-27). */}
+      <div className="w-[200px] max-w-full sm:w-[42%] sm:shrink-0">
         <picture>
+          {/* `sizes` belongs on the source too: without it the AVIF
+              candidate is picked against a 100vw assumption, so a 200px tile
+              on a phone fetched the 640w file. */}
           <source
+            sizes="(min-width: 1024px) 290px, (min-width: 640px) 45vw, 200px"
             srcSet={`/schools/${testimonial.id}-320.avif 320w, /schools/${testimonial.id}-640.avif 640w`}
             type="image/avif"
           />
@@ -122,7 +129,7 @@ function SchoolCard({
             className="block aspect-square w-full rounded-2xl bg-[color:var(--paper-hover-bg)] object-contain p-3 select-none"
             height={640}
             loading="lazy"
-            sizes="(min-width: 1024px) 290px, 45vw"
+            sizes="(min-width: 1024px) 290px, (min-width: 640px) 45vw, 200px"
             src={`/schools/${testimonial.id}-640.webp`}
             srcSet={`/schools/${testimonial.id}-320.webp 320w, /schools/${testimonial.id}-640.webp 640w`}
             width={640}
