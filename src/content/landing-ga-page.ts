@@ -210,9 +210,10 @@ export const gaPageCopy = {
     description: metaDocument.requireBody(),
   },
   hero: {
-    headline: heroDocument.requireHeading(),
-    // `gaAction`, not `action`: the shared file keeps the v1 page's governed
-    // label. See the frontmatter comment in `02-hero.mdx`.
+    // `gaHeadline` and `gaAction`, not the `#` line and `action`: the shared
+    // file keeps the v1 page's governed headline and label. See the
+    // frontmatter comment in `02-hero.mdx`.
+    headline: heroDocument.text("gaHeadline"),
     action: heroDocument.text("gaAction"),
   },
   journey: {},
