@@ -214,6 +214,7 @@ export const gaPageCopy = {
     // file keeps the v1 page's governed headline and label. See the
     // frontmatter comment in `02-hero.mdx`.
     headline: heroDocument.text("gaHeadline"),
+    accessNote: heroDocument.text("gaAccessNote"),
     action: heroDocument.text("gaAction"),
   },
   journey: {},
