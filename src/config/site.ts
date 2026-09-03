@@ -5,6 +5,8 @@ type SiteConfig = {
   readonly links: {
     readonly product: HttpsUrl
     readonly feedback: HttpsUrl
+    readonly reportVulnerability: HttpsUrl
+    readonly scamShield: HttpsUrl
     readonly parentGatewayResourceCentre: HttpsUrl
     readonly landingPageV2Issue: HttpsUrl
     readonly landingPageV2DirectionComment: HttpsUrl
@@ -26,6 +28,11 @@ export const siteConfig = {
   links: {
     product: "https://teacher.digital.moe.gov.sg",
     feedback: "https://go.gov.sg/teacherworkspace-feedback",
+    // Both are obligations of a public-facing government site, raised in
+    // review on 2026-09-03. `report_vulnerability` and the bare host both
+    // redirect here, so this is the form that costs no hop.
+    reportVulnerability: "https://www.tech.gov.sg/report-vulnerability/",
+    scamShield: "https://www.scamshield.gov.sg",
     parentGatewayResourceCentre: "https://go.gov.sg/PGresource",
     landingPageV2Issue:
       "https://github.com/String-dxd/marketing-teacher-workspace/issues/3",
