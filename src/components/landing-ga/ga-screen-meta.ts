@@ -7,17 +7,15 @@ import type { GaJourneyActId } from "@/content/landing-ga-page"
  * one lazily-loaded chunk: server-rendered, the five of them pushed the
  * document from 11.7KB to 15.6KB compressed — past TCP's first congestion
  * window — and cost Lighthouse mobile four points for an illustration nobody
- * has scrolled to yet. So the server sends each act's words, the sr-only
- * description of its demonstration and its caption from here, with an empty
- * stage, and the chunk arrives when an act comes within a viewport of the
- * fold. This module must stay free of imports from the screens.
+ * has scrolled to yet. So the server sends each act's words and the sr-only
+ * description of its demonstration from here, with an empty stage, and the
+ * chunk arrives when an act comes within a viewport of the fold. This module
+ * must stay free of imports from the screens.
  */
 
 export type ActScreenMeta = {
   /** What the demonstration shows, for readers who do not see it. */
   readonly description: string
-  /** A visible line under the stage, when the screen needs one. */
-  readonly caption?: string
 }
 
 export const gaActScreenMeta: Record<GaJourneyActId, ActScreenMeta> = {
@@ -28,7 +26,6 @@ export const gaActScreenMeta: Record<GaJourneyActId, ActScreenMeta> = {
   notice: {
     description:
       "A demonstration: one student's profile, with its attendance, wellbeing and academic sections reached from a jump-to rail. Behaviour and family details are not shown.",
-    caption: "Sensitive sections stay inside the profile.",
   },
   "next-steps": {
     description:

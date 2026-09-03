@@ -195,22 +195,20 @@ describe("GaLandingPage", () => {
     // sections are redaction bars, so nothing from them can appear here.
     const html = renderToStaticMarkup(<GaLandingPage />)
     expect(html).not.toContain("/content-review/screens/")
-    expect(html).toContain("Sensitive sections stay inside the profile.")
   })
 
   it("ships the stages empty and leaves the screens to the client", () => {
     // The five product screens are illustration — aria-hidden, described in
     // an sr-only line — and the heaviest thing on the page. Server-rendered
     // they pushed the document past TCP's first congestion window and cost
-    // Lighthouse mobile four points, so the server sends each act's words,
-    // description and caption with an empty stage; the screens' chunk mounts
-    // when an act comes within a viewport of the fold.
+    // Lighthouse mobile four points, so the server sends each act's words and
+    // description with an empty stage; the screens' chunk mounts when an act
+    // comes within a viewport of the fold.
     const html = renderToStaticMarkup(<GaLandingPage />)
     for (const act of gaJourneyActs) {
       expect(html).toContain(`id="act-${act.id}"`)
     }
     expect(html).toContain("A demonstration:")
-    expect(html).toContain("Sensitive sections stay inside the profile.")
     expect(html).not.toContain("Show records")
     expect(html).not.toContain("Jump to")
   })
