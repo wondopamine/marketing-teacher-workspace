@@ -128,4 +128,22 @@ export const footerCopy = {
   brand: "Teacher Workspace",
   feedbackUrl: siteConfig.links.feedback,
   feedbackLabel: "Send feedback",
+  reportVulnerabilityUrl: siteConfig.links.reportVulnerability,
+  reportVulnerabilityLabel: "Report vulnerability",
+  /**
+   * The impersonation-scam advisory every public-facing government site
+   * carries, wording as the reviewer supplied it (2026-09-03). It is three
+   * fields rather than one string because the helpline sentence carries a
+   * link in the middle of it; the sentences themselves stay whole so they can
+   * be proofread as sentences.
+   */
+  advisory: {
+    lead: "Beware of impersonation scams:",
+    warning:
+      "Government officials will never ask you to transfer money or disclose bank log-in details over a phone call.",
+    helplineBefore: "Call the 24/7",
+    helplineLinkLabel: "ScamShield",
+    helplineLinkUrl: siteConfig.links.scamShield,
+    helplineAfter: "Helpline at 1799 if you are unsure.",
+  },
 } as const

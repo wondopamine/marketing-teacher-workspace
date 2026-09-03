@@ -185,6 +185,9 @@
   --audience-sky: #d6e2f7;
 
   --footer-bg: #fcfcfd;
+  /* The scam advisory's band: the warm end of the paper palette, kept pale
+     enough that ink on it clears AA at 13px. */
+  --advisory-bg: #fdf1ec;
 
   /* Polish tokens — kept here so component-level utilities stay tight
        and reusable hover/shadow rhythms don't drift apart. */
