@@ -107,6 +107,11 @@ export function GaHero() {
           >
             {hero.headline}
           </h1>
+          {/* Where the product can be reached, before the button asks for the
+              click (owner, 2026-08-28). */}
+          <p className="mt-5 font-body text-base leading-6 text-[color:var(--paper-muted)]">
+            {hero.accessNote}
+          </p>
           <div className="mt-8 flex flex-col items-center gap-3">
             {/* `border-0` is the fix for a pale halo around the fill, not a
                 style choice (owner, 2026-08-26). The shared Button carries

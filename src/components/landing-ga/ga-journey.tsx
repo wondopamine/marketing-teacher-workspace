@@ -45,8 +45,8 @@ const ACT_OBSERVER_OPTIONS: IntersectionObserverInit = {
  *
  * The screens are decorative: each act's copy carries the claim, and an
  * sr-only line says what the demonstration shows. No control lives inside a
- * screen. The server sends the words, the descriptions and the captions with
- * empty stages; the screens' chunk mounts when the journey is a viewport away.
+ * screen. The server sends the words and the descriptions with empty stages;
+ * the screens' chunk mounts when the journey is a viewport away.
  *
  * `overflow-x-clip` on the section is what lets a screen run off the right
  * edge without the page growing a horizontal scrollbar.
@@ -145,10 +145,6 @@ export function GaJourney() {
                   </div>
                 ) : null}
               </StageBox>
-              <p className="mt-3 min-h-4 font-body text-xs leading-4 text-[color:var(--paper-muted)] italic">
-                {gaActScreenMeta[gaJourneyActs[activeIndex]?.id ?? "promise"]
-                  .caption ?? ""}
-              </p>
             </div>
           </div>
         ) : null}
@@ -165,7 +161,7 @@ type JourneyActProps = {
 }
 
 function JourneyAct({ act, anchored, index, near }: JourneyActProps) {
-  const { description, caption } = gaActScreenMeta[act.id]
+  const { description } = gaActScreenMeta[act.id]
   return (
     <article
       className={
@@ -205,11 +201,6 @@ function JourneyAct({ act, anchored, index, near }: JourneyActProps) {
               </div>
             ) : null}
           </StageBox>
-          {caption !== undefined ? (
-            <p className="mt-3 font-body text-xs leading-4 text-[color:var(--paper-muted)] italic">
-              {caption}
-            </p>
-          ) : null}
         </div>
       )}
     </article>
